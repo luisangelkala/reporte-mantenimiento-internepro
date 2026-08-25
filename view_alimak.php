@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/bootstrap.php';
 /**
 * Password generator
 *
@@ -12,28 +13,15 @@ if(!isset($_GET["id"]) || $_GET["id"] == '' || $_GET["id"] == 0){
 header("Location: index.php");
 }
 
-$ID = $_GET["id"];
+$ID = report_id($_GET["id"]);
 
-
-/**
-*  Connect Database
-*/
-function db(){
-$servername = "localhost";
-$database = "db_registros_elevadores";
-$username = "us_registro";
-$password = "q2H7S98oXeD5";
-
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $database);
-return $conn;
-}
-
-$sql = "SELECT * FROM reporte WHERE `id`='$ID'";
 
 $db = db();
-
-$data = $db->query($sql);
+$stmt = $db->prepare('SELECT * FROM reporte WHERE id = ?');
+$stmt->bind_param('i', $ID);
+$stmt->execute();
+$data = $stmt->get_result();
+$stmt->close();
 
 mysqli_close($db);
 
@@ -1053,7 +1041,7 @@ mysqli_close($db);
                                     </div>
                                     <div class="col-md-12">
                                         <p><?php
-                                        echo (!isset($obs_reporte['ab_33'])) ? '' : $obs_reporte['ab_33'];?></p>
+                                        echo (!isset($obs_reporte['ab_34'])) ? '' : $obs_reporte['ab_34'];?></p>
                                     </div>
                                 </div>
                             </th>

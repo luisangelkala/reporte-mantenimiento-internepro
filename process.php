@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/bootstrap.php';
 /**
  * Password generator
  *
@@ -7,6 +6,20 @@ require_once __DIR__ . '/bootstrap.php';
  *
  *@author LAGC
  */
+
+/**
+ *  Connect Database
+*/
+function db(){
+   $servername = "localhost";
+   $database = "db_registros_elevadores";
+   $username = "us_registro";
+   $password = "q2H7S98oXeD5";
+
+   // Create connection
+   $conn = mysqli_connect($servername, $username, $password, $database);
+   return $conn;
+}
 
 function report_list(){
 	$sql = "SELECT * FROM reporte ORDER BY created_at DESC";
@@ -22,20 +35,20 @@ function report_list(){
    	if ($data->num_rows > 0) {
         while ($row = $data->fetch_assoc()){
 
-        $state = json_decode($row['state_reporte'], true) ?: [];
+        $state = json_decode($row['state_reporte'], true);//json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $reporte])
 
-        $status = (($state['status'] ?? 'open') === 'close') ?
+        $status = ($state['status'] == 'close') ?
         '<a href="#" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-check-square-fill" viewBox="0 0 16 16"><path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm10.03 4.97a.75.75 0 0 1 .011 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.75.75 0 0 1 1.08-.022z"/></svg></a>'
         :
         ''
         ;
-        $red = (($state['status'] ?? 'open') === 'close') ? 'red' : '';
+        $red = ($state['status'] == 'close') ? 'red' : '';
 
-        $alimak = (($state['reporte'] ?? 'elevador') === 'alimak') ? '_alimak' : '';
+        $alimak = ($state['reporte'] == 'alimak') ? '_alimak' : '';
 
    		$table .= '<tr class="'. $red .'">
                    <th scope="row">'. $row['id'] .'</th>
-                   <td class="text-left">'.$status.' '. escape_html($row['title_reporte']) .'</td>
+                   <td class="text-left">'.$status.' '. $row['title_reporte'] .'</td>
                    <td>
                    <div>
                    <a href="https://api.whatsapp.com/send?text=https://reportes.internepro.com.pa/edit'.$alimak.'.php?id='.$row['id'].'" data-action="share/whatsapp/share" class="url" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16"> <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg></a>
@@ -52,9 +65,6 @@ function report_list(){
 }
 
 function report_create($reporte){
-	if (!in_array($reporte, ['elevador', 'alimak'], true)) {
-		throw new InvalidArgumentException('Tipo de reporte inválido.');
-	}
 	$status = json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $reporte]);
 
 	$sql = "INSERT INTO `reporte`(`title_reporte`,`state_reporte`,`created_at`) VALUES ('Añadir titulo del reporte...', '$status', NOW())";
@@ -68,30 +78,25 @@ function report_create($reporte){
 }
 
 function report_delete($id){
-	$id = report_id($id);
+	$sql = "DELETE FROM `reporte` WHERE `id`='$id'";
+
 	$db = db();
-	$stmt = $db->prepare('DELETE FROM reporte WHERE id = ?');
-	$stmt->bind_param('i', $id);
-	$data = $stmt->execute();
-	$stmt->close();
+
+	$data = $db->query($sql);
 
    	mysqli_close($db);
    	return $data;
 }
 
 function report_insert($id, $reporte){
-	$id = report_id($id);
-	if (!in_array($reporte, ['elevador', 'alimak'], true)) {
-		throw new InvalidArgumentException('Tipo de reporte inválido.');
-	}
 
 	$status = json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $reporte]);
 
-	$title = htmlentities(post_string('title', 255), ENT_QUOTES, 'UTF-8');
-	$cliente = htmlentities(post_string('cliente', 255), ENT_QUOTES, 'UTF-8');
-	$fecha = post_string('fecha', 10);
-	$equipo = htmlentities(post_string('equipo', 255), ENT_QUOTES, 'UTF-8');
-	$tecnico = htmlentities(post_string('tecnico', 255), ENT_QUOTES, 'UTF-8');
+	$title = htmlentities($_POST['title'], ENT_QUOTES,'UTF-8');
+	$cliente = htmlentities($_POST["cliente"], ENT_QUOTES,'UTF-8');
+	$fecha = $_POST["fecha"];
+	$equipo = htmlentities($_POST["equipo"], ENT_QUOTES,'UTF-8');
+	$tecnico = htmlentities($_POST["tecnico"], ENT_QUOTES,'UTF-8');
 
 
 	if($reporte == 'elevador'){
@@ -165,7 +170,6 @@ function report_insert($id, $reporte){
 		$s_8_d = $_POST['s_8_d'];
 		$s_8_e = $_POST['s_8_e'];
 		$s_8_f = $_POST['s_8_f'];
-		$s_8_g = $_POST['s_8_g'];
 		$ob_8 = htmlentities($_POST['ob_8'], ENT_QUOTES,'UTF-8');
 
 		$s_9_a = $_POST['s_9_a'];
@@ -221,9 +225,6 @@ function report_insert($id, $reporte){
 		$data_reporte = json_encode(['s_0_a' => $s_0_a, 's_0_b' => $s_0_b, 's_0_c' => $s_0_c, 's_1_a' => $s_1_a, 's_1_b' => $s_1_b, 's_1_c' => $s_1_c, 's_1_d' => $s_1_d, 's_1_e' => $s_1_e, 's_1_f' => $s_1_f, 's_1_g' => $s_1_g, 's_2_a' => $s_2_a, 's_2_b' => $s_2_b, 's_2_c' => $s_2_c, 's_2_d' => $s_2_d, 's_2_e' => $s_2_e, 's_2_f' => $s_2_f, 's_3_a' => $s_3_a, 's_3_b' => $s_3_b, 's_3_c' => $s_3_c, 's_3_d' => $s_3_d, 's_3_e' => $s_3_e, 's_4_a' => $s_4_a, 's_4_b' => $s_4_b, 's_4_c' => $s_4_c, 's_4_d' => $s_4_d, 's_5_a' => $s_5_a, 's_5_b' => $s_5_b, 's_5_c' => $s_5_c, 's_5_d' => $s_5_d, 's_5_e' => $s_5_e, 's_5_f' => $s_5_f, 's_5_g' => $s_5_g, 's_5_h' => $s_5_h, 's_6_a' => $s_6_a, 's_6_b' => $s_6_b, 's_6_c' => $s_6_c, 's_6_d' => $s_6_d, 's_6_e' => $s_6_e, 's_6_f' => $s_6_f, 's_6_g' => $s_6_g, 's_6_h' => $s_6_h, 's_6_i' => $s_6_i, 's_7_a' => $s_7_a, 's_7_b' => $s_7_b, 's_7_c' => $s_7_c, 's_7_d' => $s_7_d, 's_7_e' => $s_7_e, 's_7_f' => $s_7_f, 's_8_a' => $s_8_a, 's_8_b' => $s_8_b, 's_8_c' => $s_8_c, 's_8_d' => $s_8_d, 's_8_e' => $s_8_e, 's_8_f' => $s_8_f, 's_9_a' => $s_9_a, 's_9_b' => $s_9_b, 's_9_c' => $s_9_c, 's_9_d' => $s_9_d, 's_9_e' => $s_9_e, 's_10_a' => $s_10_a, 's_10_b' => $s_10_b, 's_10_c' => $s_10_c, 's_11_a' => $s_11_a, 's_11_b' => $s_11_b, 's_11_c' => $s_11_c, 's_11_d' => $s_11_d, 's_11_e' => $s_11_e, 's_12_a' => $s_12_a, 's_12_b' => $s_12_b, 's_12_c' => $s_12_c, 's_12_d' => $s_12_d, 's_12_e' => $s_12_e, 's_13_a' => $s_13_a, 's_13_b' => $s_13_b, 's_13_c' => $s_13_c, 's_13_d' => $s_13_d, 's_13_e' => $s_13_e, 's_13_f' => $s_13_f, 's_14_a' => $s_14_a, 's_14_b' => $s_14_b, 's_14_c' => $s_14_c, 's_14_d' => $s_14_d, 's_14_e' => $s_14_e, 's_15_a' => $s_15_a, 's_15_b' => $s_15_b, 's_15_c' => $s_15_c, 's_15_d' => $s_15_d]);
 
 		// Obervaciones
-		$data_reporte = json_decode($data_reporte, true);
-		$data_reporte['s_8_g'] = $s_8_g;
-		$data_reporte = json_encode($data_reporte);
 		$obs_reporte = json_encode(['ob_1' => $ob_1, 'ob_2' => $ob_2, 'ob_3' => $ob_3, 'ob_4' => $ob_4, 'ob_5' => $ob_5, 'ob_6' => $ob_6, 'ob_7' => $ob_7, 'ob_8' => $ob_8, 'ob_9' => $ob_9, 'ob_10' => $ob_10, 'ob_11' => $ob_11, 'ob_12' => $ob_12, 'ob_13' => $ob_13, 'ob_14' => $ob_14, 'ob_15' => $ob_15, 'ob_comentario' => $ob_comentario, 'ob_recomendacion' => $ob_recomendacion]);
 	}
 	elseif($reporte == 'alimak'){
@@ -407,44 +408,29 @@ function report_insert($id, $reporte){
 		$ob_recomendacion = htmlentities($_POST['ob_recomendacion'], ENT_QUOTES,'UTF-8');
 
 		// Obervaciones
-		$data_reporte = json_decode($data_reporte, true);
-		$data_reporte['a_22_a'] = $a_22_a;
-		$data_reporte = json_encode($data_reporte);
 		$obs_reporte = json_encode(['ab_1' => $ab_1, 'ab_2' => $ab_2, 'ab_3' => $ab_3, 'ab_4' => $ab_4, 'ab_5' => $ab_5, 'ab_6' => $ab_6, 'ab_7' => $ab_7, 'ab_8' => $ab_8, 'ab_9' => $ab_9, 'ab_10' => $ab_10, 'ab_11' => $ab_11, 'ab_12' => $ab_12, 'ab_13' => $ab_13, 'ab_14' => $ab_14, 'ab_15' => $ab_15,'ab_16' => $ab_16, 'ab_17' => $ab_17, 'ab_18' => $ab_18, 'ab_19' => $ab_19, 'ab_20' => $ab_20, 'ab_21' => $ab_21, 'ab_22' => $ab_22, 'ab_23' => $ab_23, 'ab_24' => $ab_24, 'ab_25' => $ab_25, 'ab_26' => $ab_26, 'ab_27' => $ab_27, 'ab_28' => $ab_28, 'ab_29' => $ab_29, 'ab_30' => $ab_30, 'ab_31' => $ab_31, 'ab_32' => $ab_32, 'ab_32' => $ab_32, 'ab_33' => $ab_33, 'ab_34' => $ab_34, 'ab_35' => $ab_35, 'ab_36' => $ab_36, 'ab_37' => $ab_37, 'ob_comentario' => $ob_comentario, 'ob_recomendacion' => $ob_recomendacion]);
 	}
 
+	$sql = "UPDATE `reporte` SET `title_reporte`='$title', `state_reporte`='$status', `cliente_reporte`='$cliente',`fecha_reporte`='$fecha',`equipo_reporte`='$equipo',`tecnico_reporte`='$tecnico',`data_reporte`='$data_reporte',`obs_reporte`='$obs_reporte' WHERE `id`='$id'";
+
 	$db = db();
-	$stmt = $db->prepare('UPDATE reporte SET title_reporte = ?, state_reporte = ?, cliente_reporte = ?, fecha_reporte = ?, equipo_reporte = ?, tecnico_reporte = ?, data_reporte = ?, obs_reporte = ?, updated_at = NOW() WHERE id = ?');
-	$stmt->bind_param('ssssssssi', $title, $status, $cliente, $fecha, $equipo, $tecnico, $data_reporte, $obs_reporte, $id);
-	$data = $stmt->execute();
-	$stmt->close();
+
+	$data = $db->query($sql);
 
    	mysqli_close($db);
    	return $data;
 }
 
 function report_aprobar($id){
-	$id = report_id($id);
 	$db = db();
-	$cliente = htmlentities(post_string('cliente', 255), ENT_QUOTES, 'UTF-8');
-	$stateQuery = $db->prepare('SELECT state_reporte FROM reporte WHERE id = ?');
-	$stateQuery->bind_param('i', $id);
-	$stateQuery->execute();
-	$current = $stateQuery->get_result()->fetch_assoc();
-	$stateQuery->close();
-	if ($current === null) {
-		throw new RuntimeException('Reporte no encontrado.');
-	}
-	$status = json_decode($current['state_reporte'], true) ?: [];
-	$status['status'] = 'close';
-	$status['aprobado'] = $cliente;
-	$status['fecha'] = date('Y-m-d');
-	$status['reporte'] = $status['reporte'] ?? 'elevador';
-	$status = json_encode($status, JSON_UNESCAPED_UNICODE);
-	$stmt = $db->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
-	$stmt->bind_param('si', $status, $id);
-	$data = $stmt->execute();
-	$stmt->close();
+
+	$cliente = $_POST['cliente'];
+
+	$status = json_encode(['status' => 'close', 'aprobado' => $cliente, 'fecha' => date("Y-m-d")]);
+
+	$sql = "UPDATE `reporte` SET `state_reporte`='$status' WHERE `id`='$id'";
+
+	$data = $db->query($sql);
 
 	mysqli_close($db);
    	return $status;
@@ -478,11 +464,10 @@ if ($type == 'delete'){
 }
 
 if ($type == 'insert'){
-	$id = report_id($_POST["id"] ?? null);
+	$id = $_POST["id"];
 	report_insert($id, $reporte);
 	$page = ($reporte == 'alimak') ? '_alimak' : '';
 	header("Location: view".$page.".php?id=".$id);
-	exit;
 }
 
 if ($type == 'aprobando'){

@@ -1,0 +1,206 @@
+@charset "utf-8";
+/* CSS Document */
+
+/***********
+1. Fonts
+***********/
+
+@import url('https://fonts.googleapis.com/css?family=Ubuntu:300,400,400i,500,600,700,800,900');
+
+/* GLOBAL STYLES
+-------------------------------------------------- */
+/* Padding below the footer and lighter body text */
+
+*
+{
+	margin: 0;
+	padding: 0;
+	-webkit-font-smoothing: antialiased;
+	-webkit-text-shadow: rgba(0,0,0,.01) 0 0 1px;
+	text-shadow: rgba(0,0,0,.01) 0 0 1px;
+}
+
+body
+{
+	font-family: 'Ubuntu';
+	font-size: 14px;
+	font-weight: 400;
+	background: #FFFFFF;
+	color: #000;
+}
+main{
+	height: 100%;
+	width: 100%;
+	max-width: 100%;
+	overflow: hidden;
+	padding: 60px 0;
+	background-image: url("../../images/bg-container-main.png");
+	background-repeat: no-repeat;
+	background-position: bottom;
+	background-size: cover;
+	text-align: center;
+	padding: 0 0 60px 0;
+}
+h2{
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 40px;
+	color: #000;
+}
+h4{
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 32px;
+	color: #000;
+}
+p{
+	font-size: 16px;
+	line-height: 22px;
+	font-weight: 400;
+ 	color: #000;
+ 	text-align: left;
+}
+input[type=submit]{
+	font-size: 16px;
+	line-height: 22px;
+	font-weight: 500;
+	color: #fff;
+	background-color: #000;
+	padding: 20px 30px;
+}
+.head{
+	display: flex;
+	margin: 20px;
+	justify-content: space-between;
+
+}
+input[type=button]{
+	padding: 10px 20px;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 20px;
+}
+input[type=text], input[type=date]{
+	font-size: 14px!important;
+	font-weight: 400;
+	line-height: 16px;
+	padding: 5px 10px!important;
+	height: 40px;
+}
+.text-left {
+    text-align: left !important;
+}
+.text-left p{
+	font-size: 12px;
+	margin-top: 15px;
+}
+form{
+	text-align: left;
+}
+.data-inicial input{
+	margin: 0 0 15px 0;
+}
+table{
+	margin-top: 20px;
+}
+table tr{
+	border-bottom: 1px solid #bbb;
+}
+.data-final{
+	width: 300px;
+	margin-top: 40px;
+}
+th{
+	align-content: center;
+}
+th .col-md-3, th .col-md-12, th .col-md-6{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+th .col-md-3 label{
+	margin-right: 15px;
+}
+th select{
+	width: 70px!important;
+	font-size: 12px!important;
+}
+th textarea{
+	font-size: 12px!important;
+}
+.text-left span, .general-q span{
+	width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    text-align: center;
+    border-radius: 20px;
+    padding: 5px;
+}
+.text-left .row{
+	margin-top: 5px;
+}
+.general-q span{
+	margin-left: 10px;
+}
+.general-q{
+	display: flex;
+	align-items: center;
+	margin-bottom: 20px;
+}
+.general-q select{
+	width: 70px!important;
+	font-size: 12px!important;
+	margin-left: 20px;
+}
+.general-q textarea{
+	font-size: 12px!important;
+}
+.head-edit{
+	display: flex;
+	margin: 30px 0;
+	justify-content: center;
+}
+.head-edit .status{
+    display: flex;
+    margin: 30px 0;
+    width: 100%;
+    align-items:center;
+    color: red;
+}
+.head-edit input[type=button]{
+	height: 40px;
+	margin-left: 20px ;
+	padding: 5px;
+	width: 250px;
+	background-color: #000;
+	color: #fff;
+}
+.red{
+	color: red;
+}
+.al-w-50{
+	width: 50%;
+}
+.table-al{
+	display: flex;
+	align-items: flex-start
+}
+@media (max-width:768px){
+	h2{
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 24px;
+	color: #000;
+	text-align: left;
+	}
+	.al-w-50{
+		width: 100%;
+	}
+	.table-al{
+		display: block;
+	}
+}
+
+/* RESPONSIVE CSS
+-------------------------------------------------- */

@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -42,9 +44,12 @@ private fun loadReports(baseUrl: String, token: String): List<ReportSummary> {
   topBar = {
    TopAppBar(
     title = {
-     Column {
+     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+      Image(painterResource(R.drawable.logo_internepro), "Internepro", modifier = Modifier.height(42.dp).width(130.dp))
+      Column {
       Text("Internepro S.A.", color = androidx.compose.ui.graphics.Color(0xFFC8102E))
       Text("Negociando con Profesionales", style = MaterialTheme.typography.labelSmall)
+      }
      }
     }
    )
@@ -52,14 +57,11 @@ private fun loadReports(baseUrl: String, token: String): List<ReportSummary> {
  ) { padding ->
   Column(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
    Text("Registro de mantenimiento", style = MaterialTheme.typography.headlineSmall)
-   Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-    Button(onClick = { }, modifier = Modifier.weight(1f)) { Text("Nuevo Elevador") }
-    OutlinedButton(onClick = { }, modifier = Modifier.weight(1f)) { Text("Nuevo ALIMAK") }
+   Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+    Button(enabled = !loading, onClick = { loading = true; message = "Cargando..."; Thread { try { reports = loadReports(BuildConfig.API_BASE_URL, BuildConfig.API_TOKEN); message = "${reports.size} reportes cargados." } catch (e: Exception) { message = e.message ?: "Error" } finally { loading = false } }.start() }, modifier = Modifier.weight(2f)) { Text("Conectar") }
+    OutlinedButton(onClick = { }, modifier = Modifier.weight(1f)) { Text("Nuevo Reporte") }
+    OutlinedButton(onClick = { }, modifier = Modifier.weight(1f)) { Text("Nuevo Reporte ALIMAK") }
    }
-   Button(enabled = !loading, onClick = {
-    loading = true; message = "Cargando..."
-    Thread { try { reports = loadReports(BuildConfig.API_BASE_URL, BuildConfig.API_TOKEN); message = "${reports.size} reportes cargados." } catch (error: Exception) { message = error.message ?: "No se pudo conectar." } finally { loading = false } }.start()
-   }, modifier = Modifier.fillMaxWidth()) { Text(if (loading) "Cargando..." else "Conectar y cargar reportes") }
    Text(message)
    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(reports) { report ->
     Card(colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFFFFBFB))) {
@@ -67,7 +69,7 @@ private fun loadReports(baseUrl: String, token: String): List<ReportSummary> {
       Text("#${report.id} · ${report.type.uppercase()}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
       Text(report.title, style = MaterialTheme.typography.titleMedium)
       AssistChip(onClick = { }, label = { Text(if (report.status == "close") "APROBADO" else "PENDIENTE") })
-      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { TextButton(onClick = { }) { Text("Ver") }; TextButton(onClick = { }) { Text("Editar") }; TextButton(onClick = { }) { Text("Compartir") } }
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { TextButton(onClick = { }) { Text("◉ Ver") }; TextButton(onClick = { }) { Text("✎ Editar") }; TextButton(onClick = { }) { Text("↗ Compartir") }; TextButton(onClick = { }) { Text("⌫") } }
      }
     }
    } }

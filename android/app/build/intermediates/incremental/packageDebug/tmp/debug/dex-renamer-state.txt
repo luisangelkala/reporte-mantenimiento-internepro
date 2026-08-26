@@ -1,0 +1,13 @@
+#Wed Aug 26 16:21:52 EST 2026
+base.0=D\:\\WORKS\\DEVELOPMENT\\reporte-mantenimiento-internepro\\android\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
+base.1=D\:\\WORKS\\DEVELOPMENT\\reporte-mantenimiento-internepro\\android\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
+base.2=D\:\\WORKS\\DEVELOPMENT\\reporte-mantenimiento-internepro\\android\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
+base.3=D\:\\WORKS\\DEVELOPMENT\\reporte-mantenimiento-internepro\\android\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
+path.0=classes.dex
+path.1=0/classes.dex
+path.2=4/classes.dex
+path.3=classes2.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
+renamed.2=classes3.dex
+renamed.3=classes4.dex

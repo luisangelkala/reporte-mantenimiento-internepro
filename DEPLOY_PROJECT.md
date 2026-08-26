@@ -66,7 +66,7 @@ Resultados esperados:
 
 ## Fase 2: API para web y APK
 
-**Estado: testing**
+**Estado: completed**
 
 Crear `/api/v1` con contrato OpenAPI y respuestas JSON consistentes. Endpoints propuestos:
 
@@ -80,9 +80,51 @@ La API validará tipo, estado permitido, campos de checklist y permisos. No expo
 
 ## Fase 3: APK Android
 
-**Estado: pending**
+**Estado: testing**
 
 La implementación propuesta es Kotlin + Jetpack Compose + Room + cliente HTTPS. Requiere que Fase 2 esté aprobada y validada. La APK se validará primero en una tablet de QA y se firmará/distribuirá conforme al proceso que QA apruebe.
+
+**Bloqueo de compilación:** el entorno de desarrollo actual no dispone de Java, Gradle ni Android SDK. QA debe habilitar un entorno de compilación Android aprobado antes de generar y verificar una APK.
+
+## Fase 3.1: diseño visual y experiencia táctil de la APK
+
+**Estado: testing**
+
+Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Android pensada para tablet y móvil, sin cambiar los contratos de API ni la funcionalidad de los reportes.
+
+### Referencia funcional aprobada por QA
+
+- Listado de reportes con botones `Nuevo Reporte` y `Nuevo Reporte ALIMAK`.
+- Acciones por reporte: compartir por WhatsApp, ver, editar y eliminar con confirmación.
+- Vista de reporte con datos generales, instrucciones, checklist, observaciones y estado de aprobación.
+- Edición de datos generales y selección por actividad de los estados `OK`, `X` y `R`.
+
+### Propuesta visual
+
+- Encabezado fijo con logo de Internepro, título de sección y conexión/estado de sincronización.
+- Paleta basada en la identidad mostrada: rojo Internepro como color principal, blanco/gris muy claro como superficie y negro/gris oscuro para texto.
+- Listado en tarjetas táctiles: ID, título, tipo, fecha, estado y menú de acciones; en tablet se mostrarán en dos columnas cuando el ancho lo permita.
+- Dos botones principales persistentes: `Nuevo Elevador` y `Nuevo ALIMAK`; en móvil se convierten en botones apilados o un botón flotante con selector.
+- Detalle en secciones plegables: datos generales, instrucciones, checklist y observaciones. Esto evita una página excesivamente larga.
+- Cada actividad usa selector segmentado grande `OK / X / R`, visible y cómodo para guantes/dedos, en lugar de menús pequeños.
+- Observaciones en campos amplios por sección y barra inferior fija con `Guardar` y `Aprobar` cuando corresponda.
+- Compartir mediante el selector nativo Android, que incluye WhatsApp si está instalado.
+- Eliminar exige un diálogo de confirmación claro con nombre/ID del reporte y acción destructiva destacada en rojo.
+
+### Adaptación responsive
+
+| Contexto | Diseño |
+| --- | --- |
+| Tablet horizontal | Panel de datos generales en dos columnas y checklist con varias actividades visibles. |
+| Tablet vertical | Una columna amplia, acciones superiores y barra inferior fija. |
+| Móvil | Una columna, acciones en menú y secciones plegables. |
+
+### Entregables y validación QA
+
+1. Prototipo navegable de listado, detalle, edición y confirmación de borrado.
+2. Integración del logo oficial proporcionado por QA, respetando sus proporciones.
+3. Prueba de contraste, tamaño táctil y orientación en la tablet física final.
+4. QA aprueba el diseño antes de sustituir las pantallas funcionales actuales.
 
 ## Criterio de ejecución
 

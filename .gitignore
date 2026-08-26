@@ -1,0 +1,3 @@
+# Configuración privada creada manualmente en cada ambiente.
+config/auth.php
+config/db.php

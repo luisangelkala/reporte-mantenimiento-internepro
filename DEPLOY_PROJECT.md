@@ -47,11 +47,11 @@ Alcance propuesto:
 2. Inventariar versiones reales de Apache, PHP, MariaDB y Android objetivo únicamente después de autorización.
 3. Definir respaldo comprobado, ventana de cambio, responsables, criterios de aceptación y plan de reversión.
 4. Crear casos de prueba QA que cubran ambos tipos de reporte y sus 16/38 secciones respectivamente.
-5. Centralizar la configuración de conexión en `config/database.php` sin modificar la configuración efectiva ni el comportamiento de la aplicación.
+5. Centralizar la configuración de conexión en `config/db.php`, excluido de Git, sin modificar el comportamiento de la aplicación.
 
 ## Fase 1: corrección segura del sistema existente
 
-**Estado: pending**
+**Estado: testing**
 
 Precondiciones: aprobación de QA de SEC-01 a SEC-05, DATA-01 a DATA-06, OPS-01/02, UX-01 y TECH-02; respaldo validado; ambiente de prueba disponible.
 

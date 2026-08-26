@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/database.php';
 /**
  * Password generator
  *
@@ -6,20 +7,6 @@
  *
  *@author LAGC
  */
-
-/**
- *  Connect Database
-*/
-function db(){
-   $servername = "localhost";
-   $database = "db_registros_elevadores";
-   $username = "us_registro";
-   $password = "q2H7S98oXeD5";
-
-   // Create connection
-   $conn = mysqli_connect($servername, $username, $password, $database);
-   return $conn;
-}
 
 function report_list(){
 	$sql = "SELECT * FROM reporte ORDER BY created_at DESC";

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/database.php';
 /**
 * Password generator
 *
@@ -14,20 +15,6 @@ header("Location: index.php");
 
 $ID = $_GET["id"];
 
-
-/**
-*  Connect Database
-*/
-function db(){
-$servername = "localhost";
-$database = "db_registros_elevadores";
-$username = "us_registro";
-$password = "q2H7S98oXeD5";
-
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $database);
-return $conn;
-}
 
 $sql = "SELECT * FROM reporte WHERE `id`='$ID'";
 

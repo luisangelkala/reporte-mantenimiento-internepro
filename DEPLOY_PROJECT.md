@@ -39,7 +39,7 @@ Revisión estática del código PHP, JavaScript, CSS y dump SQL entregados en el
 
 ## Fase 0: preparación obligatoria
 
-**Estado: pending**
+**Estado: testing**
 
 Alcance propuesto:
 
@@ -47,6 +47,7 @@ Alcance propuesto:
 2. Inventariar versiones reales de Apache, PHP, MariaDB y Android objetivo únicamente después de autorización.
 3. Definir respaldo comprobado, ventana de cambio, responsables, criterios de aceptación y plan de reversión.
 4. Crear casos de prueba QA que cubran ambos tipos de reporte y sus 16/38 secciones respectivamente.
+5. Centralizar la configuración de conexión en `config/database.php` sin modificar la configuración efectiva ni el comportamiento de la aplicación.
 
 ## Fase 1: corrección segura del sistema existente
 
@@ -86,4 +87,3 @@ La implementación propuesta es Kotlin + Jetpack Compose + Room + cliente HTTPS.
 ## Criterio de ejecución
 
 Ninguna fase puede pasar de `pending` a ejecución por inferencia. QA debe aprobar expresamente: identificador de fase, ambiente, alcance, ventana de cambio y criterios de aceptación. Tras cada actividad autorizada se actualizará este documento con la evidencia y el resultado de QA.
-

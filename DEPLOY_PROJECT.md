@@ -39,7 +39,7 @@ Revisión estática del código PHP, JavaScript, CSS y dump SQL entregados en el
 
 ## Fase 0: preparación obligatoria
 
-**Estado: testing**
+**Estado: completed**
 
 Alcance propuesto:
 
@@ -51,7 +51,7 @@ Alcance propuesto:
 
 ## Fase 1: corrección segura del sistema existente
 
-**Estado: testing**
+**Estado: completed**
 
 Precondiciones: aprobación de QA de SEC-01 a SEC-05, DATA-01 a DATA-06, OPS-01/02, UX-01 y TECH-02; respaldo validado; ambiente de prueba disponible.
 
@@ -66,7 +66,7 @@ Resultados esperados:
 
 ## Fase 2: API para web y APK
 
-**Estado: pending**
+**Estado: testing**
 
 Crear `/api/v1` con contrato OpenAPI y respuestas JSON consistentes. Endpoints propuestos:
 

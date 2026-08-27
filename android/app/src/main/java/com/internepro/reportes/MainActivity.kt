@@ -31,7 +31,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class ReportSummary(val id: Int, val title: String, val type: String, val status: String)
+data class ReportSummary(
+    val id: Int,
+    val title: String,
+    val type: String,
+    val status: String,
+    val coverPhoto: String? = null
+)
 
 @Composable
 fun App() {
@@ -63,6 +69,9 @@ fun App() {
                             loading = false
                         }
                     }.start()
+                },
+                onPhotoDeleted = { reportId, nextCover ->
+                    reports = reports.map { if (it.id == reportId) it.copy(coverPhoto = nextCover) else it }
                 }
             )
         } ?: viewer?.let { report ->
@@ -204,7 +213,16 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> 
                 modifier = Modifier.fillMaxWidth().height(92.dp).background(Color(0xFFE2E2E2)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Filled.Image, contentDescription = "Imagen pendiente del reporte", tint = Color(0xFF9A9A9A), modifier = Modifier.size(36.dp))
+                if (report.coverPhoto != null) {
+                    AuthenticatedPhoto(
+                        reportId = report.id,
+                        name = report.coverPhoto,
+                        contentDescription = "Portada del reporte #${report.id}",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(Icons.Filled.Image, contentDescription = "Imagen pendiente del reporte", tint = Color(0xFF9A9A9A), modifier = Modifier.size(36.dp))
+                }
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                     shape = RoundedCornerShape(10.dp),

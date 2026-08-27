@@ -2,6 +2,7 @@ package com.internepro.reportes
 
 import android.content.ContentResolver
 import android.net.Uri
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
@@ -21,7 +22,15 @@ data class ReportDetail(
     var approvedDate: String,
     val checklist: JSONObject,
     val observations: JSONObject
-)
+) {
+    fun photoNames(): List<String> = checklist.optJSONArray("_photos").photoNames()
+}
+
+private fun JSONArray?.photoNames(): List<String> {
+    if (this == null) return emptyList()
+    return List(length()) { index -> optJSONObject(index)?.optString("name").orEmpty() }
+        .filter { it.matches(Regex("^[a-f0-9]{32}\\.(jpg|png|webp)$")) }
+}
 
 object ReportApi {
     private fun endpoint(path: String): String = BuildConfig.API_BASE_URL.trimEnd('/') + "/" + path
@@ -63,7 +72,8 @@ object ReportApi {
                 id = item.getInt("id"),
                 title = item.optString("title_reporte"),
                 type = state.optString("reporte", "elevador"),
-                status = state.optString("status")
+                status = state.optString("status"),
+                coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos").photoNames().firstOrNull()
             )
         }
     }
@@ -123,6 +133,20 @@ object ReportApi {
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException("El servidor no confirmo la fotografia cargada.")
         }
+    }
+
+    fun photoBytes(reportId: Int, name: String): ByteArray {
+        val connection = connection("reports/$reportId/photos/$name", "GET")
+        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+        val bytes = stream?.use { it.readBytes() } ?: byteArrayOf()
+        if (connection.responseCode !in 200..299 || bytes.isEmpty()) {
+            throw IllegalStateException("No se pudo recuperar la fotografia.")
+        }
+        return bytes
+    }
+
+    fun deletePhoto(reportId: Int, name: String) {
+        jsonRequest("reports/$reportId/photos/$name", "DELETE")
     }
 
     private fun parseReport(item: JSONObject): ReportDetail {

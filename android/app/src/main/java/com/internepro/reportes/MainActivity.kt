@@ -202,7 +202,11 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onDelete: () -
                     Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
-                    IconButton(onClick = onDelete, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
+                    if (approved) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Un reporte aprobado no puede ser eliminado", tint = Color.Gray, modifier = Modifier.size(22.dp))
+                    } else {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
+                    }
                 }
             }
         }

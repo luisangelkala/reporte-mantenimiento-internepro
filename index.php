@@ -74,6 +74,10 @@
                                 /*location.reload();*/
                                 // Adding a row inside the tbody.
                                 $('#tableresults').html(data.content);
+                                $('#tableresults tr.red a.delete')
+                                    .removeAttr('data-filter')
+                                    .attr('title', 'Un reporte aprobado no puede ser borrado')
+                                    .css({ color: '#888', cursor: 'not-allowed', pointerEvents: 'none' });
                                 ;
                             }
                             else {

@@ -286,6 +286,16 @@ if ($method === 'POST' && ($segments[2] ?? '') === 'approve') {
 }
 
 if ($method === 'DELETE' && count($segments) === 2) {
+    $report = api_report($connection, $id);
+    if ($report === null) {
+        mysqli_close($connection);
+        api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $state = json_decode($report['state_reporte'], true) ?: [];
+    if (($state['status'] ?? '') === 'close') {
+        mysqli_close($connection);
+        api_response(409, ['error' => 'Un reporte aprobado no puede ser eliminado.']);
+    }
     $statement = $connection->prepare('DELETE FROM reporte WHERE id = ?');
     $statement->bind_param('i', $id);
     $statement->execute();

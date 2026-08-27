@@ -20,6 +20,7 @@ Revisión estática del código PHP, JavaScript, CSS y dump SQL entregados en el
 | DATA-05 | Media | La vista ALIMAK valida `a_11_a` antes de imprimir `a_11_c`. | El dato puede ocultarse ante estados parciales de datos. | Fase 1: validar la clave correcta (`a_11_c`). | pending |
 | DATA-06 | Media | `updated_at` no se actualiza y fechas se almacenan como `varchar`. | Auditoría y filtrado poco fiables. | Fase 1: migración aprobada a `DATE`/`DATETIME` y actualización automática. | pending |
 | DATA-07 | Media | El formulario se almacena como JSON no validado dentro de texto. | Difícil búsqueda, validación, auditoría y evolución de estructura. | Fase 2: definir esquema de datos/versionado JSON o normalización aprobada. | pending |
+| DATA-08 | Alta | Un reporte aprobado podía eliminarse desde web o API. | Se pierde un registro formalmente aprobado. | Fase 3.4: bloquear borrado en web, API y APK cuando `state_reporte.status` es `close`. | testing |
 | OPS-01 | Alta | No se identificó configuración separada por ambiente ni manejo de secretos. | Riesgo de publicar credenciales y dificultad de despliegue seguro. | Fase 1: archivo de configuración fuera del webroot, permisos mínimos y plantilla `.env.example` sin secretos. | pending |
 | OPS-02 | Media | No se identificaron pruebas automatizadas, CI ni guía de despliegue/reversión. | Las correcciones pueden romper producción. | Fase 1: pruebas de regresión, checklist QA y runbook de despliegue/reversión. | pending |
 | OPS-03 | Media | No hay control de versiones Git en el directorio analizado. | No hay trazabilidad local verificable de cambios. | Fase 0: confirmar ubicación del repositorio o inicializarlo solo con autorización de QA. | pending |
@@ -133,7 +134,7 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 | 3.1 | pending | Diseño responsive del listado: logo superior, conexión, botones de alta y una franja compacta con estado de carga a la izquierda y selector visual de tipo a la derecha. Dos tarjetas por fila en móvil/tablet, vertical/horizontal; cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila, sin acciones funcionales todavía. Validada visualmente por QA; queda `pending` por instrucción expresa de QA. |
 | 3.2 | testing | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API autenticada y guardado del reporte. Las fotografías se almacenan fuera de acceso web directo y se consultan únicamente mediante la API autenticada. |
 | 3.3 | pending | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. |
-| 3.4 | testing | Eliminación: confirmación explícita con ID/título, API, actualización automática del listado y manejo de errores. |
+| 3.4 | testing | Eliminación: confirmación explícita con ID/título, API, actualización automática del listado y manejo de errores. Los reportes aprobados no son eliminables en web, API ni APK. |
 
 ## Criterio de ejecución
 

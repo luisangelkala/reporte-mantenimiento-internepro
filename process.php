@@ -65,14 +65,31 @@ function report_create($reporte){
 }
 
 function report_delete($id){
-	$sql = "DELETE FROM `reporte` WHERE `id`='$id'";
-
-	$db = db();
-
-	$data = $db->query($sql);
-
-   	mysqli_close($db);
-   	return $data;
+    if (!ctype_digit((string)$id) || (int)$id < 1) {
+        return 'invalid';
+    }
+    $db = db();
+    $statement = $db->prepare('SELECT state_reporte FROM reporte WHERE id = ?');
+    $statement->bind_param('i', $id);
+    $statement->execute();
+    $report = $statement->get_result()->fetch_assoc();
+    $statement->close();
+    if (!$report) {
+        mysqli_close($db);
+        return 'not_found';
+    }
+    $state = json_decode($report['state_reporte'], true) ?: [];
+    if (($state['status'] ?? '') === 'close') {
+        mysqli_close($db);
+        return 'approved';
+    }
+    $statement = $db->prepare('DELETE FROM reporte WHERE id = ?');
+    $statement->bind_param('i', $id);
+    $statement->execute();
+    $deleted = $statement->affected_rows === 1;
+    $statement->close();
+    mysqli_close($db);
+    return $deleted ? 'deleted' : 'not_found';
 }
 
 function report_insert($id, $reporte){
@@ -445,8 +462,8 @@ if ($type == 'create'){
 
 if ($type == 'delete'){
 	$id = isset($_POST["id"]) ? $_POST["id"] : '';
-	report_delete($id);
-	$message = 'El Reporte ha sido borrado.';
+	$deleted = report_delete($id);
+	$message = ($deleted === 'deleted') ? 'El Reporte ha sido borrado.' : (($deleted === 'approved') ? 'Un reporte aprobado no puede ser borrado.' : 'No se pudo borrar el reporte.');
 	$content = '';
 }
 

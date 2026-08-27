@@ -136,6 +136,11 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 | 3.3 | completed | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. Validada por QA. |
 | 3.4 | completed | Eliminación: confirmación explícita con ID/título, API, actualización automática del listado y manejo de errores. Los reportes aprobados no son eliminables en web, API ni APK. Validada por QA. |
 | 3.5 | testing | Fotografías desde APK: abrir cámara del equipo, capturar una o varias imágenes y comprimir cada una a JPEG menor de 250 KB. Las nuevas fotos permanecen privadas/locales hasta Guardar; la carga autenticada, verificación, portada de card y miniaturas ocurren después. Permite eliminar fotos locales y fotos guardadas mediante API autenticada, con vista a pantalla completa y reintento ante error. |
+| 3.5.1 | testing | Cámara/galería, compresión local menor de 250 KB y cola local de fotografías. |
+| 3.5.2 | testing | Guardado real: subida, verificación autenticada y recuperación de fotografías al reabrir edición. |
+| 3.5.3 | testing | Portada: primera fotografía persistida en la card del listado. |
+| 3.5.4 | pending | Edición: miniaturas y eliminación local/remota de fotografías. |
+| 3.5.5 | pending | Visualización: miniaturas bajo Aprobar y visor de imagen a pantalla completa. |
 
 ## Criterio de ejecución
 

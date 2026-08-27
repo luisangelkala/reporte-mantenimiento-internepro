@@ -21,7 +21,7 @@
     <!-- Resources CSS & JS -->
     <link rel="stylesheet" type="text/css" href="assets/css/bootstrap5/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.6">
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.61">
     <script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
 
 </head>

@@ -47,7 +47,7 @@ mysqli_close($db);
     <!-- Resources CSS & JS -->
     <link rel="stylesheet" type="text/css" href="assets/css/bootstrap5/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.6">
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.61">
     <script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
 
 </head>
@@ -85,6 +85,7 @@ mysqli_close($db);
 
                         <?php
                         $data_reporte = ($row['data_reporte'] == null) ? null : json_decode($row['data_reporte'], true);
+                        $reportPhotos = report_photo_entries($row['data_reporte']);
 
                 //print_r($data_reporte);
 
@@ -111,6 +112,8 @@ mysqli_close($db);
                              Inspeccionado y en óptimas condiciones</strong></label>
                              <span><?php echo (!isset($data_reporte['a_0_c'])) ? '' : $data_reporte['a_0_c']; ?> </span>
                          </div>
+
+                         <?php echo report_photo_gallery_markup($ID, $reportPhotos); ?>
 
                          <div class="table-responsive table-al">
                             <table class="table al-w-50">
@@ -1163,7 +1166,6 @@ mysqli_close($db);
 
                         <?php
                         $status = json_decode($row['state_reporte'], true) ?: [];
-                        $reportPhotos = report_photo_entries($row['data_reporte']);
                     }
                 }
                 ?>
@@ -1190,7 +1192,6 @@ mysqli_close($db);
                 <?php } ?>
             </div>
         </div>
-        <?php echo report_photo_gallery_markup($ID, $reportPhotos); ?>
     </form>
 </main>
 <script>

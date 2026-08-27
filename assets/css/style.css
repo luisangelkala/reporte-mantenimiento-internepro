@@ -292,6 +292,7 @@ th textarea{
 	align-items: center;
 	display: flex;
 	flex-direction: column;
+	grid-column: 2;
 	height: 100%;
 	justify-content: center;
 	min-width: 0;
@@ -323,6 +324,12 @@ th textarea{
 .report-photo-lightbox__previous,
 .report-photo-lightbox__next {
 	font-size: 24px;
+}
+.report-photo-lightbox__previous {
+	grid-column: 1;
+}
+.report-photo-lightbox__next {
+	grid-column: 3;
 }
 .report-photo-lightbox__counter,
 .report-photo-lightbox__message {

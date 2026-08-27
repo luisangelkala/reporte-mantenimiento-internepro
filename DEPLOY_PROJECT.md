@@ -189,8 +189,9 @@ QA autorizó la implementación técnica de esta fase; su cierre requiere valida
 ### Implementación técnica realizada
 
 - El listado web incorpora un icono de galería únicamente en los reportes que contienen fotografías.
-- Las vistas `view.php` y `view_alimak.php` muestran miniaturas debajo del bloque de aprobación.
+- Las vistas `view.php` y `view_alimak.php` muestran las miniaturas inmediatamente después del bloque de instrucciones generales y antes del checklist del reporte.
 - Se añadió un visor responsive con ampliación, contador, navegación circular mediante botones, teclado y gesto horizontal táctil.
+- Se corrigió el visor para reportes con una sola fotografía: aunque las flechas estén ocultas, la imagen conserva la columna central y utiliza todo el espacio disponible en lugar de reducirse al tamaño de una miniatura.
 - Las fotografías se entregan mediante URLs firmadas y temporales generadas en el servidor. El controlador valida firma, vencimiento, reporte, nombre permitido, pertenencia de la fotografía y tipo MIME antes de leer el archivo privado.
 - La vista de un reporte aprobado incorpora `Volver a PENDIENTE`, confirmación explícita y protección CSRF de sesión.
 - El servidor acepta únicamente la transición `close` a `open`, conserva el tipo Elevador/ALIMAK y no modifica datos, checklist, observaciones ni fotografías.

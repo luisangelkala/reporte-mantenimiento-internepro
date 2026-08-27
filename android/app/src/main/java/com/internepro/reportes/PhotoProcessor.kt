@@ -9,7 +9,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 object PhotoProcessor {
-    private const val maxBytes = 950 * 1024L
+    private const val maxBytes = 240 * 1024L
 
     fun createCameraUri(context: Context): Uri {
         val directory = File(context.cacheDir, "camera").apply { mkdirs() }
@@ -20,7 +20,7 @@ object PhotoProcessor {
     fun compress(context: Context, source: Uri): Uri {
         val original = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
             ?: throw IllegalStateException("No se pudo leer la fotografia.")
-        var bitmap = scale(original, 1600)
+        var bitmap = scale(original, 1280)
         val directory = File(context.cacheDir, "uploads").apply { mkdirs() }
         val output = File.createTempFile("upload_", ".jpg", directory)
         var quality = 85
@@ -32,7 +32,7 @@ object PhotoProcessor {
                 quality = 85
             }
         } while (bitmap.width > 320)
-        if (output.length() > maxBytes) throw IllegalStateException("No fue posible optimizar la fotografia a menos de 1 MB.")
+        if (output.length() > maxBytes) throw IllegalStateException("No fue posible optimizar la fotografia a menos de 250 KB.")
         return FileProvider.getUriForFile(context, "${context.packageName}.files", output)
     }
 

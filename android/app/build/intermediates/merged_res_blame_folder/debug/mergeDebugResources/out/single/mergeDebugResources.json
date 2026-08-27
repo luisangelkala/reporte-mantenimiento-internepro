@@ -1,6 +1,10 @@
 [
     {
-        "merged": "com.internepro.reportes.app-debug-46:/drawable_logo_internepro.png.flat",
-        "source": "com.internepro.reportes.app-main-48:/drawable/logo_internepro.png"
+        "merged": "com.internepro.reportes.app-debug-46:/xml_file_paths.xml.flat",
+        "source": "com.internepro.reportes.app-main-48:/xml/file_paths.xml"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\drawable_logo_internepro.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\drawable\\logo_internepro.png"
     }
 ]

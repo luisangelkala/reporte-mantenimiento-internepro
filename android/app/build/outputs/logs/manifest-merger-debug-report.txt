@@ -1,9 +1,20 @@
 -- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:177-451
+	android:grantUriPermissions
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:307-341
+	android:authorities
+		INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:237-281
+	android:exported
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:282-306
+	android:name
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:187-236
 manifest
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-417
-INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-417
-INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-417
-INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-417
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-691
+INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-691
+INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-691
+INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:1-691
 MERGED from [androidx.compose.material3:material3-android:1.3.1] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\0053ae5fe55f0abbe5c431c5751ad155\workspace\transformed\jetified-material3-release\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.compose.material:material-android:1.7.6] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\a5df8f5debdc8a677807a37b4489a2c2\workspace\transformed\jetified-material-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.animation:animation-core-android:1.7.6] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\ce617d63930b40cf6aab8d4a449236a0\workspace\transformed\jetified-animation-core-release\AndroidManifest.xml:2:1-7:12
@@ -63,8 +74,8 @@ ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src
 	android:name
 		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:87-129
 application
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:131-406
-INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:131-406
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:131-680
+INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:131-680
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\c74ddf3edc14e27afd8acf8a154e40df\workspace\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\c74ddf3edc14e27afd8acf8a154e40df\workspace\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\LuisKala\.gradle\caches\9.3.0\transforms\5a926ea31049782dca70a260bc44e9c8\workspace\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
@@ -86,21 +97,27 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Lu
 	android:theme
 		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:144-176
 activity#com.internepro.reportes.MainActivity
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:177-392
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:451-666
 	android:exported
-		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:216-239
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:490-513
 	android:name
-		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:187-215
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:461-489
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:240-381
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:514-655
 action#android.intent.action.MAIN
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:255-306
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:529-580
 	android:name
-		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:263-304
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:537-578
 category#android.intent.category.LAUNCHER
-ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:306-365
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:580-639
 	android:name
-		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:316-363
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:590-637
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:342-440
+	android:resource
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:404-438
+	android:name
+		ADDED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml:1:353-403
 uses-sdk
 INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\src\main\AndroidManifest.xml

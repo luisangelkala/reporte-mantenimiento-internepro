@@ -205,6 +205,47 @@ if ($method === 'POST' && count($segments) === 1) {
 
 $id = api_id($segments[1] ?? '');
 
+if ($method === 'DELETE' && count($segments) === 4 && ($segments[2] ?? '') === 'photos') {
+    $name = $segments[3] ?? '';
+    if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', $name)) {
+        mysqli_close($connection);
+        api_response(404, ['error' => 'Fotografia no encontrada.']);
+    }
+    $report = api_report($connection, $id);
+    if ($report === null) {
+        mysqli_close($connection);
+        api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $data = json_decode($report['data_reporte'] ?? '', true);
+    $data = is_array($data) ? $data : [];
+    $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
+    $found = false;
+    $photos = array_values(array_filter($photos, function ($photo) use ($name, &$found) {
+        if (is_array($photo) && ($photo['name'] ?? '') === $name) {
+            $found = true;
+            return false;
+        }
+        return true;
+    }));
+    if (!$found) {
+        mysqli_close($connection);
+        api_response(404, ['error' => 'Fotografia no pertenece al reporte.']);
+    }
+    $path = api_photo_directory($id) . '/' . $name;
+    if (is_file($path) && !unlink($path)) {
+        mysqli_close($connection);
+        api_response(500, ['error' => 'No se pudo eliminar la fotografia.']);
+    }
+    $data['_photos'] = $photos;
+    $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
+    $statement = $connection->prepare('UPDATE reporte SET data_reporte = ?, updated_at = NOW() WHERE id = ?');
+    $statement->bind_param('si', $encoded, $id);
+    $statement->execute();
+    $statement->close();
+    mysqli_close($connection);
+    api_response(200, ['message' => 'Fotografia eliminada.']);
+}
+
 if ($method === 'GET' && count($segments) === 4 && ($segments[2] ?? '') === 'photos') {
     $name = $segments[3] ?? '';
     if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', $name)) {

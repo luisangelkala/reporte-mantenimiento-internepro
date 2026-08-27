@@ -22,6 +22,16 @@
         android:extractNativeLibs="false"
         android:testOnly="true"
         android:theme="@style/Theme.App" >
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.internepro.reportes.files"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name="com.internepro.reportes.MainActivity"
             android:exported="true" >

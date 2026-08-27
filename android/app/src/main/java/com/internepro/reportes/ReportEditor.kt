@@ -38,30 +38,23 @@ fun ReportEditor(
     val photos = remember { mutableStateListOf<PhotoJob>() }
     var photoVersion by remember { mutableIntStateOf(0) }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
-    fun uploadPhoto(source: Uri, existingIndex: Int? = null) {
+    fun preparePhoto(source: Uri, existingIndex: Int? = null) {
         val index = existingIndex ?: photos.size
         if (existingIndex == null) photos.add(PhotoJob(source, status = "Comprimiendo")) else photos[index] = PhotoJob(source, status = "Comprimiendo")
         Thread {
             try {
                 val compressed = PhotoProcessor.compress(context, source)
-                photos[index] = PhotoJob(source, compressed, "Subiendo")
-                photoVersion++
-                val path = ReportApi.uploadPhoto(context.contentResolver, report.id, compressed)
-                ReportApi.verifyPhoto(path)
-                val storedPhotos = report.checklist.optJSONArray("_photos") ?: org.json.JSONArray()
-                storedPhotos.put(org.json.JSONObject().put("name", path.substringAfterLast('/')))
-                report.checklist.put("_photos", storedPhotos)
-                photos[index] = PhotoJob(source, compressed, "Verificada")
+                photos[index] = PhotoJob(source, compressed, "Lista para guardar")
             } catch (error: Exception) {
                 photos[index] = PhotoJob(source, status = "Error", error = error.message ?: "Error al subir")
             } finally { photoVersion++ }
         }.start()
     }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
-        selected.forEach(::uploadPhoto)
+        selected.forEach(::preparePhoto)
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
-        if (captured) cameraUri?.let(::uploadPhoto)
+        if (captured) cameraUri?.let(::preparePhoto)
     }
 
     Scaffold(
@@ -133,10 +126,10 @@ fun ReportEditor(
                 ) {
                     photos.forEachIndexed { index, photo ->
                         Column {
-                            photo.compressed?.let(::PhotoPreview)
+                            photo.compressed?.let { uri -> PhotoPreview(uri) }
                             Text(photo.status, style = MaterialTheme.typography.labelSmall)
                             if (photo.status == "Error") Text(photo.error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                            if (photo.status == "Error") TextButton(onClick = { uploadPhoto(photo.source, index) }) { Text("Reintentar") }
+                            if (photo.status == "Error") TextButton(onClick = { preparePhoto(photo.source, index) }) { Text("Reintentar") }
                         }
                     }
                 }

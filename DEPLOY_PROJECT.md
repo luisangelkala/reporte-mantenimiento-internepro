@@ -130,8 +130,8 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 
 | Microfase | Estado | Alcance |
 | --- | --- | --- |
-| 3.1 | testing | Diseño responsive del listado: logo superior, conexión, botones de alta, filtro visual por tipo y dos tarjetas por fila en móvil/tablet, vertical/horizontal. Cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila; sin acciones funcionales todavía. |
-| 3.2 | pending | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API y guardado del reporte. |
+| 3.1 | pending | Diseño responsive del listado: logo superior, conexión, botones de alta y una franja compacta con estado de carga a la izquierda y selector visual de tipo a la derecha. Dos tarjetas por fila en móvil/tablet, vertical/horizontal; cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila, sin acciones funcionales todavía. Validada visualmente por QA; queda `pending` por instrucción expresa de QA. |
+| 3.2 | testing | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API autenticada y guardado del reporte. Las fotografías se almacenan fuera de acceso web directo y se consultan únicamente mediante la API autenticada. |
 | 3.3 | pending | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. |
 | 3.4 | pending | Eliminación: confirmación, API, actualización del listado y manejo de errores. |
 

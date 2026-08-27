@@ -13,7 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Image as ImageIcon
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
@@ -23,9 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,50 +31,28 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class ReportSummary(
-    val id: Int,
-    val title: String,
-    val type: String,
-    val status: String
-)
-
-private fun loadReports(baseUrl: String, token: String): List<ReportSummary> {
-    val connection = (URL(baseUrl.trimEnd('/') + "/reports").openConnection() as HttpURLConnection).apply {
-        requestMethod = "GET"
-        setRequestProperty("Authorization", "Bearer $token")
-        connectTimeout = 15000
-        readTimeout = 15000
-    }
-    if (connection.responseCode != 200) {
-        throw IllegalStateException("API respondio HTTP ${connection.responseCode}")
-    }
-    val json = JSONObject(connection.inputStream.bufferedReader().use { it.readText() }).getJSONArray("data")
-    return List(json.length()) { index ->
-        val item = json.getJSONObject(index)
-        val state = item.getJSONObject("state_reporte")
-        ReportSummary(
-            id = item.getInt("id"),
-            title = item.optString("title_reporte"),
-            type = state.optString("reporte", "elevador"),
-            status = state.optString("status")
-        )
-    }
-}
+data class ReportSummary(val id: Int, val title: String, val type: String, val status: String)
 
 @Composable
 fun App() {
     var reports by remember { mutableStateOf(emptyList<ReportSummary>()) }
     var message by remember { mutableStateOf("Listo para cargar reportes.") }
     var loading by remember { mutableStateOf(false) }
+    var editor by remember { mutableStateOf<ReportDetail?>(null) }
+    var filterExpanded by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf("Todos") }
 
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Color(0xFFC8102E),
-            secondary = Color(0xFF8A0E20),
-            surface = Color(0xFFF8F8F8)
-        )
-    ) {
-        Scaffold { padding ->
+    MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFFC8102E), secondary = Color(0xFF8A0E20))) {
+        editor?.let { report ->
+            ReportEditor(
+                report = report,
+                onBack = { editor = null },
+                onSaved = { result ->
+                    editor = null
+                    message = result
+                }
+            )
+        } ?: Scaffold { padding ->
             Column(
                 modifier = Modifier.padding(padding).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -87,8 +62,6 @@ fun App() {
                     contentDescription = "Internepro",
                     modifier = Modifier.height(55.dp).width(180.dp).align(Alignment.CenterHorizontally)
                 )
-                Text("Registro de mantenimiento", style = MaterialTheme.typography.headlineSmall)
-
                 Button(
                     enabled = !loading,
                     onClick = {
@@ -96,42 +69,42 @@ fun App() {
                         message = "Cargando..."
                         Thread {
                             try {
-                                reports = loadReports(BuildConfig.API_BASE_URL, BuildConfig.API_TOKEN)
+                                reports = ReportApi.loadReports()
                                 message = "${reports.size} reportes cargados."
-                            } catch (e: Exception) {
-                                message = e.message ?: "Error"
+                            } catch (error: Exception) {
+                                message = error.message ?: "No se pudieron cargar los reportes."
                             } finally {
                                 loading = false
                             }
                         }.start()
                     },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Conectar y cargar reportes")
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedButton(onClick = { }, modifier = Modifier.weight(1f)) {
-                        Text("Nuevo Reporte", style = MaterialTheme.typography.labelSmall, maxLines = 2)
+                ) { Text("Conectar y cargar reportes") }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NewReportButton("Nuevo Reporte", "elevador", Modifier.weight(1f)) { type ->
+                        loading = true
+                        Thread {
+                            try { editor = ReportApi.createReport(type) } catch (error: Exception) { message = error.message ?: "No se pudo crear el reporte." } finally { loading = false }
+                        }.start()
                     }
-                    OutlinedButton(onClick = { }, modifier = Modifier.weight(1f)) {
-                        Text("Nuevo Reporte ALIMAK", style = MaterialTheme.typography.labelSmall, maxLines = 2)
+                    NewReportButton("Nuevo Reporte ALIMAK", "alimak", Modifier.weight(1f)) { type ->
+                        loading = true
+                        Thread {
+                            try { editor = ReportApi.createReport(type) } catch (error: Exception) { message = error.message ?: "No se pudo crear el reporte." } finally { loading = false }
+                        }.start()
                     }
                 }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    FilterChip(selected = true, onClick = { }, label = { Text("Todos") })
-                    FilterChip(selected = false, onClick = { }, label = { Text("Elevador") })
-                    FilterChip(selected = false, onClick = { }, label = { Text("ALIMAK") })
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    Box {
+                        OutlinedButton(onClick = { filterExpanded = true }) { Text("Filtro: $selectedFilter", style = MaterialTheme.typography.bodySmall) }
+                        DropdownMenu(expanded = filterExpanded, onDismissRequest = { filterExpanded = false }) {
+                            listOf("Todos", "Elevador", "ALIMAK").forEach { option ->
+                                DropdownMenuItem(text = { Text(option) }, onClick = { selectedFilter = option; filterExpanded = false })
+                            }
+                        }
+                    }
                 }
-                Text(message, style = MaterialTheme.typography.bodySmall)
-
                 Box(modifier = Modifier.weight(1f)) {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
@@ -140,7 +113,12 @@ fun App() {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(reports) { report ->
-                            ReportCard(report)
+                            ReportCard(report) {
+                                loading = true
+                                Thread {
+                                    try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                }.start()
+                            }
                         }
                     }
                 }
@@ -150,77 +128,39 @@ fun App() {
 }
 
 @Composable
-private fun ReportCard(report: ReportSummary) {
-    val approved = report.status == "close"
-    val statusColor = if (approved) Color(0xFF5E7D3A) else Color(0xFF8A0E20)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(92.dp)
-                    .background(Color(0xFFE2E2E2)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = ImageIcon,
-                    contentDescription = "Imagen pendiente del reporte",
-                    tint = Color(0xFF9A9A9A),
-                    modifier = Modifier.size(36.dp)
-                )
-                Surface(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = statusColor,
-                    contentColor = Color.White
-                ) {
-                    Text(
-                        text = if (approved) "APROBADO" else "PENDIENTE",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Text(
-                    "#${report.id} - ${report.type.uppercase()}",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge
-                )
-                Text(
-                    report.title.ifBlank { "Añadir título del reporte..." },
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ReportActionIcon(Icons.Filled.Share, "Compartir")
-                    ReportActionIcon(Icons.Filled.Visibility, "Ver")
-                    ReportActionIcon(Icons.Filled.Edit, "Editar")
-                    ReportActionIcon(Icons.Filled.Delete, "Eliminar")
-                }
-            }
-        }
+private fun NewReportButton(label: String, type: String, modifier: Modifier, onCreate: (String) -> Unit) {
+    OutlinedButton(onClick = { onCreate(type) }, modifier = modifier) {
+        Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 2)
     }
 }
 
 @Composable
-private fun ReportActionIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, description: String) {
-    Icon(
-        imageVector = icon,
-        contentDescription = description,
-        tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(22.dp)
-    )
+private fun ReportCard(report: ReportSummary, onEdit: () -> Unit) {
+    val approved = report.status == "close"
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))) {
+        Column {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(92.dp).background(Color(0xFFE2E2E2)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Image, contentDescription = "Imagen pendiente del reporte", tint = Color(0xFF9A9A9A), modifier = Modifier.size(36.dp))
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (approved) Color(0xFF5E7D3A) else Color(0xFF8A0E20),
+                    contentColor = Color.White
+                ) { Text(if (approved) "APROBADO" else "PENDIENTE", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
+            }
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("#${report.id} - ${report.type.uppercase()}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                Text(report.title.ifBlank { "Añadir título del reporte..." }, style = MaterialTheme.typography.titleMedium, maxLines = 2)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
+                    Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                }
+            }
+        }
+    }
 }

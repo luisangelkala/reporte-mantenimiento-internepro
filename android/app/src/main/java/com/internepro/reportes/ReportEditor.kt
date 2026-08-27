@@ -78,6 +78,16 @@ fun ReportEditor(
                         report.technician = technician
                         Thread {
                             try {
+                                photos.filter { it.status == "Lista para guardar" && it.compressed != null }.forEach { photo ->
+                                    val index = photos.indexOf(photo)
+                                    photos[index] = photo.copy(status = "Subiendo")
+                                    val path = ReportApi.uploadPhoto(context.contentResolver, report.id, photo.compressed!!)
+                                    ReportApi.verifyPhoto(path)
+                                    val stored = report.checklist.optJSONArray("_photos") ?: org.json.JSONArray()
+                                    stored.put(org.json.JSONObject().put("name", path.substringAfterLast('/')))
+                                    report.checklist.put("_photos", stored)
+                                    photos[index] = photo.copy(status = "Verificada")
+                                }
                                 ReportApi.saveReport(report)
                                 onSaved("Reporte guardado.")
                             } catch (error: Exception) {

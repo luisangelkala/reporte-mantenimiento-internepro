@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.internepro.reportes.app-mergeDebugResources-43:/values-et/values-et.xml",
+            "outputFile": "com.internepro.reportes.app-mergeDebugResources-44:/values-et/values-et.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\1ef2a050c7d1d40e618ef994620fd22a\\workspace\\transformed\\material3-release\\res\\values-et\\values-et.xml",
+                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\0053ae5fe55f0abbe5c431c5751ad155\\workspace\\transformed\\jetified-material3-release\\res\\values-et\\values-et.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\b30b30983b426dd62b454a1b4f1fee18\\workspace\\transformed\\ui-release\\res\\values-et\\values-et.xml",
+                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\bfabcfa818dc50b40b50704c615f90ab\\workspace\\transformed\\jetified-ui-release\\res\\values-et\\values-et.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -35,23 +35,6 @@
                         "startOffsets": "834,927,1007,1103,1198,1280,1358,7695,7786,7870,7952,8037,8109,8184,8259,8432,8509,8580",
                         "endColumns": "92,79,95,94,81,77,90,90,83,81,84,71,74,74,71,76,70,121",
                         "endOffsets": "922,1002,1098,1193,1275,1353,1444,7781,7865,7947,8032,8104,8179,8254,8326,8504,8575,8697"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\60882482ba6bbc09ab6eb4cb92bd44ba\\workspace\\transformed\\foundation-release\\res\\values-et\\values-et.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,145",
-                        "endColumns": "89,88",
-                        "endOffsets": "140,229"
-                    },
-                    "to": {
-                        "startLines": "85,86",
-                        "startColumns": "4,4",
-                        "startOffsets": "8702,8792",
-                        "endColumns": "89,88",
-                        "endOffsets": "8787,8876"
                     }
                 },
                 {
@@ -69,6 +52,23 @@
                         "startOffsets": "105,200,302,400,503,609,714,8331",
                         "endColumns": "94,101,97,102,105,104,119,100",
                         "endOffsets": "195,297,395,498,604,709,829,8427"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\dd90f4c8c7fae7a2664cf20677ca7c56\\workspace\\transformed\\jetified-foundation-release\\res\\values-et\\values-et.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,145",
+                        "endColumns": "89,88",
+                        "endOffsets": "140,229"
+                    },
+                    "to": {
+                        "startLines": "85,86",
+                        "startColumns": "4,4",
+                        "startOffsets": "8702,8792",
+                        "endColumns": "89,88",
+                        "endOffsets": "8787,8876"
                     }
                 }
             ]

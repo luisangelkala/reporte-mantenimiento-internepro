@@ -24,8 +24,7 @@
         android:theme="@style/Theme.App" >
         <activity
             android:name="com.internepro.reportes.MainActivity"
-            android:exported="true"
-            android:screenOrientation="portrait" >
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

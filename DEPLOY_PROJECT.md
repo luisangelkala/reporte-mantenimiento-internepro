@@ -126,6 +126,15 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 3. Prueba de contraste, tamaño táctil y orientación en la tablet física final.
 4. QA aprueba el diseño antes de sustituir las pantallas funcionales actuales.
 
+## Microfases de la experiencia Android
+
+| Microfase | Estado | Alcance |
+| --- | --- | --- |
+| 3.1 | testing | Diseño responsive del listado: logo superior, conexión, botones de alta, filtro visual por tipo y dos tarjetas por fila en móvil/tablet, vertical/horizontal. Cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila; sin acciones funcionales todavía. |
+| 3.2 | pending | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API y guardado del reporte. |
+| 3.3 | pending | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. |
+| 3.4 | pending | Eliminación: confirmación, API, actualización del listado y manejo de errores. |
+
 ## Criterio de ejecución
 
 Ninguna fase puede pasar de `pending` a ejecución por inferencia. QA debe aprobar expresamente: identificador de fase, ambiente, alcance, ventana de cambio y criterios de aceptación. Tras cada actividad autorizada se actualizará este documento con la evidencia y el resultado de QA.

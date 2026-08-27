@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.internepro.reportes.app-mergeDebugResources-43:/values-v30/values-v30.xml",
+            "outputFile": "com.internepro.reportes.app-mergeDebugResources-44:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\1ef2a050c7d1d40e618ef994620fd22a\\workspace\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "C:\\Users\\LuisKala\\.gradle\\caches\\9.3.0\\transforms\\0053ae5fe55f0abbe5c431c5751ad155\\workspace\\transformed\\jetified-material3-release\\res\\values-v30\\values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

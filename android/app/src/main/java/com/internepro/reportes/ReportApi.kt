@@ -84,6 +84,10 @@ object ReportApi {
         return parseReport(jsonRequest("reports/${report.id}", "PUT", payload).getJSONObject("data"))
     }
 
+    fun deleteReport(id: Int) {
+        jsonRequest("reports/$id", "DELETE")
+    }
+
     fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri) {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {

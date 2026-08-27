@@ -39,6 +39,7 @@ fun App() {
     var message by remember { mutableStateOf("Listo para cargar reportes.") }
     var loading by remember { mutableStateOf(false) }
     var editor by remember { mutableStateOf<ReportDetail?>(null) }
+    var deleteCandidate by remember { mutableStateOf<ReportSummary?>(null) }
     var filterExpanded by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Todos") }
 
@@ -49,7 +50,18 @@ fun App() {
                 onBack = { editor = null },
                 onSaved = { result ->
                     editor = null
-                    message = result
+                    loading = true
+                    message = "Actualizando listado..."
+                    Thread {
+                        try {
+                            reports = ReportApi.loadReports()
+                            message = "$result ${reports.size} reportes cargados."
+                        } catch (error: Exception) {
+                            message = "$result No se pudo actualizar el listado: ${error.message ?: "error"}"
+                        } finally {
+                            loading = false
+                        }
+                    }.start()
                 }
             )
         } ?: Scaffold { padding ->
@@ -113,16 +125,48 @@ fun App() {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(reports) { report ->
-                            ReportCard(report) {
-                                loading = true
-                                Thread {
-                                    try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
-                                }.start()
-                            }
+                            ReportCard(
+                                report = report,
+                                onEdit = {
+                                    loading = true
+                                    Thread {
+                                        try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                    }.start()
+                                },
+                                onDelete = { deleteCandidate = report }
+                            )
                         }
                     }
                 }
             }
+        }
+        deleteCandidate?.let { report ->
+            AlertDialog(
+                onDismissRequest = { deleteCandidate = null },
+                title = { Text("Eliminar reporte #${report.id}") },
+                text = { Text("Se eliminara permanentemente \"${report.title.ifBlank { "Sin titulo" }}\". Esta accion no se puede deshacer.") },
+                dismissButton = { TextButton(onClick = { deleteCandidate = null }) { Text("Cancelar") } },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            deleteCandidate = null
+                            loading = true
+                            message = "Eliminando reporte..."
+                            Thread {
+                                try {
+                                    ReportApi.deleteReport(report.id)
+                                    reports = ReportApi.loadReports()
+                                    message = "Reporte eliminado. ${reports.size} reportes cargados."
+                                } catch (error: Exception) {
+                                    message = error.message ?: "No se pudo eliminar el reporte."
+                                } finally {
+                                    loading = false
+                                }
+                            }.start()
+                        }
+                    ) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
+                }
+            )
         }
     }
 }
@@ -135,7 +179,7 @@ private fun NewReportButton(label: String, type: String, modifier: Modifier, onC
 }
 
 @Composable
-private fun ReportCard(report: ReportSummary, onEdit: () -> Unit) {
+private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onDelete: () -> Unit) {
     val approved = report.status == "close"
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))) {
         Column {
@@ -158,7 +202,7 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit) {
                     Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                     IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
-                    Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    IconButton(onClick = onDelete, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
                 }
             }
         }

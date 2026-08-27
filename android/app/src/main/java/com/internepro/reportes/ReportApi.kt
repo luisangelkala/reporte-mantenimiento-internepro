@@ -16,6 +16,9 @@ data class ReportDetail(
     var date: String,
     var equipment: String,
     var technician: String,
+    var status: String,
+    var approvedBy: String,
+    var approvedDate: String,
     val checklist: JSONObject,
     val observations: JSONObject
 )
@@ -88,6 +91,9 @@ object ReportApi {
         jsonRequest("reports/$id", "DELETE")
     }
 
+    fun approveReport(id: Int, approvedBy: String): ReportDetail =
+        parseReport(jsonRequest("reports/$id/approve", "POST", JSONObject().put("approved_by", approvedBy)).getJSONObject("data"))
+
     fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri) {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {
@@ -118,6 +124,9 @@ object ReportApi {
             date = item.optString("fecha_reporte"),
             equipment = item.optString("equipo_reporte"),
             technician = item.optString("tecnico_reporte"),
+            status = state.optString("status"),
+            approvedBy = state.optString("aprobado"),
+            approvedDate = state.optString("fecha"),
             checklist = item.optJSONObject("data_reporte") ?: JSONObject(),
             observations = item.optJSONObject("obs_reporte") ?: JSONObject()
         )

@@ -39,6 +39,7 @@ fun App() {
     var message by remember { mutableStateOf("Listo para cargar reportes.") }
     var loading by remember { mutableStateOf(false) }
     var editor by remember { mutableStateOf<ReportDetail?>(null) }
+    var viewer by remember { mutableStateOf<ReportDetail?>(null) }
     var deleteCandidate by remember { mutableStateOf<ReportSummary?>(null) }
     var filterExpanded by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Todos") }
@@ -62,6 +63,16 @@ fun App() {
                             loading = false
                         }
                     }.start()
+                }
+            )
+        } ?: viewer?.let { report ->
+            ReportViewer(
+                report = report,
+                onBack = { viewer = null },
+                onApproved = { approved ->
+                    viewer = approved
+                    message = "Reporte aprobado por ${approved.approvedBy}."
+                    reports = reports.map { if (it.id == approved.id) it.copy(status = "close") else it }
                 }
             )
         } ?: Scaffold { padding ->
@@ -133,6 +144,12 @@ fun App() {
                                         try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
                                     }.start()
                                 },
+                                onView = {
+                                    loading = true
+                                    Thread {
+                                        try { viewer = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                    }.start()
+                                },
                                 onDelete = { deleteCandidate = report }
                             )
                         }
@@ -179,7 +196,7 @@ private fun NewReportButton(label: String, type: String, modifier: Modifier, onC
 }
 
 @Composable
-private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> Unit, onDelete: () -> Unit) {
     val approved = report.status == "close"
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))) {
         Column {
@@ -200,7 +217,7 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onDelete: () -
                 Text(report.title.ifBlank { "Añadir título del reporte..." }, style = MaterialTheme.typography.titleMedium, maxLines = 2)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
-                    Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    IconButton(onClick = onView, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
                     if (approved) {
                         Icon(Icons.Filled.Delete, contentDescription = "Un reporte aprobado no puede ser eliminado", tint = Color.Gray, modifier = Modifier.size(22.dp))

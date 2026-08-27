@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/includes/report_photos.php';
+session_start();
 /**
  * Password generator
  *
@@ -24,20 +26,22 @@ function report_list(){
 
         $state = json_decode($row['state_reporte'], true);//json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $reporte])
 
-        $status = ($state['status'] == 'close') ?
+        $status = (($state['status'] ?? '') == 'close') ?
         '<a href="#" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-check-square-fill" viewBox="0 0 16 16"><path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm10.03 4.97a.75.75 0 0 1 .011 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.75.75 0 0 1 1.08-.022z"/></svg></a>'
         :
         ''
         ;
-        $red = ($state['status'] == 'close') ? 'red' : '';
+        $red = (($state['status'] ?? '') == 'close') ? 'red' : '';
 
-        $alimak = ($state['reporte'] == 'alimak') ? '_alimak' : '';
+        $alimak = (($state['reporte'] ?? '') == 'alimak') ? '_alimak' : '';
+        $photoButton = report_photo_list_button((int) $row['id'], report_photo_entries($row['data_reporte']));
 
    		$table .= '<tr class="'. $red .'">
                    <th scope="row">'. $row['id'] .'</th>
                    <td class="text-left">'.$status.' '. $row['title_reporte'] .'</td>
                    <td>
                    <div>
+                   '.$photoButton.'
                    <a href="https://api.whatsapp.com/send?text=https://reportes.internepro.com.pa/edit'.$alimak.'.php?id='.$row['id'].'" data-action="share/whatsapp/share" class="url" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16"> <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg></a>
                    <a href="view'.$alimak.'.php?id='. $row['id'] .'" class="view" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"> <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></a>
                    <a href="edit'.$alimak.'.php?id='. $row['id'] .'" class="edit" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard2-pulse" viewBox="0 0 16 16"><path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5h3Z"/><path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-12Z"/><path d="M9.979 5.356a.5.5 0 0 0-.968.04L7.92 10.49l-.94-3.135a.5.5 0 0 0-.926-.08L4.69 10H4.5a.5.5 0 0 0 0 1H5a.5.5 0 0 0 .447-.276l.936-1.873 1.138 3.793a.5.5 0 0 0 .968-.04L9.58 7.51l.94 3.135A.5.5 0 0 0 11 11h.5a.5.5 0 0 0 0-1h-.128L9.979 5.356Z"/></svg></a>
@@ -425,19 +429,101 @@ function report_insert($id, $reporte){
    	return $data;
 }
 
+function report_type_from_record(array $state, $dataReporte){
+	if (($state['reporte'] ?? '') === 'alimak') {
+		return 'alimak';
+	}
+	if (($state['reporte'] ?? '') === 'elevador') {
+		return 'elevador';
+	}
+	$data = is_string($dataReporte) ? json_decode($dataReporte, true) : $dataReporte;
+	if (is_array($data)) {
+		foreach (array_keys($data) as $key) {
+			if (is_string($key) && strpos($key, 'a_') === 0) {
+				return 'alimak';
+			}
+		}
+	}
+	return 'elevador';
+}
+
 function report_aprobar($id){
+	if (!ctype_digit((string) $id) || (int) $id < 1) {
+		return json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '']);
+	}
 	$db = db();
-
-	$cliente = $_POST['cliente'];
-
-	$status = json_encode(['status' => 'close', 'aprobado' => $cliente, 'fecha' => date("Y-m-d")]);
-
-	$sql = "UPDATE `reporte` SET `state_reporte`='$status' WHERE `id`='$id'";
-
-	$data = $db->query($sql);
-
+	$reportId = (int) $id;
+	$cliente = trim((string) ($_POST['cliente'] ?? ''));
+	$cliente = substr($cliente, 0, 255);
+	$statement = $db->prepare('SELECT state_reporte, data_reporte FROM reporte WHERE id = ?');
+	$statement->bind_param('i', $reportId);
+	$statement->execute();
+	$report = $statement->get_result()->fetch_assoc() ?: [];
+	$statement->close();
+	$state = json_decode($report['state_reporte'] ?? '', true) ?: [];
+	$state['status'] = 'close';
+	$state['aprobado'] = $cliente;
+	$state['fecha'] = date('Y-m-d');
+	$state['reporte'] = report_type_from_record($state, $report['data_reporte'] ?? null);
+	$status = json_encode($state, JSON_UNESCAPED_UNICODE);
+	$statement = $db->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
+	$statement->bind_param('si', $status, $reportId);
+	$statement->execute();
+	$statement->close();
 	mysqli_close($db);
-   	return $status;
+	return $status;
+}
+
+function report_reopen($id, $csrfToken){
+	if (!ctype_digit((string) $id) || (int) $id < 1) {
+		return 'invalid';
+	}
+	$sessionToken = $_SESSION['reopen_csrf'] ?? '';
+	if (!is_string($csrfToken) || !is_string($sessionToken) || $sessionToken === '' || !hash_equals($sessionToken, $csrfToken)) {
+		return 'forbidden';
+	}
+
+	$db = db();
+	$db->begin_transaction();
+	$reportId = (int) $id;
+	$statement = $db->prepare('SELECT state_reporte, data_reporte FROM reporte WHERE id = ? FOR UPDATE');
+	$statement->bind_param('i', $reportId);
+	$statement->execute();
+	$report = $statement->get_result()->fetch_assoc() ?: null;
+	$statement->close();
+
+	if ($report === null) {
+		$db->rollback();
+		mysqli_close($db);
+		return 'not_found';
+	}
+
+	$state = json_decode($report['state_reporte'], true) ?: [];
+	if (($state['status'] ?? '') !== 'close') {
+		$db->rollback();
+		mysqli_close($db);
+		return 'not_approved';
+	}
+
+	$state['status'] = 'open';
+	$state['aprobado'] = '';
+	$state['fecha'] = '';
+	$state['reporte'] = report_type_from_record($state, $report['data_reporte'] ?? null);
+	$encodedState = json_encode($state, JSON_UNESCAPED_UNICODE);
+	$statement = $db->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
+	$statement->bind_param('si', $encodedState, $reportId);
+	$statement->execute();
+	$updated = $statement->affected_rows === 1;
+	$statement->close();
+
+	if ($updated) {
+		$db->commit();
+	} else {
+		$db->rollback();
+	}
+	unset($_SESSION['reopen_csrf']);
+	mysqli_close($db);
+	return $updated ? 'reopened' : 'error';
 }
 
 /**
@@ -445,6 +531,7 @@ function report_aprobar($id){
  */
 
 $data = [];
+$responseStatus = 200;
 
 $type = isset($_POST["type"]) ? $_POST["type"] : 'list';
 $reporte = isset($_POST["reporte"]) ? $_POST["reporte"] : 'elevador';
@@ -485,10 +572,37 @@ if ($type == 'aprobando'){
 	$content = '';
 }
 
-$data['status']  = 200;
+if ($type == 'reopen'){
+	$id = isset($_POST['id']) ? $_POST['id'] : '';
+	$csrfToken = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
+	$result = report_reopen($id, $csrfToken);
+	if ($result === 'reopened') {
+		$message = 'El reporte volvió a estado PENDIENTE y ya puede editarse desde la APK.';
+		$content = '';
+	} elseif ($result === 'forbidden') {
+		$responseStatus = 403;
+		$message = 'La solicitud expiró o no es válida. Recargue la página e intente nuevamente.';
+		$content = '';
+	} elseif ($result === 'not_found') {
+		$responseStatus = 404;
+		$message = 'El reporte no existe.';
+		$content = '';
+	} elseif ($result === 'not_approved') {
+		$responseStatus = 409;
+		$message = 'Solo un reporte aprobado puede volver a PENDIENTE.';
+		$content = '';
+	} else {
+		$responseStatus = 400;
+		$message = 'No se pudo cambiar el estado del reporte.';
+		$content = '';
+	}
+}
+
+$data['status']  = $responseStatus;
 $data['message'] = $message;
 $data['content'] = $content;
 
+http_response_code($responseStatus);
 echo json_encode($data);
 
 //var_dump(report_list());

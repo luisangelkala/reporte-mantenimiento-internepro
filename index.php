@@ -21,7 +21,7 @@
     <!-- Resources CSS & JS -->
     <link rel="stylesheet" type="text/css" href="assets/css/bootstrap5/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.453">
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.6">
     <script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
 
 </head>
@@ -174,6 +174,7 @@
 
 </script>
 
+<script src="assets/js/report-gallery.js?ver=1.0"></script>
 <script src="assets/css/bootstrap5/bootstrap.min.js?v=0.4"></script>
 </body>
 </html>

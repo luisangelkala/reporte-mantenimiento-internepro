@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/includes/report_photos.php';
+session_start();
 /**
 * Password generator
 *
@@ -9,19 +11,25 @@ require_once __DIR__ . '/config/db.php';
 */
 
 
-if(!isset($_GET["id"]) || $_GET["id"] == '' || $_GET["id"] == 0){
-header("Location: index.php");
+if (!isset($_GET['id']) || !is_string($_GET['id']) || !ctype_digit($_GET['id']) || (int) $_GET['id'] < 1) {
+    header('Location: index.php');
+    exit;
 }
 
-$ID = $_GET["id"];
-
-
-$sql = "SELECT * FROM reporte WHERE `id`='$ID'";
+$ID = (int) $_GET['id'];
+if (!isset($_SESSION['reopen_csrf']) || !is_string($_SESSION['reopen_csrf'])) {
+    $_SESSION['reopen_csrf'] = bin2hex(random_bytes(32));
+}
+$reopenCsrf = $_SESSION['reopen_csrf'];
+$reportPhotos = [];
+$status = [];
 
 $db = db();
-
-$data = $db->query($sql);
-
+$statement = $db->prepare('SELECT * FROM reporte WHERE id = ?');
+$statement->bind_param('i', $ID);
+$statement->execute();
+$data = $statement->get_result();
+$statement->close();
 mysqli_close($db);
 
 ?>
@@ -39,7 +47,7 @@ mysqli_close($db);
 <!-- Resources CSS & JS -->
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap5/bootstrap.min.css"/>
 <link rel="stylesheet" type="text/css" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.5">
+<link rel="stylesheet" type="text/css" href="assets/css/style.css?ver=0.6">
 <script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
 
 </head>
@@ -653,7 +661,8 @@ mysqli_close($db);
                         </div>
 
                         <?php
-                        $status = json_decode($row['state_reporte'], true); //json_encode(['status' => 'close', 'aprobado' => $cliente, 'fecha' => date("Y-m-d")]);
+                        $status = json_decode($row['state_reporte'], true) ?: [];
+                        $reportPhotos = report_photo_entries($row['data_reporte']);
                         }
                     }
                     ?>
@@ -664,11 +673,14 @@ mysqli_close($db);
             <div class="head-edit">
                 <div class="status">
                     <?php
-                    if($status['status'] == 'close'){
-                        $fecha = $status['fecha'];
-                        $cliente = $status['aprobado'];
+                    if (($status['status'] ?? '') == 'close') {
+                        $fecha = $status['fecha'] ?? '';
+                        $cliente = $status['aprobado'] ?? '';
 
                         echo 'El Reporte ha sido aprobado: '.$fecha.' por: '.$cliente;
+                        ?>
+                        <input type="button" class="form-control reopen-report report-reopen-button" name="reopen" value="Volver a PENDIENTE">
+                        <?php
                     }else{
                     ?>
                     <label>Cliente: </label>
@@ -677,6 +689,7 @@ mysqli_close($db);
                 <?php } ?>
                 </div>
             </div>
+            <?php echo report_photo_gallery_markup($ID, $reportPhotos); ?>
             </form>
         </main>
 <script>
@@ -690,7 +703,8 @@ mysqli_close($db);
             if(event.preventDefault) { event.preventDefault(); }
 
             if($('#cliente').val() == ''){
-                alert('Introduzca el nombre del cliente que aprueba el registro')
+                alert('Introduzca el nombre del cliente que aprueba el registro');
+                return;
             }else{
                 $cliente = $('#cliente').val();
             }
@@ -712,7 +726,7 @@ mysqli_close($db);
                 dataType: 'json',
                 success: function(data, XMLHttpRequest) {
                             if (data.status === 200) {
-                                $status.html(data.message);
+                                window.location.reload();
                             }
                             else {
                                 $status.html(data.message);
@@ -724,9 +738,41 @@ mysqli_close($db);
             });
         });
 
+        $('.head-edit').on('click', '.reopen-report', function(event) {
+            if(event.preventDefault) { event.preventDefault(); }
+            if (!confirm('¿Seguro que desea volver este reporte a PENDIENTE? Podrá editarse nuevamente desde la APK.')) {
+                return;
+            }
+
+            $status = $('.head-edit .status');
+            $status.text('Cambiando reporte a PENDIENTE...');
+            $.ajax({
+                url: 'process.php',
+                data: {
+                    type: 'reopen',
+                    id: <?php echo $ID; ?>,
+                    csrf_token: <?php echo json_encode($reopenCsrf); ?>
+                },
+                type: 'post',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.status === 200) {
+                        window.location.reload();
+                    } else {
+                        $status.text(data.message || 'No se pudo cambiar el estado del reporte.');
+                    }
+                },
+                error: function(xhr) {
+                    var response = xhr.responseJSON || {};
+                    $status.text(response.message || 'No se pudo cambiar el estado del reporte.');
+                }
+            });
+        });
+
     });
 
 })(jQuery);</script>
+<script src="assets/js/report-gallery.js?ver=1.0"></script>
 <script src="assets/css/bootstrap5/bootstrap.min.js?v=0.4"></script>
 </body>
     </html>

@@ -135,12 +135,68 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 | 3.2 | testing | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API autenticada y guardado del reporte. Las fotografías se almacenan fuera de acceso web directo y se consultan únicamente mediante la API autenticada. |
 | 3.3 | completed | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. Validada por QA. |
 | 3.4 | completed | Eliminación: confirmación explícita con ID/título, API, actualización automática del listado y manejo de errores. Los reportes aprobados no son eliminables en web, API ni APK. Validada por QA. |
-| 3.5 | testing | Fotografías desde APK: abrir cámara del equipo, capturar una o varias imágenes y comprimir cada una a JPEG menor de 250 KB. Las nuevas fotos permanecen privadas/locales hasta Guardar; la carga autenticada, verificación, portada de card y miniaturas ocurren después. Permite eliminar fotos locales y fotos guardadas mediante API autenticada, con vista a pantalla completa y reintento ante error. |
-| 3.5.1 | pending | Cámara/galería, compresión local menor de 250 KB y cola local de fotografías. |
-| 3.5.2 | pending | Guardado real: subida, verificación autenticada y recuperación de fotografías al reabrir edición. |
-| 3.5.3 | pending | Portada: primera fotografía persistida en la card del listado. |
-| 3.5.4 | pending | Edición: miniaturas y eliminación local/remota de fotografías. |
-| 3.5.5 | pending | Visualización: miniaturas bajo Aprobar y visor de imagen a pantalla completa. |
+| 3.5 | completed | Fotografías desde APK: abrir cámara del equipo, capturar una o varias imágenes y comprimir cada una a JPEG menor de 250 KB. Las nuevas fotos permanecen privadas/locales hasta Guardar; la carga autenticada, verificación, portada de card y miniaturas ocurren después. Permite eliminar fotos locales y fotos guardadas mediante API autenticada, con vista a pantalla completa y reintento ante error. Validada por QA. |
+| 3.5.1 | completed | Cámara/galería, compresión local menor de 250 KB y cola local de fotografías. Validada por QA. |
+| 3.5.2 | completed | Guardado real: subida, verificación autenticada y recuperación de fotografías al reabrir edición. Validada por QA. |
+| 3.5.3 | completed | Portada: primera fotografía persistida en la card del listado. Validada por QA. |
+| 3.5.4 | completed | Edición: miniaturas y eliminación local/remota de fotografías. Validada por QA. |
+| 3.5.5 | completed | Visualización: miniaturas bajo Aprobar y visor de imagen a pantalla completa. Validada por QA. |
+
+## Fase 4: galería fotográfica en el portal web
+
+**Estado: testing**
+
+Objetivo: incorporar en la web la consulta visual de las fotografías ya asociadas a cada reporte y permitir que un reporte aprobado vuelva controladamente a estado `PENDIENTE` para corregirlo desde la APK, sin exponer credenciales o archivos privados.
+
+### Alcance funcional
+
+- En cada fila del listado de reportes se añadirá un icono de fotografías cuando el reporte tenga al menos una imagen asociada.
+- Al pulsar el icono se abrirá un popup tipo galería con la fotografía ampliada, contador de posición, botón de cierre y flechas para avanzar o retroceder entre todas las imágenes del mismo reporte.
+- En las vistas de visualización de reportes Elevador y ALIMAK se mostrará una sección de miniaturas.
+- Al pulsar una miniatura se abrirá la misma galería ampliada y se podrá recorrer el resto de las fotografías mediante flechas.
+- El popup será responsive para escritorio, tablet y móvil. Admitirá cierre con `Escape`, navegación con flechas del teclado y controles táctiles visibles.
+- Si una fotografía fue eliminada o no puede cargarse, la web mostrará un aviso controlado sin romper el listado ni la vista del reporte.
+- En la vista web de visualización de un reporte aprobado se añadirá la acción `Volver a PENDIENTE`.
+- La acción exigirá una confirmación explícita que informe que el reporte volverá a estar disponible para edición en la APK.
+- Al confirmar, el reporte pasará de aprobado/cerrado a pendiente/abierto y se retirará su aprobación vigente, sin eliminar datos, actividades, observaciones ni fotografías.
+- La APK deberá reconocer el nuevo estado después de actualizar el listado y permitir nuevamente la edición del reporte.
+
+### Seguridad e integración
+
+- El token Bearer técnico no se incluirá en HTML ni JavaScript del navegador.
+- Las imágenes serán entregadas por un controlador PHP del servidor que validará el ID entero del reporte, el nombre permitido del archivo y que la fotografía pertenezca a ese reporte.
+- Se mantendrá bloqueado el acceso web directo al directorio privado de fotografías.
+- La galería será de solo lectura; esta fase no incorpora carga ni eliminación de fotografías desde la web.
+- El cambio de estado se realizará mediante una operación validada en el servidor; no se confiará el estado solicitado directamente al navegador.
+- Solo se permitirá la transición de un reporte existente en estado aprobado/cerrado a pendiente/abierto. Las solicitudes inválidas devolverán un error controlado y no modificarán el reporte.
+
+### Criterios de aceptación QA
+
+1. Un reporte con fotos muestra el icono en su fila; uno sin fotos no ofrece una galería vacía.
+2. El popup muestra exclusivamente las fotos del reporte seleccionado.
+3. Las flechas anterior/siguiente, el contador y el cierre funcionan correctamente con una o varias imágenes.
+4. Las vistas de Elevador y ALIMAK muestran miniaturas y permiten ampliarlas.
+5. La galería se adapta a escritorio, tablet, móvil y a ambas orientaciones.
+6. Ningún token o secreto queda visible en el código entregado al navegador y el acceso directo al almacenamiento continúa denegado.
+7. Un archivo ausente o inválido genera un mensaje controlado y no expone rutas internas del servidor.
+8. La acción `Volver a PENDIENTE` aparece en la visualización de un reporte aprobado y solicita confirmación antes de ejecutar el cambio.
+9. Al confirmar, el reporte queda pendiente sin perder campos, checklist, observaciones ni fotografías.
+10. Después de recargar/sincronizar la APK, el reporte aparece pendiente y puede editarse y guardarse nuevamente.
+11. La acción no puede aplicarse a un reporte inexistente o que ya esté pendiente, y cualquier fallo mantiene intacto el estado anterior.
+
+QA autorizó la implementación técnica de esta fase; su cierre requiere validación funcional en DEMO.
+
+### Implementación técnica realizada
+
+- El listado web incorpora un icono de galería únicamente en los reportes que contienen fotografías.
+- Las vistas `view.php` y `view_alimak.php` muestran miniaturas debajo del bloque de aprobación.
+- Se añadió un visor responsive con ampliación, contador, navegación circular mediante botones, teclado y gesto horizontal táctil.
+- Las fotografías se entregan mediante URLs firmadas y temporales generadas en el servidor. El controlador valida firma, vencimiento, reporte, nombre permitido, pertenencia de la fotografía y tipo MIME antes de leer el archivo privado.
+- La vista de un reporte aprobado incorpora `Volver a PENDIENTE`, confirmación explícita y protección CSRF de sesión.
+- El servidor acepta únicamente la transición `close` a `open`, conserva el tipo Elevador/ALIMAK y no modifica datos, checklist, observaciones ni fotografías.
+- Al aprobar desde la web se conserva ahora el tipo de reporte, evitando que un ALIMAK sea interpretado como Elevador al sincronizar.
+
+La fase queda en `testing` hasta que QA valide el comportamiento en DEMO.
 
 ## Criterio de ejecución
 

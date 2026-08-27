@@ -20,6 +20,7 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
+        android:testOnly="true"
         android:theme="@style/Theme.App" >
         <provider
             android:name="androidx.core.content.FileProvider"

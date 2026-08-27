@@ -18,6 +18,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
+private data class PhotoJob(val source: Uri, val compressed: Uri? = null, val status: String, val error: String = "")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportEditor(
@@ -33,9 +35,33 @@ fun ReportEditor(
     var technician by remember(report.id) { mutableStateOf(report.technician) }
     var saving by remember { mutableStateOf(false) }
     var stateVersion by remember { mutableIntStateOf(0) }
-    val photos = remember { mutableStateListOf<Uri>() }
+    val photos = remember { mutableStateListOf<PhotoJob>() }
+    var photoVersion by remember { mutableIntStateOf(0) }
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    fun uploadPhoto(source: Uri, existingIndex: Int? = null) {
+        val index = existingIndex ?: photos.size
+        if (existingIndex == null) photos.add(PhotoJob(source, status = "Comprimiendo")) else photos[index] = PhotoJob(source, status = "Comprimiendo")
+        Thread {
+            try {
+                val compressed = PhotoProcessor.compress(context, source)
+                photos[index] = PhotoJob(source, compressed, "Subiendo")
+                photoVersion++
+                val path = ReportApi.uploadPhoto(context.contentResolver, report.id, compressed)
+                ReportApi.verifyPhoto(path)
+                val storedPhotos = report.checklist.optJSONArray("_photos") ?: org.json.JSONArray()
+                storedPhotos.put(org.json.JSONObject().put("name", path.substringAfterLast('/')))
+                report.checklist.put("_photos", storedPhotos)
+                photos[index] = PhotoJob(source, compressed, "Verificada")
+            } catch (error: Exception) {
+                photos[index] = PhotoJob(source, status = "Error", error = error.message ?: "Error al subir")
+            } finally { photoVersion++ }
+        }.start()
+    }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
-        photos.addAll(selected.filterNot { it in photos })
+        selected.forEach(::uploadPhoto)
+    }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
+        if (captured) cameraUri?.let(::uploadPhoto)
     }
 
     Scaffold(
@@ -48,7 +74,7 @@ fun ReportEditor(
         bottomBar = {
             Surface(shadowElevation = 6.dp) {
                 Button(
-                    enabled = !saving,
+                    enabled = !saving && photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     onClick = {
                         saving = true
@@ -59,8 +85,7 @@ fun ReportEditor(
                         report.technician = technician
                         Thread {
                             try {
-                                val saved = ReportApi.saveReport(report)
-                                photos.forEach { ReportApi.uploadPhoto(context.contentResolver, saved.id, it) }
+                                ReportApi.saveReport(report)
                                 onSaved("Reporte guardado.")
                             } catch (error: Exception) {
                                 onSaved(error.message ?: "No se pudo guardar el reporte.")
@@ -95,7 +120,10 @@ fun ReportEditor(
             }
 
             Text("Fotografias", style = MaterialTheme.typography.titleLarge)
-            OutlinedButton(onClick = { photoPicker.launch("image/*") }) { Text("Seleccionar fotografias") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { val uri = PhotoProcessor.createCameraUri(context); cameraUri = uri; camera.launch(uri) }) { Text("Tomar fotografia") }
+                OutlinedButton(onClick = { photoPicker.launch("image/*") }) { Text("Seleccionar") }
+            }
             if (photos.isEmpty()) {
                 Text("No hay fotografias nuevas seleccionadas.", style = MaterialTheme.typography.bodySmall)
             } else {
@@ -103,7 +131,14 @@ fun ReportEditor(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    photos.forEach { uri -> PhotoPreview(uri) }
+                    photos.forEachIndexed { index, photo ->
+                        Column {
+                            photo.compressed?.let(::PhotoPreview)
+                            Text(photo.status, style = MaterialTheme.typography.labelSmall)
+                            if (photo.status == "Error") Text(photo.error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            if (photo.status == "Error") TextButton(onClick = { uploadPhoto(photo.source, index) }) { Text("Reintentar") }
+                        }
+                    }
                 }
             }
 

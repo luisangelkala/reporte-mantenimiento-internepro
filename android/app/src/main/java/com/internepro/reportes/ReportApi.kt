@@ -94,7 +94,8 @@ object ReportApi {
     fun approveReport(id: Int, approvedBy: String): ReportDetail =
         parseReport(jsonRequest("reports/$id/approve", "POST", JSONObject().put("approved_by", approvedBy)).getJSONObject("data"))
 
-    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri) {
+    @Synchronized
+    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri): String {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {
             doOutput = true
@@ -111,6 +112,16 @@ object ReportApi {
         val text = responseText(connection)
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(JSONObject(text.ifBlank { "{}" }).optString("error", "No se pudo cargar la fotografia."))
+        }
+        return JSONObject(text).getJSONObject("data").getJSONObject("photo").getString("url")
+    }
+
+    fun verifyPhoto(path: String) {
+        val connection = connection(path, "GET")
+        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+        stream?.close()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException("El servidor no confirmo la fotografia cargada.")
         }
     }
 

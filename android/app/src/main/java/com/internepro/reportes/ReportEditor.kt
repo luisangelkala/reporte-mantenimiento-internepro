@@ -141,16 +141,6 @@ fun ReportEditor(
             OutlinedTextField(equipment, { equipment = it }, Modifier.fillMaxWidth(), label = { Text("Equipo") })
             OutlinedTextField(technician, { technician = it }, Modifier.fillMaxWidth(), label = { Text("Tecnico") })
 
-            Text("Checklist de mantenimiento", style = MaterialTheme.typography.titleLarge)
-            ChecklistTemplates.forType(report.type).forEach { section ->
-                ChecklistSectionEditor(
-                    section = section,
-                    checklist = report.checklist,
-                    observations = report.observations,
-                    onChanged = { stateVersion++ }
-                )
-            }
-
             Text("Fotografias", style = MaterialTheme.typography.titleLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { val uri = PhotoProcessor.createCameraUri(context); cameraUri = uri; camera.launch(uri) }) { Text("Tomar fotografia") }
@@ -199,6 +189,16 @@ fun ReportEditor(
                 }
             }
             if (saveError.isNotBlank()) Text(saveError, color = MaterialTheme.colorScheme.error)
+
+            Text("Checklist de mantenimiento", style = MaterialTheme.typography.titleLarge)
+            ChecklistTemplates.forType(report.type).forEach { section ->
+                ChecklistSectionEditor(
+                    section = section,
+                    checklist = report.checklist,
+                    observations = report.observations,
+                    onChanged = { stateVersion++ }
+                )
+            }
 
             var comment by remember(report.id) { mutableStateOf(report.observations.optString("ob_comentario")) }
             var recommendation by remember(report.id) { mutableStateOf(report.observations.optString("ob_recomendacion")) }

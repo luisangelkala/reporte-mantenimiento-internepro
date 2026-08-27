@@ -73,6 +73,7 @@ object ReportApi {
                 title = item.optString("title_reporte"),
                 type = state.optString("reporte", "elevador"),
                 status = state.optString("status"),
+                createdAt = item.optString("created_at"),
                 coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos").photoNames().firstOrNull()
             )
         }

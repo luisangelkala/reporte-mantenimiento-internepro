@@ -81,7 +81,7 @@ La API validará tipo, estado permitido, campos de checklist y permisos. No expo
 
 ## Fase 3: APK Android
 
-**Estado: testing**
+**Estado: completed**
 
 La implementación propuesta es Kotlin + Jetpack Compose + Room + cliente HTTPS. Requiere que Fase 2 esté aprobada y validada. La APK se validará primero en una tablet de QA y se firmará/distribuirá conforme al proceso que QA apruebe.
 
@@ -89,7 +89,7 @@ La implementación propuesta es Kotlin + Jetpack Compose + Room + cliente HTTPS.
 
 ## Fase 3.1: diseño visual y experiencia táctil de la APK
 
-**Estado: testing**
+**Estado: completed**
 
 Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Android pensada para tablet y móvil, sin cambiar los contratos de API ni la funcionalidad de los reportes.
 
@@ -131,8 +131,8 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 
 | Microfase | Estado | Alcance |
 | --- | --- | --- |
-| 3.1 | pending | Diseño responsive del listado: logo superior, conexión, botones de alta y una franja compacta con estado de carga a la izquierda y selector visual de tipo a la derecha. Dos tarjetas por fila en móvil/tablet, vertical/horizontal; cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila, sin acciones funcionales todavía. Validada visualmente por QA; queda `pending` por instrucción expresa de QA. |
-| 3.2 | testing | Creación y edición de Elevador/ALIMAK: datos generales, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API autenticada y guardado del reporte. Las fotografías se almacenan fuera de acceso web directo y se consultan únicamente mediante la API autenticada. |
+| 3.1 | completed | Diseño responsive del listado: logo superior, conexión, botones de alta y una franja compacta con estado de carga a la izquierda y selector funcional de tipo a la derecha. Dos tarjetas por fila en móvil/tablet, vertical/horizontal; cada tarjeta incorpora imagen placeholder, badge flotante de estado e iconos en una sola fila. La fila superior de cada card muestra `#ID - TIPO` a la izquierda y la fecha de creación a la derecha. Se corrigió el BUG que cambiaba la etiqueta del filtro sin filtrar la colección: `Todos`, `Elevador` y `ALIMAK` renderizan ahora únicamente los resultados correspondientes y muestran un estado vacío cuando aplica. Validada por QA; ajustes finales pendientes de prueba de regresión. |
+| 3.2 | completed | Creación y edición de Elevador/ALIMAK: datos generales, bloque de fotografías antes del checklist, checklist `OK/X/R`, observaciones, captura o selección de fotografías desde la tablet, vista previa, carga segura por API autenticada y guardado del reporte. Las fotografías se almacenan fuera de acceso web directo y se consultan únicamente mediante la API autenticada. Validada por QA; nueva ubicación visual pendiente de prueba de regresión. |
 | 3.3 | completed | Visualización y aprobación: detalle, instrucciones, checklist, observaciones, estado y aprobación por API. Validada por QA. |
 | 3.4 | completed | Eliminación: confirmación explícita con ID/título, API, actualización automática del listado y manejo de errores. Los reportes aprobados no son eliminables en web, API ni APK. Validada por QA. |
 | 3.5 | completed | Fotografías desde APK: abrir cámara del equipo, capturar una o varias imágenes y comprimir cada una a JPEG menor de 250 KB. Las nuevas fotos permanecen privadas/locales hasta Guardar; la carga autenticada, verificación, portada de card y miniaturas ocurren después. Permite eliminar fotos locales y fotos guardadas mediante API autenticada, con vista a pantalla completa y reintento ante error. Validada por QA. |
@@ -144,7 +144,7 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 
 ## Fase 4: galería fotográfica en el portal web
 
-**Estado: testing**
+**Estado: completed**
 
 Objetivo: incorporar en la web la consulta visual de las fotografías ya asociadas a cada reporte y permitir que un reporte aprobado vuelva controladamente a estado `PENDIENTE` para corregirlo desde la APK, sin exponer credenciales o archivos privados.
 
@@ -184,7 +184,7 @@ Objetivo: incorporar en la web la consulta visual de las fotografías ya asociad
 10. Después de recargar/sincronizar la APK, el reporte aparece pendiente y puede editarse y guardarse nuevamente.
 11. La acción no puede aplicarse a un reporte inexistente o que ya esté pendiente, y cualquier fallo mantiene intacto el estado anterior.
 
-QA autorizó la implementación técnica de esta fase; su cierre requiere validación funcional en DEMO.
+QA autorizó la implementación técnica y validó funcionalmente esta fase en DEMO.
 
 ### Implementación técnica realizada
 
@@ -197,7 +197,7 @@ QA autorizó la implementación técnica de esta fase; su cierre requiere valida
 - El servidor acepta únicamente la transición `close` a `open`, conserva el tipo Elevador/ALIMAK y no modifica datos, checklist, observaciones ni fotografías.
 - Al aprobar desde la web se conserva ahora el tipo de reporte, evitando que un ALIMAK sea interpretado como Elevador al sincronizar.
 
-La fase queda en `testing` hasta que QA valide el comportamiento en DEMO.
+Fase validada por QA y cerrada en estado `completed`.
 
 ## Criterio de ejecución
 

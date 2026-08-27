@@ -36,6 +36,7 @@ data class ReportSummary(
     val title: String,
     val type: String,
     val status: String,
+    val createdAt: String,
     val coverPhoto: String? = null
 )
 
@@ -49,6 +50,11 @@ fun App() {
     var deleteCandidate by remember { mutableStateOf<ReportSummary?>(null) }
     var filterExpanded by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Todos") }
+    val filteredReports = when (selectedFilter) {
+        "Elevador" -> reports.filter { it.type.equals("elevador", ignoreCase = true) }
+        "ALIMAK" -> reports.filter { it.type.equals("alimak", ignoreCase = true) }
+        else -> reports
+    }
 
     MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFFC8102E), secondary = Color(0xFF8A0E20))) {
         editor?.let { report ->
@@ -138,29 +144,38 @@ fun App() {
                     }
                 }
                 Box(modifier = Modifier.weight(1f)) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(reports) { report ->
-                            ReportCard(
-                                report = report,
-                                onEdit = {
-                                    loading = true
-                                    Thread {
-                                        try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
-                                    }.start()
-                                },
-                                onView = {
-                                    loading = true
-                                    Thread {
-                                        try { viewer = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
-                                    }.start()
-                                },
-                                onDelete = { deleteCandidate = report }
-                            )
+                    if (filteredReports.isEmpty()) {
+                        Text(
+                            text = "No hay reportes para el filtro $selectedFilter.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF666666),
+                            modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp)
+                        )
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(filteredReports, key = { it.id }) { report ->
+                                ReportCard(
+                                    report = report,
+                                    onEdit = {
+                                        loading = true
+                                        Thread {
+                                            try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                        }.start()
+                                    },
+                                    onView = {
+                                        loading = true
+                                        Thread {
+                                            try { viewer = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                        }.start()
+                                    },
+                                    onDelete = { deleteCandidate = report }
+                                )
+                            }
                         }
                     }
                 }
@@ -207,6 +222,7 @@ private fun NewReportButton(label: String, type: String, modifier: Modifier, onC
 @Composable
 private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> Unit, onDelete: () -> Unit) {
     val approved = report.status == "close"
+    val creationDate = report.createdAt.trim().take(10).ifBlank { "Sin fecha" }
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))) {
         Column {
             Box(
@@ -231,7 +247,25 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> 
                 ) { Text(if (approved) "APROBADO" else "PENDIENTE", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
             }
             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("#${report.id} - ${report.type.uppercase()}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "#${report.id} - ${report.type.uppercase()}",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "Creado: $creationDate",
+                        color = Color(0xFF666666),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1
+                    )
+                }
                 Text(report.title.ifBlank { "Añadir título del reporte..." }, style = MaterialTheme.typography.titleMedium, maxLines = 2)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))

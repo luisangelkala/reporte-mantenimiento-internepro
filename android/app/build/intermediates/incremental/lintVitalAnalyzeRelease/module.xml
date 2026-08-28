@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app"
+    name=":app"
+    type="APP"
+    maven="InterneproReportes:app:unspecified"
+    agpVersion="8.13.0"
+    buildFolder="build"
+    bootClassPath="C:\Users\LuisKala\AppData\Local\Android\Sdk\platforms\android-37.0\android.jar;C:\Users\LuisKala\AppData\Local\Android\Sdk\build-tools\35.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-37"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

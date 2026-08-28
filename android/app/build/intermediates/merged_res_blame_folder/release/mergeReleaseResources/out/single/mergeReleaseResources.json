@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.internepro.reportes.app-release-43:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-44:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-release-43:\\xml_file_paths.xml.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-44:\\xml\\file_paths.xml"
+    },
+    {
+        "merged": "com.internepro.reportes.app-release-43:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-44:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-release-43:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-44:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-release-43:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-44:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-release-43:\\drawable_logo_internepro.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-44:\\drawable\\logo_internepro.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-release-43:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-44:/mipmap-xxhdpi/ic_launcher.png"
+    }
+]

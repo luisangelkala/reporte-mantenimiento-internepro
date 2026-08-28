@@ -10,7 +10,7 @@ val apiUrl = localProperties.getProperty("INTERNEPRO_API_URL", "")
 val apiToken = localProperties.getProperty("INTERNEPRO_API_TOKEN", "")
 
 android { namespace = "com.internepro.reportes"; compileSdk = 37
-    defaultConfig { applicationId = "com.internepro.reportes"; minSdk = 26; targetSdk = 37; versionCode = 1; versionName = "0.1.0-demo" }
+    defaultConfig { applicationId = "com.internepro.reportes"; minSdk = 26; targetSdk = 37; versionCode = 1; versionName = "1.0.0" }
     buildFeatures { compose = true; buildConfig = true }
     defaultConfig {
         buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")

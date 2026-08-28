@@ -1,0 +1,5 @@
+com.internepro.reportes.test.app-androidTest-0 D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\build\generated\res\resValues\androidTest\debug
+com.internepro.reportes.test.app-updated_navigation_xml-1 D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\build\generated\updated_navigation_xml\debugAndroidTest
+com.internepro.reportes.test.app-mergeDebugAndroidTestResources-2 D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.internepro.reportes.test.app-mergeDebugAndroidTestResources-3 D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.internepro.reportes.test.app-debugAndroidTest-4 D:\WORKS\DEVELOPMENT\reporte-mantenimiento-internepro\android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

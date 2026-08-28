@@ -142,6 +142,12 @@ Objetivo: trasladar la identidad visual actual de Internepro a una interfaz Andr
 | 3.5.4 | completed | Edición: miniaturas y eliminación local/remota de fotografías. Validada por QA. |
 | 3.5.5 | completed | Visualización: miniaturas bajo Aprobar y visor de imagen a pantalla completa. Validada por QA. |
 
+### Empaquetado de la versión 1.0
+
+- La APK declara el nombre visible `Internepro Reportes` y un icono launcher generado a partir del emblema oficial `IP` incluido en el proyecto.
+- La firma de QA garantiza la integridad y continuidad de las actualizaciones, pero una APK enviada por WhatsApp continúa siendo una instalación externa no distribuida por Google Play.
+- Para pruebas con el cliente se recomienda Google Play Internal Testing, conservando Play Protect y el bloqueo automático del dispositivo activos.
+
 ## Fase 4: galería fotográfica en el portal web
 
 **Estado: completed**

@@ -219,7 +219,7 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | 5.2 | completed | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada y validada funcionalmente por QA en DEMO. |
 | 5.3 | completed | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Validada funcionalmente por QA en DEMO. |
 | 5.4 | testing | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Implementación terminada; pendiente de validación funcional de QA en DEMO. |
-| 5.5 | pending | Compartir PDF: el botón Enviar/WhatsApp de cada card solo estará habilitado cuando el reporte esté aprobado y su PDF exista. Abrirá WhatsApp o el selector de compartir con la URL backend del PDF, sin exponer el token Bearer. |
+| 5.5 | testing | Consulta y compartir PDF: APK y web muestran iconos PDF y WhatsApp únicamente activos cuando el reporte está aprobado y existe un PDF vigente. La API entrega una URL firmada temporal sin exponer el token Bearer. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
 | 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
 | 5.7 | pending | Nueva identidad visual: sustituir el logo en web, APK, icono launcher y PDF usando los archivos oficiales que entregue QA, respetando proporciones, fondo y variantes aprobadas. |
 
@@ -265,7 +265,7 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Cada miniatura muestra el comentario o `Sin comentario`; al abrirla, el visor a pantalla completa muestra grupo, comentario, posición y flechas para recorrer únicamente las fotos del mismo grupo.
 - La web interpreta `scope`, `section_key` y `comment`, y separa la evidencia en generales, CABINA, CONTROL, CREMALLERA, PARACAÍDAS, PUERTAS DE PASILLO y FOSO.
 - Las miniaturas web muestran el comentario. El visor web conserva flechas, teclado, gesto táctil y ahora presenta grupo y comentario de la fotografía activa.
-- El icono de galería del listado web sigue funcionando y puede mostrar la procedencia y comentario de cada foto sin alterar el acceso privado firmado.
+- Las fotografías y sus comentarios permanecen disponibles dentro de la vista del reporte. Por solicitud posterior de QA, el icono de galería se retiró del listado web para reservar esa fila a PDF, WhatsApp, visualización y borrado.
 - Los registros históricos sin `scope`, `section_key` o `comment` continúan tratándose como fotografías generales con comentario vacío.
 - La edición web de fotografías no forma parte de 5.3; carga, modificación, eliminación y límites visuales en web permanecen reservados para 5.6.
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`; las pruebas funcionales web y APK en DEMO quedan pendientes de QA.
@@ -282,9 +282,21 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Cada versión se almacena en `storage/report-pdfs/{id}` bajo un nombre interno aleatorio y permisos privados. `storage/.htaccess` continúa denegando el acceso HTTP directo.
 - `state_reporte.pdf` registra `name`, `generated_at`, `version` y `status=active`. Al usar `Volver a PENDIENTE`, la versión queda `invalidated` con fecha de invalidación; una aprobación posterior incrementa la versión y genera un archivo nuevo.
 - La web muestra un error controlado cuando no puede generarse el documento. La API devuelve `500` sin cerrar el reporte; también conserva respuestas diferenciadas para reporte inexistente, datos inválidos o reporte previamente aprobado.
-- El PDF generado en 5.4 permanece privado y no tiene todavía una URL compartible. El controlador firmado, habilitación de WhatsApp y política de acceso corresponden exclusivamente a 5.5.
+- El archivo físico generado en 5.4 permanece privado. La URL firmada y las acciones de consulta/WhatsApp fueron incorporadas posteriormente como parte de 5.5.
 - Se mantiene la identidad textual actual en el documento. La sustitución por el nuevo logo oficial continúa en 5.7 y exige el recurso gráfico aprobado por QA.
 - Evidencia local: revisión estática y `git diff --check` sin errores de espacios. Este equipo no dispone de ejecutable PHP, por lo que el lint PHP y la prueba real de generación con MariaDB/almacenamiento deben ejecutarse en DEMO por QA.
+
+### Implementación técnica 5.5
+
+- Se corrigió el fallo silencioso de aprobación en la APK: cualquier error devuelto por el backend ahora aparece debajo del botón, y mientras se genera el documento se muestra `Generando y verificando PDF...`. La interfaz solo confirma la aprobación cuando la API devuelve el reporte cerrado con su PDF.
+- La API incorpora `GET /reports/{id}/pdf` y también añade `state_reporte.pdf.url` a los listados, detalles y respuesta de aprobación cuando existe una versión activa.
+- `pdf.php` entrega el documento sin Bearer mediante una URL firmada con HMAC, reporte, nombre interno y vencimiento. Antes de leer el archivo vuelve a comprobar en MariaDB que el reporte continúe aprobado, que la versión sea la activa y que el archivo exista.
+- La vigencia inicial del enlace es de siete días. Cada nueva consulta a la API o carga del listado web genera un enlace actualizado; no se guarda la URL temporal en MariaDB.
+- Volver a `PENDIENTE` invalida inmediatamente cualquier enlace emitido, aunque todavía no haya llegado su vencimiento. Una aprobación posterior crea otra versión y otro enlace.
+- Las cards APK incluyen un icono PDF para abrir el documento remoto y un icono oficial de WhatsApp que comparte el texto `Reporte de mantenimiento #ID: URL`. Ambos quedan grises y deshabilitados sin PDF vigente.
+- El listado web retiró el icono de fotografías. Cada fila muestra PDF y WhatsApp habilitados para reportes aprobados con PDF; en reportes pendientes o aprobados antiguos sin documento aparecen deshabilitados.
+- La URL no contiene ni revela `INTERNEPRO_API_TOKEN`. El archivo continúa almacenado bajo `storage/report-pdfs` y no puede abrirse por su ruta física.
+- Evidencia local Android: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. El lint y las pruebas funcionales PHP continúan a cargo de QA en DEMO porque localhost no dispone de PHP CLI.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 
@@ -313,7 +325,7 @@ Reglas de asociación:
 - En reportes pendientes, la edición web permitirá añadir, comentar, modificar el comentario y eliminar fotografías, aplicando el máximo de cinco por bloque.
 - En reportes aprobados, la web mostrará fotos y comentarios en modo de solo lectura. Para modificarlos será obligatorio volver el reporte a `PENDIENTE`.
 - La web y la APK consumirán el mismo modelo y los mismos endpoints; una modificación guardada en cualquiera de los dos clientes deberá verse correctamente en el otro después de actualizar.
-- El listado web conservará el icono de galería. El popup agrupará las imágenes por `Generales` y por sección, mostrando el comentario de la foto activa.
+- El listado web no mostrará el icono de galería; las imágenes agrupadas y comentarios se consultarán desde la vista del reporte. Esta decisión no elimina el visor interno ni la futura edición fotográfica de 5.6.
 - La API será la autoridad de los límites y de la asociación entre reporte, sección, fotografía y comentario, evitando que una solicitud web pueda mezclar evidencias o superar cinco fotos.
 
 ### Reglas del PDF y aprobación
@@ -328,9 +340,8 @@ Reglas de asociación:
 ### Requisitos pendientes de definición por QA
 
 1. Confirmar si los reportes Elevador también tendrán secciones con fotografías; de ser así, QA deberá indicar sus nombres y claves exactas en una ampliación posterior.
-2. Texto predeterminado del mensaje que acompañará la URL del PDF en WhatsApp.
-3. Vigencia del enlace compartido y política de conservación de versiones anteriores del PDF.
-4. Archivo del nuevo logo en PNG transparente de alta resolución y, preferiblemente, SVG; variantes para fondo claro/oscuro si existen.
+2. Política definitiva de conservación o eliminación de versiones anteriores del PDF. La vigencia inicial del enlace compartido queda establecida en siete días.
+3. Archivo del nuevo logo en PNG transparente de alta resolución y, preferiblemente, SVG; variantes para fondo claro/oscuro si existen.
 
 ### Criterios de aceptación QA
 
@@ -347,7 +358,7 @@ Reglas de asociación:
 11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1, 5.2 y 5.3 están `completed`; 5.4 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.5 a 5.7 permanecen en `pending` y no han sido implementadas.
+La Fase 5 queda en `testing`: 5.1, 5.2 y 5.3 están `completed`; 5.4 y 5.5 están implementadas en `testing` y esperan validación funcional de QA. Las microfases 5.6 y 5.7 permanecen en `pending` y no han sido implementadas.
 
 ## Criterio de ejecución
 

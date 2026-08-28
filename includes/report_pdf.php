@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/report_photos.php';
 
+const REPORT_PDF_LINK_TTL = 604800;
+
 /**
  * Generador PDF autocontenido para la instantanea inmutable de un reporte aprobado.
  * No expone el archivo: la entrega publica y sus firmas pertenecen a la fase 5.5.
@@ -546,6 +548,72 @@ function report_pdf_invalidate_state(array $state): array
     if (isset($state['pdf']) && is_array($state['pdf'])) {
         $state['pdf']['status'] = 'invalidated';
         $state['pdf']['invalidated_at'] = date('c');
+    }
+    return $state;
+}
+
+function report_pdf_secret(): string
+{
+    static $secret = null;
+    if ($secret !== null) {
+        return $secret;
+    }
+    $config = require dirname(__DIR__) . '/config/auth.php';
+    $configuredSecret = is_array($config) ? ($config['secret'] ?? '') : '';
+    if (!is_string($configuredSecret) || $configuredSecret === '') {
+        throw new RuntimeException('La configuracion privada del PDF no esta disponible.');
+    }
+    $secret = hash('sha256', 'report-pdf-share|' . $configuredSecret, true);
+    return $secret;
+}
+
+function report_pdf_signature(int $reportId, string $name, int $expires): string
+{
+    return hash_hmac('sha256', $reportId . "\n" . $name . "\n" . $expires, report_pdf_secret());
+}
+
+function report_pdf_public_endpoint(): string
+{
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'reportes.internepro.com.pa');
+    if (!preg_match('/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i', $host)) {
+        $host = 'reportes.internepro.com.pa';
+    }
+    $https = !empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off';
+    if (!$https && (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
+        $https = true;
+    }
+    return ($https ? 'https' : 'http') . '://' . $host . '/pdf.php';
+}
+
+function report_pdf_url(int $reportId, string $name, ?int $expires = null): string
+{
+    $expires = $expires ?? (time() + REPORT_PDF_LINK_TTL);
+    $query = http_build_query([
+        'id' => $reportId,
+        'name' => $name,
+        'expires' => $expires,
+        'signature' => report_pdf_signature($reportId, $name, $expires),
+    ], '', '&', PHP_QUERY_RFC3986);
+    return report_pdf_public_endpoint() . '?' . $query;
+}
+
+function report_pdf_active_url(int $reportId, array $state): ?string
+{
+    $pdf = isset($state['pdf']) && is_array($state['pdf']) ? $state['pdf'] : [];
+    $name = is_string($pdf['name'] ?? null) ? $pdf['name'] : '';
+    if (($state['status'] ?? '') !== 'close' || ($pdf['status'] ?? '') !== 'active' ||
+        !preg_match('/^report-[0-9]+-v[0-9]+-[a-f0-9]{24}\.pdf$/', $name)) {
+        return null;
+    }
+    return report_pdf_url($reportId, $name);
+}
+
+function report_pdf_enrich_state(int $reportId, array $state): array
+{
+    $url = report_pdf_active_url($reportId, $state);
+    if ($url !== null) {
+        $state['pdf']['url'] = $url;
+        $state['pdf']['expires_in'] = REPORT_PDF_LINK_TTL;
     }
     return $state;
 }

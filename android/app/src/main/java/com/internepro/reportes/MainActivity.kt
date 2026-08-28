@@ -1,5 +1,8 @@
 package com.internepro.reportes
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,15 +17,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,11 +43,13 @@ data class ReportSummary(
     val type: String,
     val status: String,
     val createdAt: String,
+    val pdfUrl: String = "",
     val coverPhoto: String? = null
 )
 
 @Composable
 fun App() {
+    val context = LocalContext.current
     var reports by remember { mutableStateOf(emptyList<ReportSummary>()) }
     var message by remember { mutableStateOf("Listo para cargar reportes.") }
     var loading by remember { mutableStateOf(false) }
@@ -87,7 +95,7 @@ fun App() {
                 onApproved = { approved ->
                     viewer = approved
                     message = "Reporte aprobado por ${approved.approvedBy}."
-                    reports = reports.map { if (it.id == approved.id) it.copy(status = "close") else it }
+                    reports = reports.map { if (it.id == approved.id) it.copy(status = "close", pdfUrl = approved.pdfUrl) else it }
                 }
             )
         } ?: Scaffold { padding ->
@@ -173,6 +181,12 @@ fun App() {
                                             try { viewer = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
                                         }.start()
                                     },
+                                    onOpenPdf = {
+                                        openPdf(context, report.pdfUrl)?.let { message = it }
+                                    },
+                                    onShare = {
+                                        sharePdfByWhatsApp(context, report.id, report.pdfUrl)?.let { message = it }
+                                    },
                                     onDelete = { deleteCandidate = report }
                                 )
                             }
@@ -220,8 +234,16 @@ private fun NewReportButton(label: String, type: String, modifier: Modifier, onC
 }
 
 @Composable
-private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> Unit, onDelete: () -> Unit) {
+private fun ReportCard(
+    report: ReportSummary,
+    onEdit: () -> Unit,
+    onView: () -> Unit,
+    onOpenPdf: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
     val approved = report.status == "close"
+    val pdfAvailable = approved && report.pdfUrl.isNotBlank()
     val creationDate = report.createdAt.trim().take(10).ifBlank { "Sin fecha" }
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))) {
         Column {
@@ -268,7 +290,12 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> 
                 }
                 Text(report.title.ifBlank { "Añadir título del reporte..." }, style = MaterialTheme.typography.titleMedium, maxLines = 2)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Icon(Icons.Filled.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    IconButton(enabled = pdfAvailable, onClick = onOpenPdf, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Filled.PictureAsPdf, contentDescription = "Abrir PDF", tint = if (pdfAvailable) MaterialTheme.colorScheme.primary else Color.Gray)
+                    }
+                    IconButton(enabled = pdfAvailable, onClick = onShare, modifier = Modifier.size(28.dp)) {
+                        Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "Enviar PDF por WhatsApp", tint = if (pdfAvailable) Color(0xFF25D366) else Color.Gray)
+                    }
                     IconButton(onClick = onView, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
                     if (approved) {
@@ -279,5 +306,27 @@ private fun ReportCard(report: ReportSummary, onEdit: () -> Unit, onView: () -> 
                 }
             }
         }
+    }
+}
+
+private fun openPdf(context: Context, url: String): String? {
+    if (url.isBlank()) return "El PDF estara disponible cuando el reporte sea aprobado."
+    return try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        null
+    } catch (error: Exception) {
+        "No se encontro una aplicacion para abrir el PDF: ${error.message ?: "error"}"
+    }
+}
+
+private fun sharePdfByWhatsApp(context: Context, reportId: Int, url: String): String? {
+    if (url.isBlank()) return "El PDF estara disponible cuando el reporte sea aprobado."
+    val message = "Reporte de mantenimiento #$reportId: $url"
+    val target = "https://api.whatsapp.com/send?text=" + URLEncoder.encode(message, StandardCharsets.UTF_8.toString())
+    return try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)))
+        null
+    } catch (error: Exception) {
+        "No se pudo abrir WhatsApp: ${error.message ?: "error"}"
     }
 }

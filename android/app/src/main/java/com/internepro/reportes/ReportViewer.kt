@@ -1,5 +1,7 @@
 package com.internepro.reportes
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,9 +26,11 @@ import androidx.compose.ui.window.DialogProperties
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDetail) -> Unit) {
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
     var approver by remember { mutableStateOf("") }
     var confirmApproval by remember { mutableStateOf(false) }
     var approving by remember { mutableStateOf(false) }
+    var approvalError by remember { mutableStateOf("") }
     var fullScreenPhotos by remember { mutableStateOf<List<ReportPhoto>>(emptyList()) }
     var fullScreenIndex by remember { mutableIntStateOf(0) }
     Scaffold(topBar = { TopAppBar(title = { Text("Reporte #${report.id}") }, navigationIcon = { TextButton(onClick = onBack) { Text("Volver") } }) }) { padding ->
@@ -41,6 +45,13 @@ fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDe
             } else {
                 OutlinedTextField(approver, { approver = it }, Modifier.fillMaxWidth(), label = { Text("Nombre de quien aprueba") })
                 Button(enabled = approver.isNotBlank() && !approving, onClick = { confirmApproval = true }, modifier = Modifier.fillMaxWidth()) { Text("Aprobar reporte") }
+                if (approving) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text("Generando y verificando PDF...")
+                }
+                if (approvalError.isNotBlank()) {
+                    Text(approvalError, color = MaterialTheme.colorScheme.error)
+                }
             }
             ViewerPhotoGroup(
                 reportId = report.id,
@@ -80,7 +91,27 @@ fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDe
         title = { Text("Aprobar reporte") },
         text = { Text("El reporte sera aprobado por $approver y ya no podra eliminarse.") },
         dismissButton = { TextButton(onClick = { confirmApproval = false }) { Text("Cancelar") } },
-        confirmButton = { TextButton(onClick = { approving = true; confirmApproval = false; Thread { try { onApproved(ReportApi.approveReport(report.id, approver)) } finally { approving = false } }.start() }) { Text("Aprobar") } }
+        confirmButton = {
+            TextButton(onClick = {
+                approving = true
+                approvalError = ""
+                confirmApproval = false
+                Thread {
+                    try {
+                        val approved = ReportApi.approveReport(report.id, approver)
+                        mainHandler.post {
+                            approving = false
+                            onApproved(approved)
+                        }
+                    } catch (error: Exception) {
+                        mainHandler.post {
+                            approving = false
+                            approvalError = error.message ?: "No se pudo aprobar ni generar el PDF."
+                        }
+                    }
+                }.start()
+            }) { Text("Aprobar") }
+        }
     )
     fullScreenPhotos.getOrNull(fullScreenIndex)?.let { photo ->
         Dialog(

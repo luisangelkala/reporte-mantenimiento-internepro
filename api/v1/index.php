@@ -76,7 +76,8 @@ function api_report_for_update(mysqli $connection, int $id): ?array
 
 function api_decode_report(array $report): array
 {
-    $report['state_reporte'] = json_decode($report['state_reporte'], true) ?: [];
+    $state = json_decode($report['state_reporte'], true) ?: [];
+    $report['state_reporte'] = report_pdf_enrich_state((int) $report['id'], $state);
     $report['data_reporte'] = $report['data_reporte'] === null ? null : json_decode($report['data_reporte'], true);
     $report['obs_reporte'] = $report['obs_reporte'] === null ? null : json_decode($report['obs_reporte'], true);
     return $report;
@@ -392,6 +393,25 @@ if ($method === 'POST' && count($segments) === 3 && ($segments[2] ?? '') === 'ph
     $connection->commit();
     mysqli_close($connection);
     api_response(201, ['data' => ['photo' => $photo, 'report' => api_decode_report($updated)]]);
+}
+
+if ($method === 'GET' && count($segments) === 3 && ($segments[2] ?? '') === 'pdf') {
+    $report = api_report($connection, $id);
+    mysqli_close($connection);
+    if ($report === null) {
+        api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $state = json_decode((string) $report['state_reporte'], true) ?: [];
+    $url = report_pdf_active_url($id, $state);
+    if ($url === null) {
+        api_response(404, ['error' => 'El reporte no tiene un PDF vigente.']);
+    }
+    api_response(200, ['data' => [
+        'url' => $url,
+        'version' => (int) ($state['pdf']['version'] ?? 0),
+        'generated_at' => (string) ($state['pdf']['generated_at'] ?? ''),
+        'expires_in' => REPORT_PDF_LINK_TTL,
+    ]]);
 }
 
 if ($method === 'GET' && count($segments) === 2) {

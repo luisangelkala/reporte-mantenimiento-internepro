@@ -49,6 +49,7 @@ data class ReportDetail(
     var status: String,
     var approvedBy: String,
     var approvedDate: String,
+    var pdfUrl: String,
     val checklist: JSONObject,
     val observations: JSONObject
 ) {
@@ -124,6 +125,7 @@ object ReportApi {
                 type = state.optString("reporte", "elevador"),
                 status = state.optString("status"),
                 createdAt = item.optString("created_at"),
+                pdfUrl = state.optJSONObject("pdf")?.optString("url").orEmpty(),
                 coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos")
                     .reportPhotos().firstOrNull { it.scope == "general" }?.name
             )
@@ -243,6 +245,7 @@ object ReportApi {
             status = state.optString("status"),
             approvedBy = state.optString("aprobado"),
             approvedDate = state.optString("fecha"),
+            pdfUrl = state.optJSONObject("pdf")?.optString("url").orEmpty(),
             checklist = item.optJSONObject("data_reporte") ?: JSONObject(),
             observations = item.optJSONObject("obs_reporte") ?: JSONObject()
         )

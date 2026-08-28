@@ -1,11 +1,11 @@
 package com.internepro.reportes
 
 data class ChecklistItem(val key: String, val label: String)
-data class ChecklistSection(val title: String, val observationKey: String?, val items: List<ChecklistItem>)
+data class ChecklistSection(val key: String, val title: String, val observationKey: String?, val items: List<ChecklistItem>)
 
 object ChecklistTemplates {
     private fun section(prefix: String, number: Int, title: String, observationKey: String? = null, vararg labels: String): ChecklistSection =
-        ChecklistSection(title, observationKey, labels.mapIndexed { index, label -> ChecklistItem("${prefix}_${number}_${('a'.code + index).toChar()}", label) })
+        ChecklistSection("${prefix}_$number", title, observationKey, labels.mapIndexed { index, label -> ChecklistItem("${prefix}_${number}_${('a'.code + index).toChar()}", label) })
 
     fun forType(type: String): List<ChecklistSection> = if (type == "alimak") alimak() else elevador()
 

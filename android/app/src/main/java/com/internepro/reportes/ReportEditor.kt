@@ -23,14 +23,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-private const val MAX_GENERAL_PHOTOS = 5
+private const val MAX_PHOTOS_PER_BUCKET = 5
+private val ALIMAK_PHOTO_SECTION_KEYS = setOf("a_2", "a_9", "a_15", "a_22", "a_28", "a_32")
 
 private data class PhotoJob(
     val source: Uri,
     val compressed: Uri? = null,
     val status: String,
     val error: String = "",
-    val comment: String = ""
+    val comment: String = "",
+    val sectionKey: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,52 +53,71 @@ fun ReportEditor(
     var saveError by remember { mutableStateOf("") }
     var stateVersion by remember { mutableIntStateOf(0) }
     val photos = remember { mutableStateListOf<PhotoJob>() }
-    val storedPhotos = remember(report.id) { mutableStateListOf<ReportPhoto>().apply { addAll(report.photos()) } }
+    val storedPhotos = remember(report.id) { mutableStateListOf<ReportPhoto>().apply { addAll(report.allPhotos()) } }
     var deletePhotoCandidate by remember { mutableStateOf<String?>(null) }
     var photoVersion by remember { mutableIntStateOf(0) }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    var cameraSectionKey by remember { mutableStateOf<String?>(null) }
+    var pickerSectionKey by remember { mutableStateOf<String?>(null) }
+    fun storedInBucket(sectionKey: String?): List<ReportPhoto> = storedPhotos.filter {
+        if (sectionKey == null) it.scope == "general" else it.scope == "section" && it.sectionKey == sectionKey
+    }
+    fun pendingInBucket(sectionKey: String?): List<PhotoJob> = photos.filter { it.sectionKey == sectionKey }
+    fun bucketCount(sectionKey: String?): Int = storedInBucket(sectionKey).size + pendingInBucket(sectionKey).size
     fun syncStoredPhotos() {
         val updated = org.json.JSONArray()
         storedPhotos.forEach { updated.put(it.toJson()) }
         report.checklist.put("_photos", updated)
     }
-    fun preparePhoto(source: Uri, existingIndex: Int? = null) {
-        if (existingIndex == null && storedPhotos.size + photos.size >= MAX_GENERAL_PHOTOS) {
-            saveError = "Solo se permiten $MAX_GENERAL_PHOTOS fotografias generales por reporte."
+    fun preparePhoto(source: Uri, sectionKey: String?, existingIndex: Int? = null) {
+        if (existingIndex == null && bucketCount(sectionKey) >= MAX_PHOTOS_PER_BUCKET) {
+            saveError = "Solo se permiten $MAX_PHOTOS_PER_BUCKET fotografias por bloque."
             return
         }
         val index = existingIndex ?: photos.size
         val previousComment = existingIndex?.let { photos[it].comment }.orEmpty()
         if (existingIndex == null) {
-            photos.add(PhotoJob(source, status = "Comprimiendo"))
+            photos.add(PhotoJob(source, status = "Comprimiendo", sectionKey = sectionKey))
         } else {
-            photos[index] = PhotoJob(source, status = "Comprimiendo", comment = previousComment)
+            photos[index] = PhotoJob(source, status = "Comprimiendo", comment = previousComment, sectionKey = sectionKey)
         }
         Thread {
             try {
                 val compressed = PhotoProcessor.compress(context, source)
                 val currentComment = photos.getOrNull(index)?.comment ?: previousComment
-                photos[index] = PhotoJob(source, compressed, "Lista para guardar", comment = currentComment)
+                photos[index] = PhotoJob(source, compressed, "Lista para guardar", comment = currentComment, sectionKey = sectionKey)
             } catch (error: Exception) {
                 val currentComment = photos.getOrNull(index)?.comment ?: previousComment
                 photos[index] = PhotoJob(
                     source = source,
                     status = "Error",
                     error = error.message ?: "Error al subir",
-                    comment = currentComment
+                    comment = currentComment,
+                    sectionKey = sectionKey
                 )
             } finally { photoVersion++ }
         }.start()
     }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
-        val remaining = (MAX_GENERAL_PHOTOS - storedPhotos.size - photos.size).coerceAtLeast(0)
-        selected.take(remaining).forEach(::preparePhoto)
+        val target = pickerSectionKey
+        val remaining = (MAX_PHOTOS_PER_BUCKET - bucketCount(target)).coerceAtLeast(0)
+        selected.take(remaining).forEach { preparePhoto(it, target) }
         if (selected.size > remaining) {
-            saveError = "Se seleccionaron mas fotografias de las permitidas. El limite general es $MAX_GENERAL_PHOTOS."
+            saveError = "Se seleccionaron mas fotografias de las permitidas. El limite por bloque es $MAX_PHOTOS_PER_BUCKET."
         }
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
-        if (captured) cameraUri?.let(::preparePhoto)
+        if (captured) cameraUri?.let { preparePhoto(it, cameraSectionKey) }
+    }
+    fun launchCamera(sectionKey: String?) {
+        cameraSectionKey = sectionKey
+        val uri = PhotoProcessor.createCameraUri(context)
+        cameraUri = uri
+        camera.launch(uri)
+    }
+    fun launchPicker(sectionKey: String?) {
+        pickerSectionKey = sectionKey
+        photoPicker.launch("image/*")
     }
     fun deleteStoredPhoto(name: String) {
         Thread {
@@ -104,7 +125,7 @@ fun ReportEditor(
                 ReportApi.deletePhoto(report.id, name)
                 storedPhotos.removeAll { it.name == name }
                 syncStoredPhotos()
-                onPhotoDeleted(report.id, storedPhotos.firstOrNull()?.name)
+                onPhotoDeleted(report.id, storedPhotos.firstOrNull { it.scope == "general" }?.name)
             } catch (error: Exception) {
                 saveError = error.message ?: "No se pudo eliminar la fotografia."
             }
@@ -143,7 +164,9 @@ fun ReportEditor(
                                             context.contentResolver,
                                             report.id,
                                             photo.compressed!!,
-                                            photo.comment.trim()
+                                            photo.comment.trim(),
+                                            scope = if (photo.sectionKey == null) "general" else "section",
+                                            sectionKey = photo.sectionKey
                                         )
                                         ReportApi.verifyPhoto(uploaded.path)
                                         storedPhotos.add(uploaded.photo.copy(comment = photo.comment.trim()))
@@ -153,7 +176,7 @@ fun ReportEditor(
                                         throw error
                                     }
                                     }
-                                    val serverMetadata = ReportApi.getReport(report.id).photos().associateBy { it.name }
+                                    val serverMetadata = ReportApi.getReport(report.id).allPhotos().associateBy { it.name }
                                     storedPhotos.indices.forEach { storedIndex ->
                                         val local = storedPhotos[storedIndex]
                                         val server = serverMetadata[local.name]
@@ -163,9 +186,11 @@ fun ReportEditor(
                                     }
                                     syncStoredPhotos()
                                     ReportApi.saveReport(report)
-                                    val persistedPhotos = ReportApi.getReport(report.id).photos().associateBy { it.name }
+                                    val persistedPhotos = ReportApi.getReport(report.id).allPhotos().associateBy { it.name }
                                     val missingMetadata = storedPhotos.firstOrNull { expected ->
-                                        persistedPhotos[expected.name]?.comment?.trim() != expected.comment.trim()
+                                        val persisted = persistedPhotos[expected.name]
+                                        persisted == null || persisted.comment.trim() != expected.comment.trim() ||
+                                            persisted.scope != expected.scope || persisted.sectionKey != expected.sectionKey
                                     }
                                     if (missingMetadata != null) {
                                         throw IllegalStateException("El servidor no confirmo el comentario de una fotografia.")
@@ -193,87 +218,30 @@ fun ReportEditor(
             OutlinedTextField(equipment, { equipment = it }, Modifier.fillMaxWidth(), label = { Text("Equipo") })
             OutlinedTextField(technician, { technician = it }, Modifier.fillMaxWidth(), label = { Text("Tecnico") })
 
-            val generalPhotoCount = storedPhotos.size + photos.size
-            Text("Fotografias generales ($generalPhotoCount/$MAX_GENERAL_PHOTOS)", style = MaterialTheme.typography.titleLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    enabled = generalPhotoCount < MAX_GENERAL_PHOTOS && !saving,
-                    onClick = { val uri = PhotoProcessor.createCameraUri(context); cameraUri = uri; camera.launch(uri) }
-                ) { Text("Tomar fotografia") }
-                OutlinedButton(
-                    enabled = generalPhotoCount < MAX_GENERAL_PHOTOS && !saving,
-                    onClick = { photoPicker.launch("image/*") }
-                ) { Text("Seleccionar") }
-            }
-            if (generalPhotoCount >= MAX_GENERAL_PHOTOS) {
-                Text("Limite de 5 fotografias generales alcanzado.", style = MaterialTheme.typography.bodySmall)
-            }
-            if (photos.isEmpty()) {
-                Text("No hay fotografias nuevas pendientes.", style = MaterialTheme.typography.bodySmall)
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    photos.forEachIndexed { index, photo ->
-                        Column(modifier = Modifier.width(200.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            photo.compressed?.let { uri -> PhotoPreview(uri) }
-                            OutlinedTextField(
-                                value = photo.comment,
-                                onValueChange = { value -> photos[index] = photos[index].copy(comment = value.take(500)) },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Comentario (opcional)") },
-                                minLines = 2,
-                                maxLines = 3,
-                                supportingText = { Text("${photo.comment.length}/500") }
-                            )
-                            Text(photo.status, style = MaterialTheme.typography.labelSmall)
-                            if (photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" } &&
-                                (photo.status == "Lista para guardar" || photo.status == "Error")) IconButton(onClick = { photos.removeAt(index) }) {
-                                Icon(Icons.Filled.Close, contentDescription = "Quitar fotografia local")
-                            }
-                            if (photo.status == "Error") Text(photo.error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                            if (photo.status == "Error") TextButton(onClick = { preparePhoto(photo.source, index) }) { Text("Reintentar") }
-                        }
-                    }
-                }
-            }
-            if (storedPhotos.isNotEmpty()) {
-                Text("Fotografias guardadas", style = MaterialTheme.typography.titleMedium)
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().height(260.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(storedPhotos, key = { it.name }) { storedPhoto ->
-                        val index = storedPhotos.indexOfFirst { it.name == storedPhoto.name }
-                        Column(
-                            modifier = Modifier.width(200.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            AuthenticatedPhoto(
-                                reportId = report.id,
-                                name = storedPhoto.name,
-                                contentDescription = "Fotografia guardada",
-                                modifier = Modifier.fillMaxWidth().height(96.dp)
-                            )
-                            OutlinedTextField(
-                                value = storedPhoto.comment,
-                                onValueChange = { value ->
-                                    if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Comentario (opcional)") },
-                                minLines = 2,
-                                maxLines = 3
-                            )
-                            IconButton(onClick = { deletePhotoCandidate = storedPhoto.name }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Eliminar fotografia", tint = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                    }
-                }
-            }
+            PhotoBucketEditor(
+                title = "Fotografias generales",
+                reportId = report.id,
+                pendingPhotos = pendingInBucket(null),
+                storedPhotos = storedInBucket(null),
+                saving = saving,
+                canModifyPending = photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
+                onTakePhoto = { launchCamera(null) },
+                onSelectPhotos = { launchPicker(null) },
+                onPendingComment = { pending, value ->
+                    val index = photos.indexOf(pending)
+                    if (index >= 0) photos[index] = photos[index].copy(comment = value.take(500))
+                },
+                onRemovePending = { pending -> photos.remove(pending) },
+                onRetryPending = { pending ->
+                    val index = photos.indexOf(pending)
+                    if (index >= 0) preparePhoto(pending.source, pending.sectionKey, index)
+                },
+                onStoredComment = { stored, value ->
+                    val index = storedPhotos.indexOfFirst { it.name == stored.name }
+                    if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
+                },
+                onDeleteStored = { deletePhotoCandidate = it }
+            )
             if (saveError.isNotBlank()) Text(saveError, color = MaterialTheme.colorScheme.error)
 
             Text("Checklist de mantenimiento", style = MaterialTheme.typography.titleLarge)
@@ -282,7 +250,35 @@ fun ReportEditor(
                     section = section,
                     checklist = report.checklist,
                     observations = report.observations,
-                    onChanged = { stateVersion++ }
+                    onChanged = { stateVersion++ },
+                    photoContent = if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTION_KEYS) {
+                        {
+                            PhotoBucketEditor(
+                                title = "Fotografias de ${section.title}",
+                                reportId = report.id,
+                                pendingPhotos = pendingInBucket(section.key),
+                                storedPhotos = storedInBucket(section.key),
+                                saving = saving,
+                                canModifyPending = photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
+                                onTakePhoto = { launchCamera(section.key) },
+                                onSelectPhotos = { launchPicker(section.key) },
+                                onPendingComment = { pending, value ->
+                                    val index = photos.indexOf(pending)
+                                    if (index >= 0) photos[index] = photos[index].copy(comment = value.take(500))
+                                },
+                                onRemovePending = { pending -> photos.remove(pending) },
+                                onRetryPending = { pending ->
+                                    val index = photos.indexOf(pending)
+                                    if (index >= 0) preparePhoto(pending.source, pending.sectionKey, index)
+                                },
+                                onStoredComment = { stored, value ->
+                                    val index = storedPhotos.indexOfFirst { it.name == stored.name }
+                                    if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
+                                },
+                                onDeleteStored = { deletePhotoCandidate = it }
+                            )
+                        }
+                    } else null
                 )
             }
 
@@ -310,6 +306,104 @@ fun ReportEditor(
 }
 
 @Composable
+private fun PhotoBucketEditor(
+    title: String,
+    reportId: Int,
+    pendingPhotos: List<PhotoJob>,
+    storedPhotos: List<ReportPhoto>,
+    saving: Boolean,
+    canModifyPending: Boolean,
+    onTakePhoto: () -> Unit,
+    onSelectPhotos: () -> Unit,
+    onPendingComment: (PhotoJob, String) -> Unit,
+    onRemovePending: (PhotoJob) -> Unit,
+    onRetryPending: (PhotoJob) -> Unit,
+    onStoredComment: (ReportPhoto, String) -> Unit,
+    onDeleteStored: (String) -> Unit
+) {
+    val count = pendingPhotos.size + storedPhotos.size
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("$title ($count/$MAX_PHOTOS_PER_BUCKET)", style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(enabled = count < MAX_PHOTOS_PER_BUCKET && !saving, onClick = onTakePhoto) {
+                Text("Tomar fotografia")
+            }
+            OutlinedButton(enabled = count < MAX_PHOTOS_PER_BUCKET && !saving, onClick = onSelectPhotos) {
+                Text("Seleccionar")
+            }
+        }
+        if (count >= MAX_PHOTOS_PER_BUCKET) {
+            Text("Limite de 5 fotografias alcanzado para este bloque.", style = MaterialTheme.typography.bodySmall)
+        }
+        if (pendingPhotos.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                pendingPhotos.forEach { photo ->
+                    Column(modifier = Modifier.width(200.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        photo.compressed?.let { uri -> PhotoPreview(uri) }
+                        OutlinedTextField(
+                            value = photo.comment,
+                            onValueChange = { onPendingComment(photo, it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Comentario (opcional)") },
+                            minLines = 2,
+                            maxLines = 3,
+                            supportingText = { Text("${photo.comment.length}/500") }
+                        )
+                        Text(photo.status, style = MaterialTheme.typography.labelSmall)
+                        if (canModifyPending && (photo.status == "Lista para guardar" || photo.status == "Error")) {
+                            IconButton(onClick = { onRemovePending(photo) }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Quitar fotografia local")
+                            }
+                        }
+                        if (photo.status == "Error") {
+                            Text(photo.error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            TextButton(onClick = { onRetryPending(photo) }) { Text("Reintentar") }
+                        }
+                    }
+                }
+            }
+        }
+        if (storedPhotos.isNotEmpty()) {
+            Text("Fotografias guardadas", style = MaterialTheme.typography.labelLarge)
+            LazyRow(
+                modifier = Modifier.fillMaxWidth().height(260.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(storedPhotos, key = { it.name }) { storedPhoto ->
+                    Column(
+                        modifier = Modifier.width(200.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        AuthenticatedPhoto(
+                            reportId = reportId,
+                            name = storedPhoto.name,
+                            contentDescription = "Fotografia guardada en $title",
+                            modifier = Modifier.fillMaxWidth().height(96.dp)
+                        )
+                        OutlinedTextField(
+                            value = storedPhoto.comment,
+                            onValueChange = { onStoredComment(storedPhoto, it.take(500)) },
+                            enabled = !saving,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Comentario (opcional)") },
+                            minLines = 2,
+                            maxLines = 3
+                        )
+                        IconButton(enabled = !saving, onClick = { onDeleteStored(storedPhoto.name) }) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Eliminar fotografia", tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ChecklistControl(item: ChecklistItem, value: String, onValue: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -333,7 +427,8 @@ private fun ChecklistSectionEditor(
     section: ChecklistSection,
     checklist: org.json.JSONObject,
     observations: org.json.JSONObject,
-    onChanged: () -> Unit
+    onChanged: () -> Unit,
+    photoContent: (@Composable () -> Unit)? = null
 ) {
     var expanded by remember(section.title, section.observationKey) { mutableStateOf(section.observationKey == null) }
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -359,6 +454,7 @@ private fun ChecklistSectionEditor(
                         minLines = 2
                     )
                 }
+                photoContent?.invoke()
             }
         }
     }

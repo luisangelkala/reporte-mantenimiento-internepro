@@ -13,13 +13,15 @@ data class ReportPhoto(
     val name: String,
     val comment: String = "",
     val uploadedAt: String = "",
-    val scope: String = "general"
+    val scope: String = "general",
+    val sectionKey: String? = null
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("name", name)
         .put("comment", comment)
         .put("scope", scope)
         .also { json -> if (uploadedAt.isNotBlank()) json.put("uploaded_at", uploadedAt) }
+        .also { json -> if (scope == "section" && !sectionKey.isNullOrBlank()) json.put("section_key", sectionKey) }
 }
 
 data class UploadedReportPhoto(
@@ -41,7 +43,10 @@ data class ReportDetail(
     val checklist: JSONObject,
     val observations: JSONObject
 ) {
-    fun photos(): List<ReportPhoto> = checklist.optJSONArray("_photos").reportPhotos()
+    fun allPhotos(): List<ReportPhoto> = checklist.optJSONArray("_photos").reportPhotos()
+    fun photos(): List<ReportPhoto> = allPhotos().filter { it.scope == "general" }
+    fun sectionPhotos(sectionKey: String): List<ReportPhoto> =
+        allPhotos().filter { it.scope == "section" && it.sectionKey == sectionKey }
     fun photoNames(): List<String> = photos().map { it.name }
 }
 
@@ -51,14 +56,19 @@ private fun JSONArray?.reportPhotos(): List<ReportPhoto> {
         val item = optJSONObject(index) ?: return@List null
         val name = item.optString("name")
         val scope = item.optString("scope", "general")
-        if (!name.matches(Regex("^[a-f0-9]{32}\\.(jpg|png|webp)$")) || scope != "general") {
+        val sectionKey = item.optString("section_key").ifBlank { null }
+        if (!name.matches(Regex("^[a-f0-9]{32}\\.(jpg|png|webp)$")) ||
+            scope !in setOf("general", "section") ||
+            (scope == "section" && sectionKey == null)
+        ) {
             return@List null
         }
         ReportPhoto(
             name = name,
             comment = item.optString("comment"),
             uploadedAt = item.optString("uploaded_at"),
-            scope = scope
+            scope = scope,
+            sectionKey = sectionKey
         )
     }.filterNotNull()
 }
@@ -105,7 +115,8 @@ object ReportApi {
                 type = state.optString("reporte", "elevador"),
                 status = state.optString("status"),
                 createdAt = item.optString("created_at"),
-                coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos").reportPhotos().firstOrNull()?.name
+                coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos")
+                    .reportPhotos().firstOrNull { it.scope == "general" }?.name
             )
         }
     }
@@ -137,7 +148,14 @@ object ReportApi {
         parseReport(jsonRequest("reports/$id/approve", "POST", JSONObject().put("approved_by", approvedBy)).getJSONObject("data"))
 
     @Synchronized
-    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri, comment: String): UploadedReportPhoto {
+    fun uploadPhoto(
+        resolver: ContentResolver,
+        reportId: Int,
+        uri: Uri,
+        comment: String,
+        scope: String = "general",
+        sectionKey: String? = null
+    ): UploadedReportPhoto {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {
             doOutput = true
@@ -150,6 +168,14 @@ object ReportApi {
             output.writeBytes("Content-Type: text/plain; charset=UTF-8\r\n\r\n")
             output.write(comment.toByteArray(Charsets.UTF_8))
             output.writeBytes("\r\n--$boundary\r\n")
+            output.writeBytes("Content-Disposition: form-data; name=\"scope\"\r\n\r\n")
+            output.write(scope.toByteArray(Charsets.UTF_8))
+            output.writeBytes("\r\n--$boundary\r\n")
+            if (scope == "section" && !sectionKey.isNullOrBlank()) {
+                output.writeBytes("Content-Disposition: form-data; name=\"section_key\"\r\n\r\n")
+                output.write(sectionKey.toByteArray(Charsets.UTF_8))
+                output.writeBytes("\r\n--$boundary\r\n")
+            }
             output.writeBytes("Content-Disposition: form-data; name=\"photo\"; filename=\"foto.jpg\"\r\n")
             output.writeBytes("Content-Type: image/jpeg\r\n\r\n")
             input.use { it.copyTo(output) }
@@ -165,7 +191,8 @@ object ReportApi {
                 name = uploaded.getString("name"),
                 comment = if (uploaded.has("comment")) uploaded.optString("comment") else comment.trim(),
                 uploadedAt = uploaded.optString("uploaded_at"),
-                scope = uploaded.optString("scope", "general")
+                scope = uploaded.optString("scope", scope),
+                sectionKey = uploaded.optString("section_key").ifBlank { sectionKey.orEmpty() }.ifBlank { null }
             ),
             path = uploaded.getString("url")
         )

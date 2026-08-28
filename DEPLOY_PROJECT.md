@@ -215,8 +215,8 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 
 | Microfase | Estado | Alcance |
 | --- | --- | --- |
-| 5.1 | testing | Fotografías generales: cada foto podrá tener un comentario opcional y se permitirá un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica terminada y compilada; pendiente de validación funcional de QA en DEMO. |
-| 5.2 | pending | Fotografías por sección: seis secciones ALIMAK autorizadas tendrán su propio botón de cámara/galería, con máximo de cinco fotos y comentario opcional por cada fotografía. Las secciones quedan identificadas por clave técnica para evitar ambigüedad entre títulos repetidos. |
+| 5.1 | completed | Fotografías generales: cada foto puede tener un comentario opcional y se permite un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica, persistencia corregida y validación funcional de QA completadas. |
+| 5.2 | testing | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
 | 5.3 | pending | Persistencia y visualización: ampliar el modelo/API para guardar nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web mostrarán cada comentario junto a su miniatura y en el visor correspondiente. |
 | 5.4 | pending | PDF de aprobación: al aprobar, el backend generará el PDF completo con la presentación del reporte, datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. |
 | 5.5 | pending | Compartir PDF: el botón Enviar/WhatsApp de cada card solo estará habilitado cuando el reporte esté aprobado y su PDF exista. Abrirá WhatsApp o el selector de compartir con la URL backend del PDF, sin exponer el token Bearer. |
@@ -247,6 +247,17 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Un reporte aprobado conservará bloqueadas sus fotografías y comentarios. Para corregirlos deberá utilizarse `Volver a PENDIENTE` desde la web.
 - Las fotografías existentes anteriores a esta fase se tratarán como generales y con comentario vacío; completarlo será opcional y la migración no eliminará archivos existentes.
 - Cada foto continuará comprimida por la APK al límite vigente de menos de 250 KB y almacenada fuera del acceso web directo.
+
+### Implementación técnica 5.2
+
+- El modelo Android identifica cada sección del checklist mediante su clave estable y conserva `scope`, `section_key`, comentario y fecha de carga por fotografía.
+- Los bloques fotográficos aparecen dentro de CABINA `a_2`, CONTROL `a_9`, CREMALLERA `a_15`, PARACAÍDAS `a_22`, PUERTAS DE PASILLO `a_28` y FOSO `a_32`.
+- Cada bloque presenta cámara, galería, contador independiente `0/5`, compresión local, miniaturas, comentario opcional, reintento y eliminación.
+- Las fotos generales continúan separadas y únicamente una foto general puede utilizarse como portada de la card.
+- La API acepta `scope=section` únicamente para reportes ALIMAK y para las seis claves autorizadas; rechaza otros ámbitos, otras secciones y el sexto archivo de cualquier bloque.
+- El bloqueo transaccional del reporte evita superar cinco mediante cargas simultáneas. La sincronización final conserva todos los bloques sin sobrescribir sus fotografías.
+- Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. La validación contra API, MariaDB y almacenamiento de DEMO queda pendiente de QA.
+- La visualización agrupada fuera del editor corresponde a 5.3 y continúa en `pending`.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 
@@ -309,7 +320,7 @@ Reglas de asociación:
 11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: únicamente la microfase 5.1 fue autorizada e implementada y espera validación funcional de QA. Las microfases 5.2 a 5.7 permanecen en `pending` y no han sido implementadas.
+La Fase 5 queda en `testing`: 5.1 está `completed`; 5.2 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.3 a 5.7 permanecen en `pending` y no han sido implementadas.
 
 ## Criterio de ejecución
 

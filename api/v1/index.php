@@ -145,28 +145,51 @@ function api_photo_comment($value): string
     return $comment;
 }
 
-function api_general_photos(array $data): array
+function api_photo_section_keys(): array
+{
+    return ['a_2', 'a_9', 'a_15', 'a_22', 'a_28', 'a_32'];
+}
+
+function api_photos_for_bucket(array $data, string $scope, ?string $sectionKey): array
 {
     $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
-    return array_values(array_filter($photos, function ($photo) {
-        return is_array($photo) && (($photo['scope'] ?? 'general') === 'general');
+    return array_values(array_filter($photos, function ($photo) use ($scope, $sectionKey) {
+        if (!is_array($photo) || (($photo['scope'] ?? 'general') !== $scope)) {
+            return false;
+        }
+        return $scope === 'general' || (($photo['section_key'] ?? '') === $sectionKey);
     }));
 }
 
-function api_validate_general_photo_metadata(array $data): void
+function api_validate_photo_metadata(array $data, string $reportType): void
 {
-    $photos = api_general_photos($data);
-    if (count($photos) > 5) {
-        api_response(409, ['error' => 'Solo se permiten 5 fotografias generales por reporte.']);
-    }
+    $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
+    $bucketCounts = [];
     foreach ($photos as $photo) {
+        if (!is_array($photo)) {
+            api_response(400, ['error' => 'Los datos de una fotografia son invalidos.']);
+        }
         if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', (string) ($photo['name'] ?? ''))) {
             api_response(400, ['error' => 'Los datos de una fotografia son invalidos.']);
         }
-        // Los registros historicos pueden no tener comentario hasta que se editen
-        // desde la APK. No se bloquea por ello la edicion web existente.
         if (array_key_exists('comment', $photo)) {
             api_photo_comment($photo['comment']);
+        }
+        $scope = $photo['scope'] ?? 'general';
+        if ($scope === 'general') {
+            $bucket = 'general';
+        } elseif ($scope === 'section') {
+            $sectionKey = (string) ($photo['section_key'] ?? '');
+            if ($reportType !== 'alimak' || !in_array($sectionKey, api_photo_section_keys(), true)) {
+                api_response(400, ['error' => 'La seccion fotografica no esta autorizada para este reporte.']);
+            }
+            $bucket = 'section:' . $sectionKey;
+        } else {
+            api_response(400, ['error' => 'El ambito de la fotografia es invalido.']);
+        }
+        $bucketCounts[$bucket] = ($bucketCounts[$bucket] ?? 0) + 1;
+        if ($bucketCounts[$bucket] > 5) {
+            api_response(409, ['error' => 'Solo se permiten 5 fotografias por bloque.']);
         }
     }
 }
@@ -179,11 +202,22 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     }
 
     $comment = api_photo_comment($_POST['comment'] ?? null);
+    $scope = (string) ($_POST['scope'] ?? 'general');
+    $sectionKey = null;
+    if ($scope === 'section') {
+        $sectionKey = trim((string) ($_POST['section_key'] ?? ''));
+        $reportState = json_decode($report['state_reporte'] ?? '', true) ?: [];
+        if (($reportState['reporte'] ?? '') !== 'alimak' || !in_array($sectionKey, api_photo_section_keys(), true)) {
+            api_response(400, ['error' => 'La seccion fotografica no esta autorizada para este reporte.']);
+        }
+    } elseif ($scope !== 'general') {
+        api_response(400, ['error' => 'El ambito de la fotografia es invalido.']);
+    }
     $data = json_decode($report['data_reporte'] ?? '', true);
     $data = is_array($data) ? $data : [];
     $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
-    if (count(api_general_photos($data)) >= 5) {
-        api_response(409, ['error' => 'Solo se permiten 5 fotografias generales por reporte.']);
+    if (count(api_photos_for_bucket($data, $scope, $sectionKey)) >= 5) {
+        api_response(409, ['error' => 'Solo se permiten 5 fotografias por bloque.']);
     }
 
     $upload = $_FILES['photo'] ?? null;
@@ -214,12 +248,16 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     chmod($destination, 0640);
 
     $uploadedAt = date('c');
-    $photos[] = [
+    $metadata = [
         'name' => $filename,
         'uploaded_at' => $uploadedAt,
         'comment' => $comment,
-        'scope' => 'general',
+        'scope' => $scope,
     ];
+    if ($scope === 'section') {
+        $metadata['section_key'] = $sectionKey;
+    }
+    $photos[] = $metadata;
     $data['_photos'] = $photos;
     $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
     $statement = $connection->prepare('UPDATE reporte SET data_reporte = ?, updated_at = NOW() WHERE id = ?');
@@ -227,13 +265,17 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     $statement->execute();
     $statement->close();
 
-    return [
+    $response = [
         'name' => $filename,
         'url' => 'reports/' . $id . '/photos/' . rawurlencode($filename),
         'uploaded_at' => $uploadedAt,
         'comment' => $comment,
-        'scope' => 'general',
+        'scope' => $scope,
     ];
+    if ($scope === 'section') {
+        $response['section_key'] = $sectionKey;
+    }
+    return $response;
 }
 
 api_authenticate();
@@ -377,7 +419,8 @@ if ($method === 'PUT' && count($segments) === 2) {
             mysqli_close($connection);
             api_response(400, ['error' => 'Campo invalido: data']);
         }
-        api_validate_general_photo_metadata($payload['data']);
+        $reportState = json_decode($report['state_reporte'] ?? '', true) ?: [];
+        api_validate_photo_metadata($payload['data'], (string) ($reportState['reporte'] ?? 'elevador'));
         $data = json_encode($payload['data'], JSON_UNESCAPED_UNICODE);
     } else {
         $data = $report['data_reporte'];

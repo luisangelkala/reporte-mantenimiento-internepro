@@ -269,6 +269,8 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Los registros históricos sin `scope`, `section_key` o `comment` continúan tratándose como fotografías generales con comentario vacío.
 - La edición web de fotografías no forma parte de 5.3; carga, modificación, eliminación y límites visuales en web permanecen reservados para 5.6.
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`; las pruebas funcionales web y APK en DEMO quedan pendientes de QA.
+- Corrección solicitada durante `testing`: la vista ALIMAK muestra únicamente las fotos generales bajo las instrucciones y coloca las fotos `a_2`, `a_9`, `a_15`, `a_22`, `a_28` y `a_32` dentro de la fila de su sección correspondiente, evitando una galería única mezclada.
+- El icono de edición se oculta del listado web para todos los reportes. Las rutas y la funcionalidad técnica de edición permanecen intactas para la futura fase 5.6.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 

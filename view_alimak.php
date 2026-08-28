@@ -168,6 +168,7 @@ mysqli_close($db);
                                                     echo (!isset($obs_reporte['ab_2'])) ? '' : $obs_reporte['ab_2'];?></p>
                                                 </div>
                                             </div>
+                                            <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_2', 'Fotografías de CABINA'); ?>
                                         </th>
                                         <th scope="col">
                                         </th>
@@ -438,6 +439,7 @@ mysqli_close($db);
                                                     echo (!isset($obs_reporte['ab_9'])) ? '' : $obs_reporte['ab_9'];?></p>
                                                 </div>
                                             </div>
+                                            <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_9', 'Fotografías de CONTROL'); ?>
                                         </th>
                                         <th scope="col">
                                         </th>
@@ -601,6 +603,7 @@ mysqli_close($db);
                                                     echo (!isset($obs_reporte['ab_15'])) ? '' : $obs_reporte['ab_15'];?></p>
                                                 </div>
                                             </div>
+                                            <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_15', 'Fotografías de CREMALLERA'); ?>
                                         </th>
                                         <th scope="col">
                                         </th>
@@ -765,6 +768,7 @@ mysqli_close($db);
                                                     echo (!isset($obs_reporte['ab_22'])) ? '' : $obs_reporte['ab_22'];?></p>
                                                 </div>
                                             </div>
+                                            <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_22', 'Fotografías de PARACAÍDAS'); ?>
                                         </th>
                                         <th scope="col">
                                         </th>
@@ -919,6 +923,7 @@ mysqli_close($db);
                                         echo (!isset($obs_reporte['ab_28'])) ? '' : $obs_reporte['ab_28'];?></p>
                                     </div>
                                 </div>
+                                <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_28', 'Fotografías de PUERTAS DE PASILLO'); ?>
                             </th>
                             <th scope="col">
                             </th>
@@ -1014,6 +1019,7 @@ mysqli_close($db);
                                         echo (!isset($obs_reporte['ab_32'])) ? '' : $obs_reporte['ab_32'];?></p>
                                     </div>
                                 </div>
+                                <?php echo report_photo_gallery_group_markup($ID, $reportPhotos, 'section', 'a_32', 'Fotografías de FOSO'); ?>
                             </th>
                             <th scope="col">
                             </th>

@@ -140,52 +140,46 @@ function report_photo_list_button(int $reportId, array $photos): string
 
 function report_photo_gallery_markup(int $reportId, array $photos): string
 {
-    if ($photos === []) {
+    return report_photo_gallery_group_markup($reportId, $photos, 'general', null, 'Fotografías generales');
+}
+
+function report_photo_gallery_group_markup(
+    int $reportId,
+    array $photos,
+    string $scope,
+    ?string $sectionKey,
+    string $title
+): string {
+    $groupPhotos = array_values(array_filter($photos, function ($photo) use ($scope, $sectionKey) {
+        if (!is_array($photo) || (($photo['scope'] ?? 'general') !== $scope)) {
+            return false;
+        }
+        return $scope === 'general' || (($photo['section_key'] ?? '') === $sectionKey);
+    }));
+    if ($groupPhotos === []) {
         return '';
     }
 
-    $groups = [
-        'general' => ['title' => 'Fotografías generales', 'photos' => []],
-    ];
-    foreach (report_photo_section_labels() as $sectionKey => $label) {
-        $groups['section-' . $sectionKey] = ['title' => 'Fotografías de ' . $label, 'photos' => []];
+    $items = report_photo_items($reportId, $groupPhotos);
+    $attribute = report_photo_data_attribute($items);
+    $suffix = $scope === 'general' ? 'general' : preg_replace('/[^a-z0-9_-]/i', '', (string) $sectionKey);
+    $titleId = 'report-photo-title-' . $reportId . '-' . $suffix;
+    $html = '<section class="report-photo-section report-photo-section--group" aria-labelledby="' . $titleId . '">';
+    $html .= '<h3 id="' . $titleId . '">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h3>';
+    $html .= '<div class="report-photo-thumbnails" data-report-photos="' . $attribute . '">';
+    foreach ($items as $index => $item) {
+        $number = $index + 1;
+        $escapedUrl = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
+        $comment = trim((string) $item['comment']);
+        $visibleComment = $comment === '' ? 'Sin comentario' : $comment;
+        $html .= '<article class="report-photo-card">';
+        $html .= '<button type="button" data-photo-gallery data-photo-index="' . $index
+            . '" aria-label="Ampliar fotografía ' . $number . ' de ' . count($items) . '">';
+        $html .= '<img src="' . $escapedUrl . '" alt="Fotografía ' . $number . ' del reporte" loading="lazy">';
+        $html .= '</button>';
+        $html .= '<p>' . htmlspecialchars($visibleComment, ENT_QUOTES, 'UTF-8') . '</p>';
+        $html .= '</article>';
     }
-    foreach ($photos as $photo) {
-        $groupKey = ($photo['scope'] ?? 'general') === 'section'
-            ? 'section-' . ($photo['section_key'] ?? '')
-            : 'general';
-        if (isset($groups[$groupKey])) {
-            $groups[$groupKey]['photos'][] = $photo;
-        }
-    }
-
-    $html = '<section class="report-photo-section" aria-labelledby="report-photo-title-' . $reportId . '">';
-    $html .= '<h3 id="report-photo-title-' . $reportId . '">Evidencia fotográfica</h3>';
-    foreach ($groups as $group) {
-        if ($group['photos'] === []) {
-            continue;
-        }
-        $items = report_photo_items($reportId, $group['photos']);
-        $attribute = report_photo_data_attribute($items);
-        $html .= '<div class="report-photo-group">';
-        $html .= '<h4>' . htmlspecialchars($group['title'], ENT_QUOTES, 'UTF-8') . '</h4>';
-        $html .= '<div class="report-photo-thumbnails" data-report-photos="' . $attribute . '">';
-        foreach ($items as $index => $item) {
-            $number = $index + 1;
-            $escapedUrl = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
-            $comment = trim((string) $item['comment']);
-            $visibleComment = $comment === '' ? 'Sin comentario' : $comment;
-            $html .= '<article class="report-photo-card">';
-            $html .= '<button type="button" data-photo-gallery data-photo-index="' . $index
-                . '" aria-label="Ampliar fotografía ' . $number . ' de ' . count($items) . '">';
-            $html .= '<img src="' . $escapedUrl . '" alt="Fotografía ' . $number . ' del reporte" loading="lazy">';
-            $html .= '</button>';
-            $html .= '<p>' . htmlspecialchars($visibleComment, ENT_QUOTES, 'UTF-8') . '</p>';
-            $html .= '</article>';
-        }
-        $html .= '</div></div>';
-    }
-
-    $html .= '</section>';
+    $html .= '</div></section>';
     return $html;
 }

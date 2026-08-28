@@ -216,8 +216,8 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | Microfase | Estado | Alcance |
 | --- | --- | --- |
 | 5.1 | completed | Fotografías generales: cada foto puede tener un comentario opcional y se permite un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica, persistencia corregida y validación funcional de QA completadas. |
-| 5.2 | testing | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
-| 5.3 | pending | Persistencia y visualización: ampliar el modelo/API para guardar nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web mostrarán cada comentario junto a su miniatura y en el visor correspondiente. |
+| 5.2 | completed | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada y validada funcionalmente por QA en DEMO. |
+| 5.3 | testing | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
 | 5.4 | pending | PDF de aprobación: al aprobar, el backend generará el PDF completo con la presentación del reporte, datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. |
 | 5.5 | pending | Compartir PDF: el botón Enviar/WhatsApp de cada card solo estará habilitado cuando el reporte esté aprobado y su PDF exista. Abrirá WhatsApp o el selector de compartir con la URL backend del PDF, sin exponer el token Bearer. |
 | 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
@@ -257,7 +257,18 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - La API acepta `scope=section` únicamente para reportes ALIMAK y para las seis claves autorizadas; rechaza otros ámbitos, otras secciones y el sexto archivo de cualquier bloque.
 - El bloqueo transaccional del reporte evita superar cinco mediante cargas simultáneas. La sincronización final conserva todos los bloques sin sobrescribir sus fotografías.
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. La validación contra API, MariaDB y almacenamiento de DEMO queda pendiente de QA.
-- La visualización agrupada fuera del editor corresponde a 5.3 y continúa en `pending`.
+- La visualización agrupada fuera del editor se implementa y valida de forma independiente en 5.3.
+
+### Implementación técnica 5.3
+
+- La vista de visualización de la APK presenta `Fotografías generales` y, dentro de cada sección ALIMAK autorizada, sus fotografías correspondientes.
+- Cada miniatura muestra el comentario o `Sin comentario`; al abrirla, el visor a pantalla completa muestra grupo, comentario, posición y flechas para recorrer únicamente las fotos del mismo grupo.
+- La web interpreta `scope`, `section_key` y `comment`, y separa la evidencia en generales, CABINA, CONTROL, CREMALLERA, PARACAÍDAS, PUERTAS DE PASILLO y FOSO.
+- Las miniaturas web muestran el comentario. El visor web conserva flechas, teclado, gesto táctil y ahora presenta grupo y comentario de la fotografía activa.
+- El icono de galería del listado web sigue funcionando y puede mostrar la procedencia y comentario de cada foto sin alterar el acceso privado firmado.
+- Los registros históricos sin `scope`, `section_key` o `comment` continúan tratándose como fotografías generales con comentario vacío.
+- La edición web de fotografías no forma parte de 5.3; carga, modificación, eliminación y límites visuales en web permanecen reservados para 5.6.
+- Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`; las pruebas funcionales web y APK en DEMO quedan pendientes de QA.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 
@@ -320,7 +331,7 @@ Reglas de asociación:
 11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1 está `completed`; 5.2 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.3 a 5.7 permanecen en `pending` y no han sido implementadas.
+La Fase 5 queda en `testing`: 5.1 y 5.2 están `completed`; 5.3 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.4 a 5.7 permanecen en `pending` y no han sido implementadas.
 
 ## Criterio de ejecución
 

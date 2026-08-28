@@ -5,6 +5,7 @@
     var image;
     var counter;
     var message;
+    var caption;
     var previousButton;
     var nextButton;
     var photos = [];
@@ -26,6 +27,7 @@
                 '<div class="report-photo-lightbox__content">' +
                     '<img alt="Fotografía ampliada del reporte">' +
                     '<p class="report-photo-lightbox__message" role="status"></p>' +
+                    '<p class="report-photo-lightbox__caption"></p>' +
                     '<div class="report-photo-lightbox__counter" aria-live="polite"></div>' +
                 '</div>' +
                 '<button type="button" class="report-photo-lightbox__next" aria-label="Fotografía siguiente">&#10095;</button>' +
@@ -35,6 +37,7 @@
         image = modal.querySelector('img');
         counter = modal.querySelector('.report-photo-lightbox__counter');
         message = modal.querySelector('.report-photo-lightbox__message');
+        caption = modal.querySelector('.report-photo-lightbox__caption');
         previousButton = modal.querySelector('.report-photo-lightbox__previous');
         nextButton = modal.querySelector('.report-photo-lightbox__next');
 
@@ -78,7 +81,22 @@
         }
         try {
             var parsed = JSON.parse(source.getAttribute('data-report-photos'));
-            return Array.isArray(parsed) ? parsed.filter(function (url) { return typeof url === 'string'; }) : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            return parsed.map(function (photo) {
+                if (typeof photo === 'string') {
+                    return { url: photo, comment: '', group: '' };
+                }
+                if (!photo || typeof photo.url !== 'string') {
+                    return null;
+                }
+                return {
+                    url: photo.url,
+                    comment: typeof photo.comment === 'string' ? photo.comment : '',
+                    group: typeof photo.group === 'string' ? photo.group : ''
+                };
+            }).filter(function (photo) { return photo !== null; });
         } catch (error) {
             return [];
         }
@@ -90,7 +108,9 @@
         }
         image.hidden = true;
         message.textContent = 'Cargando fotografía...';
-        image.src = photos[currentIndex];
+        var photo = photos[currentIndex];
+        image.src = photo.url;
+        caption.textContent = (photo.group ? photo.group + ': ' : '') + (photo.comment || 'Sin comentario');
         counter.textContent = (currentIndex + 1) + ' / ' + photos.length;
         previousButton.hidden = photos.length < 2;
         nextButton.hidden = photos.length < 2;

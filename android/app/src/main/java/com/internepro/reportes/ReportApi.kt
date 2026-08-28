@@ -9,6 +9,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 
+val ALIMAK_PHOTO_SECTIONS = linkedMapOf(
+    "a_2" to "CABINA",
+    "a_9" to "CONTROL",
+    "a_15" to "CREMALLERA",
+    "a_22" to "PARACAIDAS",
+    "a_28" to "PUERTAS DE PASILLO",
+    "a_32" to "FOSO"
+)
+
 data class ReportPhoto(
     val name: String,
     val comment: String = "",

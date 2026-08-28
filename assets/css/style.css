@@ -231,6 +231,15 @@ th textarea{
 	font-weight: 700;
 	margin-bottom: 14px;
 }
+.report-photo-group {
+	margin: 0 0 22px;
+}
+.report-photo-group h4 {
+	color: #b40000;
+	font-size: 17px;
+	font-weight: 700;
+	margin: 0 0 10px;
+}
 .report-photo-thumbnails {
 	display: grid;
 	gap: 12px;
@@ -244,6 +253,21 @@ th textarea{
 	height: 130px;
 	overflow: hidden;
 	padding: 0;
+	width: 100%;
+}
+.report-photo-card {
+	background: #f7f5f7;
+	border-radius: 8px;
+	overflow: hidden;
+}
+.report-photo-card p {
+	color: #454047;
+	font-size: 13px;
+	line-height: 1.35;
+	margin: 0;
+	min-height: 50px;
+	padding: 8px 10px;
+	word-break: break-word;
 }
 .report-photo-thumbnails button:hover,
 .report-photo-thumbnails button:focus-visible {
@@ -298,7 +322,7 @@ th textarea{
 	min-width: 0;
 }
 .report-photo-lightbox__content img {
-	max-height: calc(95vh - 55px);
+	max-height: calc(95vh - 120px);
 	max-width: 100%;
 	object-fit: contain;
 }
@@ -332,11 +356,16 @@ th textarea{
 	grid-column: 3;
 }
 .report-photo-lightbox__counter,
+.report-photo-lightbox__caption,
 .report-photo-lightbox__message {
 	color: #fff;
 	font-size: 15px;
 	margin: 8px 0 0;
 	text-align: center;
+}
+.report-photo-lightbox__caption {
+	max-width: 900px;
+	white-space: pre-wrap;
 }
 .report-photo-lightbox-open {
 	overflow: hidden;

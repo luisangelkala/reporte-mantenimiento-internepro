@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 private const val MAX_PHOTOS_PER_BUCKET = 5
-private val ALIMAK_PHOTO_SECTION_KEYS = setOf("a_2", "a_9", "a_15", "a_22", "a_28", "a_32")
 
 private data class PhotoJob(
     val source: Uri,
@@ -251,7 +250,7 @@ fun ReportEditor(
                     checklist = report.checklist,
                     observations = report.observations,
                     onChanged = { stateVersion++ },
-                    photoContent = if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTION_KEYS) {
+                    photoContent = if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTIONS) {
                         {
                             PhotoBucketEditor(
                                 title = "Fotografias de ${section.title}",

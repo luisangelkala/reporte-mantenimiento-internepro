@@ -22,6 +22,11 @@ data class ReportPhoto(
         .also { json -> if (uploadedAt.isNotBlank()) json.put("uploaded_at", uploadedAt) }
 }
 
+data class UploadedReportPhoto(
+    val photo: ReportPhoto,
+    val path: String
+)
+
 data class ReportDetail(
     val id: Int,
     val type: String,
@@ -132,7 +137,7 @@ object ReportApi {
         parseReport(jsonRequest("reports/$id/approve", "POST", JSONObject().put("approved_by", approvedBy)).getJSONObject("data"))
 
     @Synchronized
-    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri, comment: String): String {
+    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri, comment: String): UploadedReportPhoto {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {
             doOutput = true
@@ -154,7 +159,16 @@ object ReportApi {
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(JSONObject(text.ifBlank { "{}" }).optString("error", "No se pudo cargar la fotografia."))
         }
-        return JSONObject(text).getJSONObject("data").getJSONObject("photo").getString("url")
+        val uploaded = JSONObject(text).getJSONObject("data").getJSONObject("photo")
+        return UploadedReportPhoto(
+            photo = ReportPhoto(
+                name = uploaded.getString("name"),
+                comment = if (uploaded.has("comment")) uploaded.optString("comment") else comment.trim(),
+                uploadedAt = uploaded.optString("uploaded_at"),
+                scope = uploaded.optString("scope", "general")
+            ),
+            path = uploaded.getString("url")
+        )
     }
 
     fun verifyPhoto(path: String) {

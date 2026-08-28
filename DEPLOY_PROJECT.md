@@ -234,6 +234,7 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Las fotografías históricas sin comentario continúan siendo legibles y pueden conservarse sin completar el comentario.
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. La prueba funcional contra API, MariaDB y almacenamiento de DEMO queda a cargo de QA.
 - Las microfases 5.2 a 5.7 no forman parte de esta implementación y permanecen en `pending`.
+- Corrección durante `testing`: los comentarios de fotos nuevas ya no dependen únicamente del envío multipart. Tras cargar y verificar los archivos, la APK sincroniza nuevamente `_photos`, guarda el reporte y lo relee desde la API; si nombre y comentario no coinciden con lo enviado, muestra un error y no informa el guardado como exitoso.
 
 ### Reglas funcionales de fotografías
 

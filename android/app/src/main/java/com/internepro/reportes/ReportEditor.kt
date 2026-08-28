@@ -139,26 +139,38 @@ fun ReportEditor(
                                     val index = photos.indexOf(photo)
                                     try {
                                         photos[index] = photo.copy(status = "Subiendo")
-                                        val path = ReportApi.uploadPhoto(
+                                        val uploaded = ReportApi.uploadPhoto(
                                             context.contentResolver,
                                             report.id,
                                             photo.compressed!!,
                                             photo.comment.trim()
                                         )
-                                        ReportApi.verifyPhoto(path)
-                                        storedPhotos.add(
-                                            ReportPhoto(
-                                                name = path.substringAfterLast('/'),
-                                                comment = photo.comment.trim()
-                                            )
-                                        )
+                                        ReportApi.verifyPhoto(uploaded.path)
+                                        storedPhotos.add(uploaded.photo.copy(comment = photo.comment.trim()))
                                         photos.removeAt(index)
                                     } catch (error: Exception) {
                                         photos[index] = photo.copy(status = "Error", error = error.message ?: "Error al subir")
                                         throw error
                                     }
-                                }
-                                onSaved("Reporte guardado.")
+                                    }
+                                    val serverMetadata = ReportApi.getReport(report.id).photos().associateBy { it.name }
+                                    storedPhotos.indices.forEach { storedIndex ->
+                                        val local = storedPhotos[storedIndex]
+                                        val server = serverMetadata[local.name]
+                                        if (server != null && local.uploadedAt.isBlank()) {
+                                            storedPhotos[storedIndex] = local.copy(uploadedAt = server.uploadedAt)
+                                        }
+                                    }
+                                    syncStoredPhotos()
+                                    ReportApi.saveReport(report)
+                                    val persistedPhotos = ReportApi.getReport(report.id).photos().associateBy { it.name }
+                                    val missingMetadata = storedPhotos.firstOrNull { expected ->
+                                        persistedPhotos[expected.name]?.comment?.trim() != expected.comment.trim()
+                                    }
+                                    if (missingMetadata != null) {
+                                        throw IllegalStateException("El servidor no confirmo el comentario de una fotografia.")
+                                    }
+                                    onSaved("Reporte guardado.")
                             } catch (error: Exception) {
                                 saveError = error.message ?: "No se pudo guardar el reporte."
                             } finally {

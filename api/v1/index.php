@@ -63,6 +63,16 @@ function api_report(mysqli $connection, int $id): ?array
     return $report;
 }
 
+function api_report_for_update(mysqli $connection, int $id): ?array
+{
+    $statement = $connection->prepare('SELECT * FROM reporte WHERE id = ? FOR UPDATE');
+    $statement->bind_param('i', $id);
+    $statement->execute();
+    $report = $statement->get_result()->fetch_assoc() ?: null;
+    $statement->close();
+    return $report;
+}
+
 function api_decode_report(array $report): array
 {
     $report['state_reporte'] = json_decode($report['state_reporte'], true) ?: [];
@@ -117,8 +127,65 @@ function api_photo_response(string $path): void
     exit;
 }
 
+function api_photo_comment($value): string
+{
+    if ($value === null) {
+        return '';
+    }
+    if (!is_string($value)) {
+        api_response(400, ['error' => 'El comentario de la fotografia es invalido.']);
+    }
+
+    $comment = trim($value);
+    $length = function_exists('mb_strlen') ? mb_strlen($comment, 'UTF-8') : strlen($comment);
+    if ($length > 500) {
+        api_response(400, ['error' => 'El comentario de la fotografia no puede superar 500 caracteres.']);
+    }
+
+    return $comment;
+}
+
+function api_general_photos(array $data): array
+{
+    $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
+    return array_values(array_filter($photos, function ($photo) {
+        return is_array($photo) && (($photo['scope'] ?? 'general') === 'general');
+    }));
+}
+
+function api_validate_general_photo_metadata(array $data): void
+{
+    $photos = api_general_photos($data);
+    if (count($photos) > 5) {
+        api_response(409, ['error' => 'Solo se permiten 5 fotografias generales por reporte.']);
+    }
+    foreach ($photos as $photo) {
+        if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', (string) ($photo['name'] ?? ''))) {
+            api_response(400, ['error' => 'Los datos de una fotografia son invalidos.']);
+        }
+        // Los registros historicos pueden no tener comentario hasta que se editen
+        // desde la APK. No se bloquea por ello la edicion web existente.
+        if (array_key_exists('comment', $photo)) {
+            api_photo_comment($photo['comment']);
+        }
+    }
+}
+
 function api_store_photo(mysqli $connection, array $report, int $id): array
 {
+    $state = json_decode($report['state_reporte'] ?? '', true) ?: [];
+    if (($state['status'] ?? '') === 'close') {
+        api_response(409, ['error' => 'No se pueden agregar fotografias a un reporte aprobado.']);
+    }
+
+    $comment = api_photo_comment($_POST['comment'] ?? null);
+    $data = json_decode($report['data_reporte'] ?? '', true);
+    $data = is_array($data) ? $data : [];
+    $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
+    if (count(api_general_photos($data)) >= 5) {
+        api_response(409, ['error' => 'Solo se permiten 5 fotografias generales por reporte.']);
+    }
+
     $upload = $_FILES['photo'] ?? null;
     if (!is_array($upload) || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
         api_response(400, ['error' => 'Se requiere una fotografia valida.']);
@@ -146,10 +213,13 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     }
     chmod($destination, 0640);
 
-    $data = json_decode($report['data_reporte'] ?? '', true);
-    $data = is_array($data) ? $data : [];
-    $photos = $data['_photos'] ?? [];
-    $photos[] = ['name' => $filename, 'uploaded_at' => date('c')];
+    $uploadedAt = date('c');
+    $photos[] = [
+        'name' => $filename,
+        'uploaded_at' => $uploadedAt,
+        'comment' => $comment,
+        'scope' => 'general',
+    ];
     $data['_photos'] = $photos;
     $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
     $statement = $connection->prepare('UPDATE reporte SET data_reporte = ?, updated_at = NOW() WHERE id = ?');
@@ -157,7 +227,13 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     $statement->execute();
     $statement->close();
 
-    return ['name' => $filename, 'url' => 'reports/' . $id . '/photos/' . rawurlencode($filename)];
+    return [
+        'name' => $filename,
+        'url' => 'reports/' . $id . '/photos/' . rawurlencode($filename),
+        'uploaded_at' => $uploadedAt,
+        'comment' => $comment,
+        'scope' => 'general',
+    ];
 }
 
 api_authenticate();
@@ -261,13 +337,16 @@ if ($method === 'GET' && count($segments) === 4 && ($segments[2] ?? '') === 'pho
 }
 
 if ($method === 'POST' && count($segments) === 3 && ($segments[2] ?? '') === 'photos') {
-    $report = api_report($connection, $id);
+    $connection->begin_transaction();
+    $report = api_report_for_update($connection, $id);
     if ($report === null) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(404, ['error' => 'Reporte no encontrado.']);
     }
     $photo = api_store_photo($connection, $report, $id);
     $updated = api_report($connection, $id);
+    $connection->commit();
     mysqli_close($connection);
     api_response(201, ['data' => ['photo' => $photo, 'report' => api_decode_report($updated)]]);
 }
@@ -293,7 +372,16 @@ if ($method === 'PUT' && count($segments) === 2) {
     $date = api_string($payload, 'date', 20);
     $equipment = api_string($payload, 'equipment', 255);
     $technician = api_string($payload, 'technician', 255);
-    $data = api_json_field($payload, 'data') ?? $report['data_reporte'];
+    if (array_key_exists('data', $payload)) {
+        if (!is_array($payload['data'])) {
+            mysqli_close($connection);
+            api_response(400, ['error' => 'Campo invalido: data']);
+        }
+        api_validate_general_photo_metadata($payload['data']);
+        $data = json_encode($payload['data'], JSON_UNESCAPED_UNICODE);
+    } else {
+        $data = $report['data_reporte'];
+    }
     $observations = api_json_field($payload, 'observations') ?? $report['obs_reporte'];
     $statement = $connection->prepare('UPDATE reporte SET title_reporte = ?, cliente_reporte = ?, fecha_reporte = ?, equipo_reporte = ?, tecnico_reporte = ?, data_reporte = ?, obs_reporte = ?, updated_at = NOW() WHERE id = ?');
     $statement->bind_param('sssssssi', $title, $client, $date, $equipment, $technician, $data, $observations, $id);

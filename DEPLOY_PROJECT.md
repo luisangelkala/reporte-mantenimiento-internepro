@@ -205,6 +205,111 @@ QA autorizó la implementación técnica y validó funcionalmente esta fase en D
 
 Fase validada por QA y cerrada en estado `completed`.
 
+## Fase 5: evidencia fotográfica estructurada, PDF y nueva identidad
+
+**Estado: testing**
+
+Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcionales por fotografía, separar las fotos generales de las fotos asociadas a secciones específicas, generar un PDF definitivo al aprobar y compartir ese PDF desde la APK. Esta fase también incorpora el nuevo logo oficial.
+
+### Microfases
+
+| Microfase | Estado | Alcance |
+| --- | --- | --- |
+| 5.1 | testing | Fotografías generales: cada foto podrá tener un comentario opcional y se permitirá un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica terminada y compilada; pendiente de validación funcional de QA en DEMO. |
+| 5.2 | pending | Fotografías por sección: seis secciones ALIMAK autorizadas tendrán su propio botón de cámara/galería, con máximo de cinco fotos y comentario opcional por cada fotografía. Las secciones quedan identificadas por clave técnica para evitar ambigüedad entre títulos repetidos. |
+| 5.3 | pending | Persistencia y visualización: ampliar el modelo/API para guardar nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web mostrarán cada comentario junto a su miniatura y en el visor correspondiente. |
+| 5.4 | pending | PDF de aprobación: al aprobar, el backend generará el PDF completo con la presentación del reporte, datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. |
+| 5.5 | pending | Compartir PDF: el botón Enviar/WhatsApp de cada card solo estará habilitado cuando el reporte esté aprobado y su PDF exista. Abrirá WhatsApp o el selector de compartir con la URL backend del PDF, sin exponer el token Bearer. |
+| 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
+| 5.7 | pending | Nueva identidad visual: sustituir el logo en web, APK, icono launcher y PDF usando los archivos oficiales que entregue QA, respetando proporciones, fondo y variantes aprobadas. |
+
+### Implementación técnica 5.1
+
+- La APK presenta el bloque `Fotografías generales` con contador visible `0/5` a `5/5`.
+- Cámara y galería aceptan únicamente los espacios disponibles; al alcanzar cinco se deshabilitan ambos botones.
+- Cada fotografía nueva y guardada dispone de un comentario opcional editable de hasta 500 caracteres. La ausencia de comentario no bloquea el guardado.
+- Los comentarios de fotografías guardadas se conservan en `_photos` junto con nombre, fecha de carga y ámbito `general`.
+- La API acepta el comentario vacío, valida como máximo 500 caracteres, limita a cinco las fotografías generales y bloquea fotografías nuevas en reportes aprobados.
+- La comprobación del límite se ejecuta bajo bloqueo transaccional del reporte para impedir que cargas simultáneas superen cinco.
+- Las fotografías históricas sin comentario continúan siendo legibles y pueden conservarse sin completar el comentario.
+- Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. La prueba funcional contra API, MariaDB y almacenamiento de DEMO queda a cargo de QA.
+- Las microfases 5.2 a 5.7 no forman parte de esta implementación y permanecen en `pending`.
+
+### Reglas funcionales de fotografías
+
+- El comentario de cada fotografía será opcional; si se completa, admitirá como máximo 500 caracteres.
+- El bloque general admitirá de cero a cinco fotografías.
+- Cada una de las seis secciones habilitadas admitirá de cero a cinco fotografías independientes.
+- El máximo posible para un reporte ALIMAK será de treinta y cinco fotografías: cinco generales y treinta distribuidas entre seis secciones.
+- Los límites se comprobarán tanto en la APK como en la API para impedir cargas adicionales mediante solicitudes directas o reintentos simultáneos.
+- Las fotos pendientes podrán añadirse, comentarse o eliminarse antes de guardar. Las fotos persistidas y sus comentarios podrán editarse o eliminarse mientras el reporte permanezca pendiente.
+- Un reporte aprobado conservará bloqueadas sus fotografías y comentarios. Para corregirlos deberá utilizarse `Volver a PENDIENTE` desde la web.
+- Las fotografías existentes anteriores a esta fase se tratarán como generales y con comentario vacío; completarlo será opcional y la migración no eliminará archivos existentes.
+- Cada foto continuará comprimida por la APK al límite vigente de menos de 250 KB y almacenada fuera del acceso web directo.
+
+### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
+
+| Orden | Sección visible | Clave de sección | Observación | Actividades incluidas |
+| --- | --- | --- | --- | --- |
+| 1 | CABINA | `a_2` | `ab_2` | `a_2_a`: Estado de los paneles de la cabina: limpieza y golpes. |
+| 2 | CONTROL | `a_9` | `ab_9` | `a_9_a`–`a_9_h`: Contactores, Auxiliares, Breaker, Relay, Temporizadores, Conexiones, ACL y Tarjeta com. |
+| 3 | CREMALLERA | `a_15` | `ab_15` | `a_15_a`–`a_15_c`: Piñón, Cremallera y Contrarrueda. |
+| 4 | PARACAÍDAS | `a_22` | `ab_22` | `a_22_a`: Prueba paracaídas fecha. |
+| 5 | PUERTAS DE PASILLO | `a_28` | `ab_28` | `a_28_a`: Puertas de pasillo: estado y limpieza. |
+| 6 | FOSO | `a_32` | `ab_32` | `a_32_a`: Stop de foso. |
+
+Reglas de asociación:
+
+- Las fotos se asociarán a la clave estable (`a_2`, `a_9`, `a_15`, `a_22`, `a_28` o `a_32`) y no únicamente al título visible.
+- `CABINA a_2` no debe mezclarse con `CABINA a_4`, `a_18` o `a_34`.
+- `CREMALLERA a_15` no debe mezclarse con `CREMALLERA a_23`.
+- Cada bloque mostrará sus botones de cámara/selección, contador `0/5`, miniaturas y comentario opcional por foto dentro de la tarjeta de la sección correspondiente.
+- Las fotografías de estas secciones se guardarán y mostrarán en el mismo orden definido en esta tabla.
+
+### Requisitos específicos de fotografías en la web (Microfase 5.6)
+
+- Las vistas web de edición y visualización de reportes ALIMAK tendrán la misma separación de evidencias que la APK: `Fotografías generales` y un bloque independiente para cada una de las seis secciones seleccionadas.
+- El bloque de fotografías generales se reacomodará para presentar cada miniatura junto con su comentario, conservando el visor ampliado existente.
+- Las fotos de sección aparecerán dentro o inmediatamente después de la sección de mantenimiento a la que pertenecen, nunca agrupadas como fotos generales.
+- En reportes pendientes, la edición web permitirá añadir, comentar, modificar el comentario y eliminar fotografías, aplicando el máximo de cinco por bloque.
+- En reportes aprobados, la web mostrará fotos y comentarios en modo de solo lectura. Para modificarlos será obligatorio volver el reporte a `PENDIENTE`.
+- La web y la APK consumirán el mismo modelo y los mismos endpoints; una modificación guardada en cualquiera de los dos clientes deberá verse correctamente en el otro después de actualizar.
+- El listado web conservará el icono de galería. El popup agrupará las imágenes por `Generales` y por sección, mostrando el comentario de la foto activa.
+- La API será la autoridad de los límites y de la asociación entre reporte, sección, fotografía y comentario, evitando que una solicitud web pueda mezclar evidencias o superar cinco fotos.
+
+### Reglas del PDF y aprobación
+
+- La aprobación solo responderá como exitosa cuando el PDF haya sido generado y registrado correctamente; si la generación falla, el reporte permanecerá pendiente y se devolverá un error controlado.
+- El PDF representará una captura lógica del reporte aprobado e incluirá el nuevo logo, título, cliente, fecha, equipo, técnico, instrucciones, checklist, observaciones y todas las fotografías agrupadas con sus comentarios.
+- El backend almacenará el PDF fuera del acceso directo y registrará al menos reporte, nombre interno, fecha de generación, versión y estado vigente.
+- La descarga se realizará mediante un controlador backend con un identificador no predecible o firma específica para el PDF; nunca se incluirá la credencial técnica de la API en la URL compartida.
+- Si un reporte vuelve a `PENDIENTE`, el PDF anterior dejará de ser compartible y el botón Enviar se deshabilitará. Una nueva aprobación generará una versión nueva y reemplazará el enlace activo.
+- Solo un reporte con estado aprobado y PDF confirmado podrá compartirse. Si el archivo falta, la card mostrará la acción deshabilitada y un mensaje controlado.
+
+### Requisitos pendientes de definición por QA
+
+1. Confirmar si los reportes Elevador también tendrán secciones con fotografías; de ser así, QA deberá indicar sus nombres y claves exactas en una ampliación posterior.
+2. Texto predeterminado del mensaje que acompañará la URL del PDF en WhatsApp.
+3. Vigencia del enlace compartido y política de conservación de versiones anteriores del PDF.
+4. Archivo del nuevo logo en PNG transparente de alta resolución y, preferiblemente, SVG; variantes para fondo claro/oscuro si existen.
+
+### Criterios de aceptación QA
+
+1. Se puede guardar una fotografía nueva sin comentario, pero no superar cinco fotos en ningún bloque ni 500 caracteres por comentario.
+2. Las fotos generales y las de cada sección permanecen correctamente separadas después de guardar, cerrar y reabrir el reporte.
+3. Web y APK muestran miniatura, comentario y sección correctos sin mezclar evidencias.
+4. Los reportes y fotos existentes continúan disponibles después de la migración.
+5. Una aprobación válida genera un PDF legible y completo antes de cerrar el reporte.
+6. El PDF incluye todas las fotos en su grupo correspondiente y cada comentario asociado.
+7. El botón Enviar permanece deshabilitado en reportes pendientes o sin PDF y se habilita únicamente tras una aprobación completa.
+8. WhatsApp recibe la URL del PDF vigente y un tercero autorizado puede abrirla sin conocer el token Bearer.
+9. Al volver a pendiente se invalida el enlace anterior; al aprobar nuevamente se genera y comparte una versión actualizada.
+10. Las vistas web de edición y visualización reproducen los bloques generales y por sección, con comentarios, límites y estados de edición equivalentes a la APK.
+11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
+12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
+
+La Fase 5 queda en `testing`: únicamente la microfase 5.1 fue autorizada e implementada y espera validación funcional de QA. Las microfases 5.2 a 5.7 permanecen en `pending` y no han sido implementadas.
+
 ## Criterio de ejecución
 
 Ninguna fase puede pasar de `pending` a ejecución por inferencia. QA debe aprobar expresamente: identificador de fase, ambiente, alcance, ventana de cambio y criterios de aceptación. Tras cada actividad autorizada se actualizará este documento con la evidencia y el resultado de QA.

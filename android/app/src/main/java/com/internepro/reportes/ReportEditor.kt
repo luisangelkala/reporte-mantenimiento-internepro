@@ -23,7 +23,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-private data class PhotoJob(val source: Uri, val compressed: Uri? = null, val status: String, val error: String = "")
+private const val MAX_GENERAL_PHOTOS = 5
+
+private data class PhotoJob(
+    val source: Uri,
+    val compressed: Uri? = null,
+    val status: String,
+    val error: String = "",
+    val comment: String = ""
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,24 +51,49 @@ fun ReportEditor(
     var saveError by remember { mutableStateOf("") }
     var stateVersion by remember { mutableIntStateOf(0) }
     val photos = remember { mutableStateListOf<PhotoJob>() }
-    val storedPhotos = remember(report.id) { mutableStateListOf<String>().apply { addAll(report.photoNames()) } }
+    val storedPhotos = remember(report.id) { mutableStateListOf<ReportPhoto>().apply { addAll(report.photos()) } }
     var deletePhotoCandidate by remember { mutableStateOf<String?>(null) }
     var photoVersion by remember { mutableIntStateOf(0) }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    fun syncStoredPhotos() {
+        val updated = org.json.JSONArray()
+        storedPhotos.forEach { updated.put(it.toJson()) }
+        report.checklist.put("_photos", updated)
+    }
     fun preparePhoto(source: Uri, existingIndex: Int? = null) {
+        if (existingIndex == null && storedPhotos.size + photos.size >= MAX_GENERAL_PHOTOS) {
+            saveError = "Solo se permiten $MAX_GENERAL_PHOTOS fotografias generales por reporte."
+            return
+        }
         val index = existingIndex ?: photos.size
-        if (existingIndex == null) photos.add(PhotoJob(source, status = "Comprimiendo")) else photos[index] = PhotoJob(source, status = "Comprimiendo")
+        val previousComment = existingIndex?.let { photos[it].comment }.orEmpty()
+        if (existingIndex == null) {
+            photos.add(PhotoJob(source, status = "Comprimiendo"))
+        } else {
+            photos[index] = PhotoJob(source, status = "Comprimiendo", comment = previousComment)
+        }
         Thread {
             try {
                 val compressed = PhotoProcessor.compress(context, source)
-                photos[index] = PhotoJob(source, compressed, "Lista para guardar")
+                val currentComment = photos.getOrNull(index)?.comment ?: previousComment
+                photos[index] = PhotoJob(source, compressed, "Lista para guardar", comment = currentComment)
             } catch (error: Exception) {
-                photos[index] = PhotoJob(source, status = "Error", error = error.message ?: "Error al subir")
+                val currentComment = photos.getOrNull(index)?.comment ?: previousComment
+                photos[index] = PhotoJob(
+                    source = source,
+                    status = "Error",
+                    error = error.message ?: "Error al subir",
+                    comment = currentComment
+                )
             } finally { photoVersion++ }
         }.start()
     }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
-        selected.forEach(::preparePhoto)
+        val remaining = (MAX_GENERAL_PHOTOS - storedPhotos.size - photos.size).coerceAtLeast(0)
+        selected.take(remaining).forEach(::preparePhoto)
+        if (selected.size > remaining) {
+            saveError = "Se seleccionaron mas fotografias de las permitidas. El limite general es $MAX_GENERAL_PHOTOS."
+        }
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
         if (captured) cameraUri?.let(::preparePhoto)
@@ -69,13 +102,9 @@ fun ReportEditor(
         Thread {
             try {
                 ReportApi.deletePhoto(report.id, name)
-                storedPhotos.remove(name)
-                val updated = org.json.JSONArray()
-                report.photoNames().filterNot { it == name }.forEach {
-                    updated.put(org.json.JSONObject().put("name", it))
-                }
-                report.checklist.put("_photos", updated)
-                onPhotoDeleted(report.id, storedPhotos.firstOrNull())
+                storedPhotos.removeAll { it.name == name }
+                syncStoredPhotos()
+                onPhotoDeleted(report.id, storedPhotos.firstOrNull()?.name)
             } catch (error: Exception) {
                 saveError = error.message ?: "No se pudo eliminar la fotografia."
             }
@@ -95,13 +124,14 @@ fun ReportEditor(
                     enabled = !saving && photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     onClick = {
-                        saving = true
                         saveError = ""
+                        saving = true
                         report.title = title
                         report.client = client
                         report.date = date
                         report.equipment = equipment
                         report.technician = technician
+                        syncStoredPhotos()
                         Thread {
                             try {
                                 ReportApi.saveReport(report)
@@ -109,10 +139,20 @@ fun ReportEditor(
                                     val index = photos.indexOf(photo)
                                     try {
                                         photos[index] = photo.copy(status = "Subiendo")
-                                        val path = ReportApi.uploadPhoto(context.contentResolver, report.id, photo.compressed!!)
+                                        val path = ReportApi.uploadPhoto(
+                                            context.contentResolver,
+                                            report.id,
+                                            photo.compressed!!,
+                                            photo.comment.trim()
+                                        )
                                         ReportApi.verifyPhoto(path)
-                                        storedPhotos.add(path.substringAfterLast('/'))
-                                        photos[index] = photo.copy(status = "Verificada")
+                                        storedPhotos.add(
+                                            ReportPhoto(
+                                                name = path.substringAfterLast('/'),
+                                                comment = photo.comment.trim()
+                                            )
+                                        )
+                                        photos.removeAt(index)
                                     } catch (error: Exception) {
                                         photos[index] = photo.copy(status = "Error", error = error.message ?: "Error al subir")
                                         throw error
@@ -141,10 +181,20 @@ fun ReportEditor(
             OutlinedTextField(equipment, { equipment = it }, Modifier.fillMaxWidth(), label = { Text("Equipo") })
             OutlinedTextField(technician, { technician = it }, Modifier.fillMaxWidth(), label = { Text("Tecnico") })
 
-            Text("Fotografias", style = MaterialTheme.typography.titleLarge)
+            val generalPhotoCount = storedPhotos.size + photos.size
+            Text("Fotografias generales ($generalPhotoCount/$MAX_GENERAL_PHOTOS)", style = MaterialTheme.typography.titleLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { val uri = PhotoProcessor.createCameraUri(context); cameraUri = uri; camera.launch(uri) }) { Text("Tomar fotografia") }
-                OutlinedButton(onClick = { photoPicker.launch("image/*") }) { Text("Seleccionar") }
+                Button(
+                    enabled = generalPhotoCount < MAX_GENERAL_PHOTOS && !saving,
+                    onClick = { val uri = PhotoProcessor.createCameraUri(context); cameraUri = uri; camera.launch(uri) }
+                ) { Text("Tomar fotografia") }
+                OutlinedButton(
+                    enabled = generalPhotoCount < MAX_GENERAL_PHOTOS && !saving,
+                    onClick = { photoPicker.launch("image/*") }
+                ) { Text("Seleccionar") }
+            }
+            if (generalPhotoCount >= MAX_GENERAL_PHOTOS) {
+                Text("Limite de 5 fotografias generales alcanzado.", style = MaterialTheme.typography.bodySmall)
             }
             if (photos.isEmpty()) {
                 Text("No hay fotografias nuevas pendientes.", style = MaterialTheme.typography.bodySmall)
@@ -154,8 +204,17 @@ fun ReportEditor(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     photos.forEachIndexed { index, photo ->
-                        Column {
+                        Column(modifier = Modifier.width(200.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             photo.compressed?.let { uri -> PhotoPreview(uri) }
+                            OutlinedTextField(
+                                value = photo.comment,
+                                onValueChange = { value -> photos[index] = photos[index].copy(comment = value.take(500)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Comentario (opcional)") },
+                                minLines = 2,
+                                maxLines = 3,
+                                supportingText = { Text("${photo.comment.length}/500") }
+                            )
                             Text(photo.status, style = MaterialTheme.typography.labelSmall)
                             if (photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" } &&
                                 (photo.status == "Lista para guardar" || photo.status == "Error")) IconButton(onClick = { photos.removeAt(index) }) {
@@ -170,18 +229,33 @@ fun ReportEditor(
             if (storedPhotos.isNotEmpty()) {
                 Text("Fotografias guardadas", style = MaterialTheme.typography.titleMedium)
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth().height(142.dp),
+                    modifier = Modifier.fillMaxWidth().height(260.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(storedPhotos, key = { it }) { name ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    items(storedPhotos, key = { it.name }) { storedPhoto ->
+                        val index = storedPhotos.indexOfFirst { it.name == storedPhoto.name }
+                        Column(
+                            modifier = Modifier.width(200.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             AuthenticatedPhoto(
                                 reportId = report.id,
-                                name = name,
+                                name = storedPhoto.name,
                                 contentDescription = "Fotografia guardada",
-                                modifier = Modifier.size(96.dp)
+                                modifier = Modifier.fillMaxWidth().height(96.dp)
                             )
-                            IconButton(onClick = { deletePhotoCandidate = name }) {
+                            OutlinedTextField(
+                                value = storedPhoto.comment,
+                                onValueChange = { value ->
+                                    if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Comentario (opcional)") },
+                                minLines = 2,
+                                maxLines = 3
+                            )
+                            IconButton(onClick = { deletePhotoCandidate = storedPhoto.name }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Eliminar fotografia", tint = MaterialTheme.colorScheme.error)
                             }
                         }

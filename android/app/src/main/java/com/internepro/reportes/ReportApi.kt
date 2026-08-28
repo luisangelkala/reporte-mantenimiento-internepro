@@ -9,6 +9,19 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 
+data class ReportPhoto(
+    val name: String,
+    val comment: String = "",
+    val uploadedAt: String = "",
+    val scope: String = "general"
+) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("name", name)
+        .put("comment", comment)
+        .put("scope", scope)
+        .also { json -> if (uploadedAt.isNotBlank()) json.put("uploaded_at", uploadedAt) }
+}
+
 data class ReportDetail(
     val id: Int,
     val type: String,
@@ -23,13 +36,26 @@ data class ReportDetail(
     val checklist: JSONObject,
     val observations: JSONObject
 ) {
-    fun photoNames(): List<String> = checklist.optJSONArray("_photos").photoNames()
+    fun photos(): List<ReportPhoto> = checklist.optJSONArray("_photos").reportPhotos()
+    fun photoNames(): List<String> = photos().map { it.name }
 }
 
-private fun JSONArray?.photoNames(): List<String> {
+private fun JSONArray?.reportPhotos(): List<ReportPhoto> {
     if (this == null) return emptyList()
-    return List(length()) { index -> optJSONObject(index)?.optString("name").orEmpty() }
-        .filter { it.matches(Regex("^[a-f0-9]{32}\\.(jpg|png|webp)$")) }
+    return List(length()) { index ->
+        val item = optJSONObject(index) ?: return@List null
+        val name = item.optString("name")
+        val scope = item.optString("scope", "general")
+        if (!name.matches(Regex("^[a-f0-9]{32}\\.(jpg|png|webp)$")) || scope != "general") {
+            return@List null
+        }
+        ReportPhoto(
+            name = name,
+            comment = item.optString("comment"),
+            uploadedAt = item.optString("uploaded_at"),
+            scope = scope
+        )
+    }.filterNotNull()
 }
 
 object ReportApi {
@@ -74,7 +100,7 @@ object ReportApi {
                 type = state.optString("reporte", "elevador"),
                 status = state.optString("status"),
                 createdAt = item.optString("created_at"),
-                coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos").photoNames().firstOrNull()
+                coverPhoto = item.optJSONObject("data_reporte")?.optJSONArray("_photos").reportPhotos().firstOrNull()?.name
             )
         }
     }
@@ -106,7 +132,7 @@ object ReportApi {
         parseReport(jsonRequest("reports/$id/approve", "POST", JSONObject().put("approved_by", approvedBy)).getJSONObject("data"))
 
     @Synchronized
-    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri): String {
+    fun uploadPhoto(resolver: ContentResolver, reportId: Int, uri: Uri, comment: String): String {
         val boundary = "----Internepro${UUID.randomUUID()}"
         val connection = connection("reports/$reportId/photos", "POST").apply {
             doOutput = true
@@ -115,6 +141,10 @@ object ReportApi {
         val input = resolver.openInputStream(uri) ?: throw IllegalStateException("No se pudo leer la fotografia seleccionada.")
         DataOutputStream(connection.outputStream).use { output ->
             output.writeBytes("--$boundary\r\n")
+            output.writeBytes("Content-Disposition: form-data; name=\"comment\"\r\n")
+            output.writeBytes("Content-Type: text/plain; charset=UTF-8\r\n\r\n")
+            output.write(comment.toByteArray(Charsets.UTF_8))
+            output.writeBytes("\r\n--$boundary\r\n")
             output.writeBytes("Content-Disposition: form-data; name=\"photo\"; filename=\"foto.jpg\"\r\n")
             output.writeBytes("Content-Type: image/jpeg\r\n\r\n")
             input.use { it.copyTo(output) }

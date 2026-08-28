@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/report_pdf.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -437,24 +438,26 @@ if ($method === 'PUT' && count($segments) === 2) {
 
 if ($method === 'POST' && ($segments[2] ?? '') === 'approve') {
     $payload = api_payload();
-    $report = api_report($connection, $id);
-    if ($report === null) {
+    $approvedBy = api_string($payload, 'approved_by', 255);
+    try {
+        $approved = report_approve_with_pdf($connection, $id, $approvedBy);
+        $updated = $approved['report'];
         mysqli_close($connection);
-        api_response(404, ['error' => 'Reporte no encontrado.']);
+        api_response(200, ['data' => api_decode_report($updated)]);
+    } catch (InvalidArgumentException $error) {
+        mysqli_close($connection);
+        api_response(400, ['error' => $error->getMessage()]);
+    } catch (OutOfBoundsException $error) {
+        mysqli_close($connection);
+        api_response(404, ['error' => $error->getMessage()]);
+    } catch (DomainException $error) {
+        mysqli_close($connection);
+        api_response(409, ['error' => $error->getMessage()]);
+    } catch (Throwable $error) {
+        error_log('No se pudo aprobar/generar PDF del reporte ' . $id . ': ' . $error->getMessage());
+        mysqli_close($connection);
+        api_response(500, ['error' => 'No se pudo generar el PDF. El reporte permanece PENDIENTE.']);
     }
-    $state = json_decode($report['state_reporte'], true) ?: [];
-    $state['status'] = 'close';
-    $state['aprobado'] = api_string($payload, 'approved_by', 255);
-    $state['fecha'] = date('Y-m-d');
-    $state['reporte'] = $state['reporte'] ?? 'elevador';
-    $state = json_encode($state, JSON_UNESCAPED_UNICODE);
-    $statement = $connection->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
-    $statement->bind_param('si', $state, $id);
-    $statement->execute();
-    $statement->close();
-    $updated = api_report($connection, $id);
-    mysqli_close($connection);
-    api_response(200, ['data' => api_decode_report($updated)]);
 }
 
 if ($method === 'DELETE' && count($segments) === 2) {

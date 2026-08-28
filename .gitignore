@@ -2,3 +2,6 @@
 config/auth.php
 config/db.php
 android/local.properties
+
+# Documentos generados en cada ambiente; nunca se versionan.
+storage/report-pdfs/

@@ -735,6 +735,10 @@ mysqli_close($db);
 
                             console.log(data);
                             console.log(XMLHttpRequest);
+                },
+                error: function(xhr) {
+                    var response = xhr.responseJSON || {};
+                    $status.text(response.message || 'No se pudo generar el PDF. El reporte permanece PENDIENTE.');
                 }
             });
         });

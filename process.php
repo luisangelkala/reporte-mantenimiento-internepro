@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/report_photos.php';
+require_once __DIR__ . '/includes/report_pdf.php';
 session_start();
 /**
  * Password generator
@@ -448,29 +449,29 @@ function report_type_from_record(array $state, $dataReporte){
 
 function report_aprobar($id){
 	if (!ctype_digit((string) $id) || (int) $id < 1) {
-		return json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '']);
+		return ['result' => 'invalid'];
 	}
 	$db = db();
 	$reportId = (int) $id;
 	$cliente = trim((string) ($_POST['cliente'] ?? ''));
-	$cliente = substr($cliente, 0, 255);
-	$statement = $db->prepare('SELECT state_reporte, data_reporte FROM reporte WHERE id = ?');
-	$statement->bind_param('i', $reportId);
-	$statement->execute();
-	$report = $statement->get_result()->fetch_assoc() ?: [];
-	$statement->close();
-	$state = json_decode($report['state_reporte'] ?? '', true) ?: [];
-	$state['status'] = 'close';
-	$state['aprobado'] = $cliente;
-	$state['fecha'] = date('Y-m-d');
-	$state['reporte'] = report_type_from_record($state, $report['data_reporte'] ?? null);
-	$status = json_encode($state, JSON_UNESCAPED_UNICODE);
-	$statement = $db->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
-	$statement->bind_param('si', $status, $reportId);
-	$statement->execute();
-	$statement->close();
-	mysqli_close($db);
-	return $status;
+	try {
+		$approved = report_approve_with_pdf($db, $reportId, $cliente);
+		mysqli_close($db);
+		return ['result' => 'approved', 'state' => $approved['state']];
+	} catch (InvalidArgumentException $error) {
+		mysqli_close($db);
+		return ['result' => 'invalid'];
+	} catch (OutOfBoundsException $error) {
+		mysqli_close($db);
+		return ['result' => 'not_found'];
+	} catch (DomainException $error) {
+		mysqli_close($db);
+		return ['result' => 'already_approved'];
+	} catch (Throwable $error) {
+		error_log('No se pudo aprobar/generar PDF del reporte ' . $reportId . ': ' . $error->getMessage());
+		mysqli_close($db);
+		return ['result' => 'pdf_error'];
+	}
 }
 
 function report_reopen($id, $csrfToken){
@@ -508,6 +509,7 @@ function report_reopen($id, $csrfToken){
 	$state['aprobado'] = '';
 	$state['fecha'] = '';
 	$state['reporte'] = report_type_from_record($state, $report['data_reporte'] ?? null);
+	$state = report_pdf_invalidate_state($state);
 	$encodedState = json_encode($state, JSON_UNESCAPED_UNICODE);
 	$statement = $db->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
 	$statement->bind_param('si', $encodedState, $reportId);
@@ -562,13 +564,28 @@ if ($type == 'insert'){
 
 if ($type == 'aprobando'){
 	$id = $_POST["id"];
-	$aprobado = json_decode(report_aprobar($id), true); //$status = json_encode(['status' => 'close', 'aprobado' => $cliente, 'fecha' => NOW()]);
-
-	$fecha = $aprobado['fecha'];
-	$cliente = $aprobado['aprobado'];
-
-	$message = 'El Reporte ha sido aprobado: '.$fecha.' por: '.$cliente;
-	$content = '';
+	$approval = report_aprobar($id);
+	if (($approval['result'] ?? '') === 'approved') {
+		$state = $approval['state'];
+		$message = 'El Reporte ha sido aprobado: '.$state['fecha'].' por: '.$state['aprobado'].'. PDF generado correctamente.';
+		$content = '';
+	} elseif (($approval['result'] ?? '') === 'not_found') {
+		$responseStatus = 404;
+		$message = 'El reporte no existe.';
+		$content = '';
+	} elseif (($approval['result'] ?? '') === 'already_approved') {
+		$responseStatus = 409;
+		$message = 'El reporte ya esta aprobado.';
+		$content = '';
+	} elseif (($approval['result'] ?? '') === 'pdf_error') {
+		$responseStatus = 500;
+		$message = 'No se pudo generar el PDF. El reporte permanece PENDIENTE.';
+		$content = '';
+	} else {
+		$responseStatus = 400;
+		$message = 'Debe indicar un reporte valido y el nombre de quien aprueba.';
+		$content = '';
+	}
 }
 
 if ($type == 'reopen'){

@@ -217,8 +217,8 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | --- | --- | --- |
 | 5.1 | completed | Fotografías generales: cada foto puede tener un comentario opcional y se permite un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica, persistencia corregida y validación funcional de QA completadas. |
 | 5.2 | completed | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada y validada funcionalmente por QA en DEMO. |
-| 5.3 | testing | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
-| 5.4 | pending | PDF de aprobación: al aprobar, el backend generará el PDF completo con la presentación del reporte, datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. |
+| 5.3 | completed | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Validada funcionalmente por QA en DEMO. |
+| 5.4 | testing | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Implementación terminada; pendiente de validación funcional de QA en DEMO. |
 | 5.5 | pending | Compartir PDF: el botón Enviar/WhatsApp de cada card solo estará habilitado cuando el reporte esté aprobado y su PDF exista. Abrirá WhatsApp o el selector de compartir con la URL backend del PDF, sin exponer el token Bearer. |
 | 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
 | 5.7 | pending | Nueva identidad visual: sustituir el logo en web, APK, icono launcher y PDF usando los archivos oficiales que entregue QA, respetando proporciones, fondo y variantes aprobadas. |
@@ -271,6 +271,20 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`; las pruebas funcionales web y APK en DEMO quedan pendientes de QA.
 - Corrección solicitada durante `testing`: la vista ALIMAK muestra únicamente las fotos generales bajo las instrucciones y coloca las fotos `a_2`, `a_9`, `a_15`, `a_22`, `a_28` y `a_32` dentro de la fila de su sección correspondiente, evitando una galería única mezclada.
 - El icono de edición se oculta del listado web para todos los reportes. Las rutas y la funcionalidad técnica de edición permanecen intactas para la futura fase 5.6.
+- QA validó la presentación agrupada en APK y web; la microfase queda cerrada en estado `completed`.
+
+### Implementación técnica 5.4
+
+- Se incorporó un generador PDF autocontenido en el backend, sin dependencias de Composer ni servicios externos. Produce documentos A4 multipágina con identificación del reporte, datos generales, aprobador, fecha, nomenclatura, checklist completo, observaciones y evidencia fotográfica con comentarios.
+- Las fotos generales se imprimen antes del checklist. Las fotos ALIMAK de CABINA, CONTROL, CREMALLERA, PARACAÍDAS, PUERTAS DE PASILLO y FOSO se imprimen dentro de su sección correspondiente; no se mezclan en una galería única.
+- Las fotografías JPEG se incorporan directamente. Para archivos históricos PNG o WEBP el servidor utiliza GD para convertirlos a JPEG. Si GD no está disponible, o si falta o es inválida una fotografía registrada, la aprobación falla de forma controlada y conserva el reporte pendiente; no se emite un PDF incompleto.
+- La API y la aprobación web utilizan una única operación compartida con bloqueo `FOR UPDATE` y transacción MariaDB. El archivo se genera primero y el estado solo cambia a `close` cuando el PDF quedó escrito y registrado; cualquier fallo revierte la base de datos y elimina el archivo incompleto.
+- Cada versión se almacena en `storage/report-pdfs/{id}` bajo un nombre interno aleatorio y permisos privados. `storage/.htaccess` continúa denegando el acceso HTTP directo.
+- `state_reporte.pdf` registra `name`, `generated_at`, `version` y `status=active`. Al usar `Volver a PENDIENTE`, la versión queda `invalidated` con fecha de invalidación; una aprobación posterior incrementa la versión y genera un archivo nuevo.
+- La web muestra un error controlado cuando no puede generarse el documento. La API devuelve `500` sin cerrar el reporte; también conserva respuestas diferenciadas para reporte inexistente, datos inválidos o reporte previamente aprobado.
+- El PDF generado en 5.4 permanece privado y no tiene todavía una URL compartible. El controlador firmado, habilitación de WhatsApp y política de acceso corresponden exclusivamente a 5.5.
+- Se mantiene la identidad textual actual en el documento. La sustitución por el nuevo logo oficial continúa en 5.7 y exige el recurso gráfico aprobado por QA.
+- Evidencia local: revisión estática y `git diff --check` sin errores de espacios. Este equipo no dispone de ejecutable PHP, por lo que el lint PHP y la prueba real de generación con MariaDB/almacenamiento deben ejecutarse en DEMO por QA.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 
@@ -333,7 +347,7 @@ Reglas de asociación:
 11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1 y 5.2 están `completed`; 5.3 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.4 a 5.7 permanecen en `pending` y no han sido implementadas.
+La Fase 5 queda en `testing`: 5.1, 5.2 y 5.3 están `completed`; 5.4 está implementada en `testing` y espera validación funcional de QA. Las microfases 5.5 a 5.7 permanecen en `pending` y no han sido implementadas.
 
 ## Criterio de ejecución
 

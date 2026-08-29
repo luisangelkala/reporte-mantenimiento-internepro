@@ -4,31 +4,55 @@
         "source": "com.internepro.reportes.app-main-48:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "com.internepro.reportes.app-debug-46:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.internepro.reportes.app-main-48:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\xml_file_paths.xml.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\xml\\file_paths.xml"
     },
     {
-        "merged": "com.internepro.reportes.app-debug-46:/xml_file_paths.xml.flat",
-        "source": "com.internepro.reportes.app-main-48:/xml/file_paths.xml"
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\mipmap-xhdpi\\ic_launcher.png"
     },
     {
-        "merged": "com.internepro.reportes.app-debug-46:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.internepro.reportes.app-main-48:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\drawable_ic_whatsapp.xml.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\drawable\\ic_whatsapp.xml"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\mipmap-hdpi\\ic_launcher.png"
     },
     {
         "merged": "com.internepro.reportes.app-debug-46:/mipmap-xxxhdpi_ic_launcher.png.flat",
         "source": "com.internepro.reportes.app-main-48:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.internepro.reportes.app-debug-46:/drawable_ic_whatsapp.xml.flat",
-        "source": "com.internepro.reportes.app-main-48:/drawable/ic_whatsapp.xml"
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\drawable_logo_internepro.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\drawable\\logo_internepro.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-debug-46:/drawable_logo_internepro.jpg.flat",
+        "source": "com.internepro.reportes.app-main-48:/drawable/logo_internepro.jpg"
+    },
+    {
+        "merged": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-debug-46:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\LuisKala\\.gradle\\daemon\\9.3.0\\com.internepro.reportes.app-main-48:\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-debug-46:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-48:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.internepro.reportes.app-debug-46:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.internepro.reportes.app-main-48:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.internepro.reportes.app-debug-46:/mipmap-hdpi_ic_launcher.png.flat",
         "source": "com.internepro.reportes.app-main-48:/mipmap-hdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.internepro.reportes.app-debug-46:/drawable_logo_internepro.png.flat",
-        "source": "com.internepro.reportes.app-main-48:/drawable/logo_internepro.png"
     }
 ]

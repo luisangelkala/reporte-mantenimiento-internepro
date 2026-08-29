@@ -218,10 +218,10 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | 5.1 | completed | Fotografías generales: cada foto puede tener un comentario opcional y se permite un máximo de cinco fotos por reporte. APK, API y backend validan el límite; no es suficiente ocultar el botón en la interfaz. Implementación técnica, persistencia corregida y validación funcional de QA completadas. |
 | 5.2 | completed | Fotografías por sección: las seis secciones ALIMAK autorizadas tienen su propio botón de cámara/galería, máximo independiente de cinco fotos y comentario opcional por cada fotografía. La asociación usa la clave técnica para evitar ambigüedad entre títulos repetidos. Implementación compilada y validada funcionalmente por QA en DEMO. |
 | 5.3 | completed | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Validada funcionalmente por QA en DEMO. |
-| 5.4 | testing | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Implementación terminada; pendiente de validación funcional de QA en DEMO. |
-| 5.5 | testing | Consulta y compartir PDF: APK y web muestran iconos PDF y WhatsApp únicamente activos cuando el reporte está aprobado y existe un PDF vigente. La API entrega una URL firmada temporal sin exponer el token Bearer. Implementación compilada; pendiente de validación funcional de QA en DEMO. |
+| 5.4 | completed | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Generación y contenido validados por QA en DEMO. |
+| 5.5 | completed | Consulta y compartir PDF: APK y web muestran iconos PDF y WhatsApp únicamente activos cuando el reporte está aprobado y existe un PDF vigente. La API entrega una URL firmada temporal sin exponer el token Bearer. URL, apertura y texto con título validados por QA en DEMO. |
 | 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
-| 5.7 | pending | Nueva identidad visual: sustituir el logo en web, APK, icono launcher y PDF usando los archivos oficiales que entregue QA, respetando proporciones, fondo y variantes aprobadas. |
+| 5.7 | testing | Nueva identidad visual: sustituido el logo en web, encabezado APK, icono launcher y PDF con el JPG oficial entregado por QA. Implementación terminada; pendiente de validación visual de QA en DEMO y dispositivo físico. |
 
 ### Implementación técnica 5.1
 
@@ -297,7 +297,16 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - El listado web retiró el icono de fotografías. Cada fila muestra PDF y WhatsApp habilitados para reportes aprobados con PDF; en reportes pendientes o aprobados antiguos sin documento aparecen deshabilitados.
 - La URL no contiene ni revela `INTERNEPRO_API_TOKEN`. El archivo continúa almacenado bajo `storage/report-pdfs` y no puede abrirse por su ruta física.
 - Evidencia local Android: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. El lint y las pruebas funcionales PHP continúan a cargo de QA en DEMO porque localhost no dispone de PHP CLI.
-- Tras validar QA la generación y el acceso al PDF, se ajustó el título guardado como encabezado independiente y destacado en el documento; el texto enviado por WhatsApp también incluye el ID y el título. Este ajuste queda pendiente de la prueba final de QA. El logo oficial permanece reservado para 5.7.
+- QA validó la generación, el acceso al PDF, el título destacado y el texto de WhatsApp con ID y título; 5.4 y 5.5 quedan cerradas en `completed`.
+
+### Implementación técnica 5.7
+
+- Se descargó y versionó exactamente el recurso oficial `https://reportes.internepro.com.pa/images/logo-internepro.jpg`, validando visualmente que coincide con la imagen entregada por QA.
+- `index.php`, las vistas Elevador/ALIMAK y las pantallas web de edición utilizan el JPG oficial con altura fija de `100px`, ancho automático, límite responsive y proporción preservada.
+- El encabezado de la APK utiliza el mismo recurso empaquetado a `100dp` de alto, centrado y sin forzar el ancho.
+- Los cinco iconos launcher Android (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi` y `xxxhdpi`) fueron regenerados sobre lienzo blanco, centrando el logo y conservando su proporción.
+- El generador backend incrusta el JPG oficial centrado a `100` puntos de alto antes del título del reporte. Si el recurso falta o es inválido, la aprobación falla controladamente para evitar un PDF incompleto.
+- Los PDF existentes permanecen inmutables. El nuevo logo aparece al generar una versión nueva mediante una nueva aprobación.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 
@@ -359,7 +368,7 @@ Reglas de asociación:
 11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1, 5.2 y 5.3 están `completed`; 5.4 y 5.5 están implementadas en `testing` y esperan validación funcional de QA. Las microfases 5.6 y 5.7 permanecen en `pending` y no han sido implementadas.
+La Fase 5 queda en `testing`: 5.1 a 5.5 están `completed`; 5.7 está implementada en `testing` y espera validación visual de QA. La microfase 5.6 permanece en `pending` y no ha sido implementada.
 
 ## Criterio de ejecución
 

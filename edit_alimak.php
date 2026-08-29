@@ -47,7 +47,7 @@ mysqli_close($db);
 
     <main>
         <div class="container bg-gris">
-            <a href="index.php"><img class="" src="images/logo-internepro.png" width="300" height="86"></a>
+            <a href="index.php"><img src="images/logo-internepro.jpg" height="100" style="width:auto;max-width:100%;object-fit:contain" alt="Internepro S.A."></a>
 
             <form action="process.php" method="post">
 

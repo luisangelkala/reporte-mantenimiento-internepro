@@ -95,6 +95,38 @@ final class ReportPdfDocument
         $this->text($caption, 9, false, 6, 8);
     }
 
+    public function logo(string $path, float $height = 100.0): void
+    {
+        $prepared = report_pdf_prepare_image($path);
+        if ($prepared === null) {
+            throw new RuntimeException('El logo oficial no esta disponible o no es valido para el PDF.');
+        }
+        $scale = min($height / $prepared['height'], 515.0 / $prepared['width']);
+        $width = max(1.0, $prepared['width'] * $scale);
+        $renderedHeight = max(1.0, $prepared['height'] * $scale);
+        $this->ensureSpace($renderedHeight + 12);
+
+        $hash = hash('sha256', $prepared['data']);
+        if (!isset($this->imageByHash[$hash])) {
+            $name = 'Im' . (count($this->images) + 1);
+            $this->images[$name] = $prepared;
+            $this->imageByHash[$hash] = $name;
+        }
+        $name = $this->imageByHash[$hash];
+        $this->pages[$this->pageIndex]['images'][$name] = true;
+        $x = (595.28 - $width) / 2;
+        $bottom = $this->y - $renderedHeight;
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "q %.2F 0 0 %.2F %.2F %.2F cm /%s Do Q\n",
+            $width,
+            $renderedHeight,
+            $x,
+            $bottom,
+            $name
+        );
+        $this->y = $bottom - 12;
+    }
+
     public function output(): string
     {
         $objects = [];
@@ -378,7 +410,7 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     $document = new ReportPdfDocument();
     $reportTitle = report_pdf_display_value($report['title_reporte'] ?? '');
 
-    $document->text('INTERNEPRO S.A.', 18, true, 0, 2);
+    $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 100.0);
     $document->text($reportTitle, 16, true, 0, 4);
     $document->text('Reporte #' . $reportId . ' - Mantenimiento ' . ($type === 'alimak' ? 'ALIMAK' : 'ELEVADOR'), 12, true, 0, 8);
     $document->rule();

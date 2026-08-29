@@ -29,7 +29,7 @@
 
     <main>
 	<div class="container bg-gris">
-            <a href="index.php"><img class="" src="images/logo-internepro.png" width="300" height="86"></a>
+            <a href="index.php"><img src="images/logo-internepro.jpg" height="100" style="width:auto;max-width:100%;object-fit:contain" alt="Internepro S.A."></a>
             <div class="head">
                 <h2>Registro de Mantenimiento</h2>
 		<input type="button" class="reporte" value="Nuevo Reporte">

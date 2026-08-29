@@ -1,5 +1,6 @@
 R_DEF: Internal format may change without notice
 local
+drawable ic_whatsapp
 drawable logo_internepro
 mipmap ic_launcher
 string app_name

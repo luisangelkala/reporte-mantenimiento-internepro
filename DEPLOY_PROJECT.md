@@ -220,7 +220,7 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | 5.3 | completed | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Validada funcionalmente por QA en DEMO. |
 | 5.4 | completed | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Generación y contenido validados por QA en DEMO. |
 | 5.5 | completed | Consulta y compartir PDF: APK y web muestran iconos PDF y WhatsApp únicamente activos cuando el reporte está aprobado y existe un PDF vigente. La API entrega una URL firmada temporal sin exponer el token Bearer. URL, apertura y texto con título validados por QA en DEMO. |
-| 5.6 | testing | Cierre de reglas fotográficas y bloqueo de aprobados: la web se conserva únicamente como visualizador; APK y API bloquean edición y eliminación de fotografías mientras el reporte esté aprobado. Implementación terminada y pendiente de validación funcional de QA en DEMO/tablet. |
+| 5.6 | completed | Cierre de reglas fotográficas y bloqueo de aprobados: la web se conserva únicamente como visualizador; APK y API bloquean edición y eliminación de fotografías mientras el reporte esté aprobado. Implementación y validación funcional de QA completadas en DEMO/tablet. |
 | 5.7 | completed | Nueva identidad visual: sustituido el logo en web, encabezado APK, icono launcher y PDF con el JPG oficial entregado por QA. Proporciones y alturas finales validadas por QA en web, dispositivo físico y PDF. |
 
 ### Implementación técnica 5.1
@@ -391,7 +391,7 @@ Reglas de asociación:
 11. La APK permite editar fotografías únicamente en reportes pendientes; la interfaz y la API rechazan toda modificación o eliminación mientras estén aprobados.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1 a 5.5 y 5.7 están `completed`. La microfase 5.6 está implementada en `testing` y espera validación funcional de QA antes de pasar a `completed`.
+La Fase 5 queda en `completed`: las microfases 5.1 a 5.7 fueron implementadas y validadas funcionalmente por QA.
 
 ## Criterio de ejecución
 

@@ -376,11 +376,12 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     $observations = json_decode((string) ($report['obs_reporte'] ?? ''), true) ?: [];
     $photos = report_photo_entries($data);
     $document = new ReportPdfDocument();
+    $reportTitle = report_pdf_display_value($report['title_reporte'] ?? '');
 
     $document->text('INTERNEPRO S.A.', 18, true, 0, 2);
-    $document->text('Reporte de mantenimiento ' . ($type === 'alimak' ? 'ALIMAK' : 'ELEVADOR'), 13, true, 0, 8);
+    $document->text($reportTitle, 16, true, 0, 4);
+    $document->text('Reporte #' . $reportId . ' - Mantenimiento ' . ($type === 'alimak' ? 'ALIMAK' : 'ELEVADOR'), 12, true, 0, 8);
     $document->rule();
-    $document->text('Reporte #' . $reportId . ' - ' . report_pdf_display_value($report['title_reporte'] ?? ''), 14, true, 0, 7);
     $document->text('Cliente: ' . report_pdf_display_value($report['cliente_reporte'] ?? ''), 10, true);
     $document->text('Fecha del mantenimiento: ' . report_pdf_display_value($report['fecha_reporte'] ?? ''), 10);
     $document->text('Equipo: ' . report_pdf_display_value($report['equipo_reporte'] ?? ''), 10);

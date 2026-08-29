@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Html
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -185,7 +186,7 @@ fun App() {
                                         openPdf(context, report.pdfUrl)?.let { message = it }
                                     },
                                     onShare = {
-                                        sharePdfByWhatsApp(context, report.id, report.pdfUrl)?.let { message = it }
+                                        sharePdfByWhatsApp(context, report.id, report.title, report.pdfUrl)?.let { message = it }
                                     },
                                     onDelete = { deleteCandidate = report }
                                 )
@@ -319,9 +320,10 @@ private fun openPdf(context: Context, url: String): String? {
     }
 }
 
-private fun sharePdfByWhatsApp(context: Context, reportId: Int, url: String): String? {
+private fun sharePdfByWhatsApp(context: Context, reportId: Int, title: String, url: String): String? {
     if (url.isBlank()) return "El PDF estara disponible cuando el reporte sea aprobado."
-    val message = "Reporte de mantenimiento #$reportId: $url"
+    val visibleTitle = Html.fromHtml(title, Html.FROM_HTML_MODE_LEGACY).toString().trim().ifBlank { "Sin titulo" }
+    val message = "Reporte #$reportId - $visibleTitle: $url"
     val target = "https://api.whatsapp.com/send?text=" + URLEncoder.encode(message, StandardCharsets.UTF_8.toString())
     return try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)))

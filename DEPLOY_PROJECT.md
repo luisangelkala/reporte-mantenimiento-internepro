@@ -293,10 +293,11 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - `pdf.php` entrega el documento sin Bearer mediante una URL firmada con HMAC, reporte, nombre interno y vencimiento. Antes de leer el archivo vuelve a comprobar en MariaDB que el reporte continúe aprobado, que la versión sea la activa y que el archivo exista.
 - La vigencia inicial del enlace es de siete días. Cada nueva consulta a la API o carga del listado web genera un enlace actualizado; no se guarda la URL temporal en MariaDB.
 - Volver a `PENDIENTE` invalida inmediatamente cualquier enlace emitido, aunque todavía no haya llegado su vencimiento. Una aprobación posterior crea otra versión y otro enlace.
-- Las cards APK incluyen un icono PDF para abrir el documento remoto y un icono oficial de WhatsApp que comparte el texto `Reporte de mantenimiento #ID: URL`. Ambos quedan grises y deshabilitados sin PDF vigente.
+- Las cards APK incluyen un icono PDF para abrir el documento remoto y un icono oficial de WhatsApp que comparte el texto `Reporte #ID - TÍTULO: URL`. Ambos quedan grises y deshabilitados sin PDF vigente.
 - El listado web retiró el icono de fotografías. Cada fila muestra PDF y WhatsApp habilitados para reportes aprobados con PDF; en reportes pendientes o aprobados antiguos sin documento aparecen deshabilitados.
 - La URL no contiene ni revela `INTERNEPRO_API_TOKEN`. El archivo continúa almacenado bajo `storage/report-pdfs` y no puede abrirse por su ruta física.
 - Evidencia local Android: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. El lint y las pruebas funcionales PHP continúan a cargo de QA en DEMO porque localhost no dispone de PHP CLI.
+- Tras validar QA la generación y el acceso al PDF, se ajustó el título guardado como encabezado independiente y destacado en el documento; el texto enviado por WhatsApp también incluye el ID y el título. Este ajuste queda pendiente de la prueba final de QA. El logo oficial permanece reservado para 5.7.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)
 

@@ -38,7 +38,8 @@ function report_list(){
         $pdfUrl = report_pdf_active_url((int) $row['id'], is_array($state) ? $state : []);
         if ($pdfUrl !== null) {
             $escapedPdfUrl = htmlspecialchars($pdfUrl, ENT_QUOTES, 'UTF-8');
-            $whatsappUrl = 'https://api.whatsapp.com/send?text=' . rawurlencode('Reporte de mantenimiento #' . $row['id'] . ': ' . $pdfUrl);
+            $shareTitle = html_entity_decode((string) $row['title_reporte'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $whatsappUrl = 'https://api.whatsapp.com/send?text=' . rawurlencode('Reporte #' . $row['id'] . ' - ' . $shareTitle . ': ' . $pdfUrl);
             $pdfActions = '<a href="' . $escapedPdfUrl . '" target="_blank" rel="noopener" title="Abrir PDF" aria-label="Abrir PDF" style="margin:0 5px"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></a>'
                 . '<a href="' . htmlspecialchars($whatsappUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener" data-action="share/whatsapp/share" class="url" title="Enviar PDF por WhatsApp" aria-label="Enviar PDF por WhatsApp" style="margin:0 5px"><i class="fa fa-whatsapp" aria-hidden="true"></i></a>';
         } else {

@@ -220,8 +220,8 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 | 5.3 | completed | Persistencia y visualización: el modelo/API conserva nombre, comentario, ámbito (`general` o `section`), clave de sección y fecha de carga. APK y web presentan grupos, miniaturas, comentarios y visor correspondiente. Validada funcionalmente por QA en DEMO. |
 | 5.4 | completed | PDF de aprobación: al aprobar, el backend genera y registra de forma transaccional un PDF completo con datos, instrucciones, checklist, observaciones, fotos generales y fotos de las seis secciones con sus comentarios. Generación y contenido validados por QA en DEMO. |
 | 5.5 | completed | Consulta y compartir PDF: APK y web muestran iconos PDF y WhatsApp únicamente activos cuando el reporte está aprobado y existe un PDF vigente. La API entrega una URL firmada temporal sin exponer el token Bearer. URL, apertura y texto con título validados por QA en DEMO. |
-| 5.6 | pending | Paridad fotográfica en la web: reacomodar las fotos generales con sus comentarios y añadir dentro de cada reporte ALIMAK los bloques fotográficos de las seis secciones autorizadas, siguiendo la misma organización, límites y reglas de edición de la APK. |
-| 5.7 | testing | Nueva identidad visual: sustituido el logo en web, encabezado APK, icono launcher y PDF con el JPG oficial entregado por QA. Implementación terminada; pendiente de validación visual de QA en DEMO y dispositivo físico. |
+| 5.6 | testing | Cierre de reglas fotográficas y bloqueo de aprobados: la web se conserva únicamente como visualizador; APK y API bloquean edición y eliminación de fotografías mientras el reporte esté aprobado. Implementación terminada y pendiente de validación funcional de QA en DEMO/tablet. |
+| 5.7 | completed | Nueva identidad visual: sustituido el logo en web, encabezado APK, icono launcher y PDF con el JPG oficial entregado por QA. Proporciones y alturas finales validadas por QA en web, dispositivo físico y PDF. |
 
 ### Implementación técnica 5.1
 
@@ -267,10 +267,10 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 - Las miniaturas web muestran el comentario. El visor web conserva flechas, teclado, gesto táctil y ahora presenta grupo y comentario de la fotografía activa.
 - Las fotografías y sus comentarios permanecen disponibles dentro de la vista del reporte. Por solicitud posterior de QA, el icono de galería se retiró del listado web para reservar esa fila a PDF, WhatsApp, visualización y borrado.
 - Los registros históricos sin `scope`, `section_key` o `comment` continúan tratándose como fotografías generales con comentario vacío.
-- La edición web de fotografías no forma parte de 5.3; carga, modificación, eliminación y límites visuales en web permanecen reservados para 5.6.
+- La web no incorpora edición fotográfica: desde ella las fotografías y sus comentarios se consultan únicamente en el visualizador. La captura, selección, comentario y eliminación de fotografías corresponden exclusivamente a la APK.
 - Evidencia local: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`; las pruebas funcionales web y APK en DEMO quedan pendientes de QA.
 - Corrección solicitada durante `testing`: la vista ALIMAK muestra únicamente las fotos generales bajo las instrucciones y coloca las fotos `a_2`, `a_9`, `a_15`, `a_22`, `a_28` y `a_32` dentro de la fila de su sección correspondiente, evitando una galería única mezclada.
-- El icono de edición se oculta del listado web para todos los reportes. Las rutas y la funcionalidad técnica de edición permanecen intactas para la futura fase 5.6.
+- El icono de edición se oculta del listado web para todos los reportes. La microfase 5.6 no volverá a habilitarlo ni añadirá carga de fotografías en la web.
 - QA validó la presentación agrupada en APK y web; la microfase queda cerrada en estado `completed`.
 
 ### Implementación técnica 5.4
@@ -327,16 +327,39 @@ Reglas de asociación:
 - Cada bloque mostrará sus botones de cámara/selección, contador `0/5`, miniaturas y comentario opcional por foto dentro de la tarjeta de la sección correspondiente.
 - Las fotografías de estas secciones se guardarán y mostrarán en el mismo orden definido en esta tabla.
 
-### Requisitos específicos de fotografías en la web (Microfase 5.6)
+### Cierre de reglas fotográficas y bloqueo de aprobados (Microfase 5.6)
 
-- Las vistas web de edición y visualización de reportes ALIMAK tendrán la misma separación de evidencias que la APK: `Fotografías generales` y un bloque independiente para cada una de las seis secciones seleccionadas.
-- El bloque de fotografías generales se reacomodará para presentar cada miniatura junto con su comentario, conservando el visor ampliado existente.
-- Las fotos de sección aparecerán dentro o inmediatamente después de la sección de mantenimiento a la que pertenecen, nunca agrupadas como fotos generales.
-- En reportes pendientes, la edición web permitirá añadir, comentar, modificar el comentario y eliminar fotografías, aplicando el máximo de cinco por bloque.
-- En reportes aprobados, la web mostrará fotos y comentarios en modo de solo lectura. Para modificarlos será obligatorio volver el reporte a `PENDIENTE`.
-- La web y la APK consumirán el mismo modelo y los mismos endpoints; una modificación guardada en cualquiera de los dos clientes deberá verse correctamente en el otro después de actualizar.
-- El listado web no mostrará el icono de galería; las imágenes agrupadas y comentarios se consultarán desde la vista del reporte. Esta decisión no elimina el visor interno ni la futura edición fotográfica de 5.6.
-- La API será la autoridad de los límites y de la asociación entre reporte, sección, fotografía y comentario, evitando que una solicitud web pueda mezclar evidencias o superar cinco fotos.
+#### Alcance confirmado por QA
+
+- La web será exclusivamente un medio de visualización para las fotografías. No permitirá tomar, seleccionar, cargar, comentar, modificar comentarios ni eliminar fotografías.
+- El icono de edición seguirá oculto en el listado web. La vista web mostrará las fotos generales y las fotos de cada sección en sus grupos correspondientes, con comentario y visor ampliado.
+- Toda captura, selección, comentario y eliminación de fotografías se realizará desde la APK mientras el reporte permanezca `PENDIENTE`.
+- Cada bloque de la APK admite como máximo cinco fotografías: cinco generales y cinco independientes en cada una de las seis secciones ALIMAK autorizadas.
+- El comentario de una fotografía es opcional. Una foto sin comentario es válida y debe guardarse, sincronizarse y visualizarse sin exigir texto adicional.
+- La APK conservará la eliminación existente con confirmación explícita. Al confirmar, eliminará la referencia del reporte y el archivo del servidor; al cancelar no realizará cambios.
+- Al aprobar el reporte, toda edición quedará bloqueada. Para corregir información, comentarios o fotografías será obligatorio usar `Volver a PENDIENTE` desde la web y después sincronizar la APK.
+
+#### Resultado de la auditoría previa a implementación
+
+- **Conforme:** `ReportEditor.kt` calcula el límite por ámbito y sección, cuenta fotos persistidas y pendientes, muestra el contador `/5` y bloquea cámara/galería al completar el cupo.
+- **Conforme:** la API valida el máximo de cinco por bloque y vuelve a comprobarlo con bloqueo transaccional durante la carga, evitando superar el límite mediante llamadas directas o simultáneas.
+- **Conforme:** los comentarios usan valor vacío por defecto, la interfaz los identifica como opcionales y la API acepta su ausencia o una cadena vacía; solo aplica el máximo de 500 caracteres cuando existe contenido.
+- **Conforme:** la APK presenta confirmación antes de eliminar una fotografía persistida y utiliza la API para retirarla del reporte y del almacenamiento.
+- **Conforme:** la API ya rechaza la carga de fotografías nuevas cuando el reporte está aprobado.
+- **Hallazgo corregido:** la acción Editar de las cards APK permanecía disponible en reportes aprobados y no existía una segunda comprobación al abrir el editor.
+- **Hallazgo corregido:** la ruta `PUT /reports/{id}` no rechazaba cambios cuando `state_reporte.status` era `close`.
+- **Hallazgo corregido:** la ruta `DELETE /reports/{id}/photos/{name}` validaba pertenencia y nombre, pero no impedía eliminar fotografías de un reporte aprobado.
+
+#### Implementación técnica autorizada
+
+1. La acción Editar de las cards APK queda visualmente deshabilitada y gris cuando el reporte está aprobado.
+2. Antes de abrir el editor, la APK vuelve a consultar el reporte. Si fue aprobado después de cargar el listado, actualiza su estado local, no abre el editor e informa que debe volver a `PENDIENTE` desde la web.
+3. La API responde `409` ante cualquier `PUT /reports/{id}` de un reporte aprobado.
+4. La API responde `409` ante cualquier `DELETE /reports/{id}/photos/{name}` de un reporte aprobado.
+5. Ambas operaciones protegidas leen el estado mediante `SELECT ... FOR UPDATE` dentro de una transacción, evitando una carrera entre editar/eliminar y aprobar el mismo reporte.
+6. Los reportes pendientes conservan edición, comentarios opcionales y eliminación de fotografías con confirmación.
+7. La web permanece como visualizador de solo lectura; no se añadieron controles ni rutas de edición fotográfica.
+8. Evidencia local Android: `:app:compileDebugKotlin` finalizó con `BUILD SUCCESSFUL`. No existe PHP CLI en localhost/WSL, por lo que el lint PHP y las pruebas funcionales con MariaDB deben ejecutarse en DEMO por QA.
 
 ### Reglas del PDF y aprobación
 
@@ -364,11 +387,11 @@ Reglas de asociación:
 7. El botón Enviar permanece deshabilitado en reportes pendientes o sin PDF y se habilita únicamente tras una aprobación completa.
 8. WhatsApp recibe la URL del PDF vigente y un tercero autorizado puede abrirla sin conocer el token Bearer.
 9. Al volver a pendiente se invalida el enlace anterior; al aprobar nuevamente se genera y comparte una versión actualizada.
-10. Las vistas web de edición y visualización reproducen los bloques generales y por sección, con comentarios, límites y estados de edición equivalentes a la APK.
-11. La galería del listado web identifica el grupo/sección y muestra el comentario correspondiente a cada fotografía.
+10. La vista web de visualización reproduce los bloques generales y por sección con sus comentarios y visor, sin ofrecer controles para cargar, editar o eliminar fotografías.
+11. La APK permite editar fotografías únicamente en reportes pendientes; la interfaz y la API rechazan toda modificación o eliminación mientras estén aprobados.
 12. El nuevo logo aparece correctamente en web, APK, launcher y PDF en móvil/tablet y sobre los fondos aprobados.
 
-La Fase 5 queda en `testing`: 5.1 a 5.5 están `completed`; 5.7 está implementada en `testing` y espera validación visual de QA. La microfase 5.6 permanece en `pending` y no ha sido implementada.
+La Fase 5 queda en `testing`: 5.1 a 5.5 y 5.7 están `completed`. La microfase 5.6 está implementada en `testing` y espera validación funcional de QA antes de pasar a `completed`.
 
 ## Criterio de ejecución
 

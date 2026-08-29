@@ -331,10 +331,18 @@ if ($method === 'DELETE' && count($segments) === 4 && ($segments[2] ?? '') === '
         mysqli_close($connection);
         api_response(404, ['error' => 'Fotografia no encontrada.']);
     }
-    $report = api_report($connection, $id);
+    $connection->begin_transaction();
+    $report = api_report_for_update($connection, $id);
     if ($report === null) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $state = json_decode($report['state_reporte'] ?? '', true) ?: [];
+    if (($state['status'] ?? '') === 'close') {
+        $connection->rollback();
+        mysqli_close($connection);
+        api_response(409, ['error' => 'No se pueden eliminar fotografias de un reporte aprobado.']);
     }
     $data = json_decode($report['data_reporte'] ?? '', true);
     $data = is_array($data) ? $data : [];
@@ -348,11 +356,13 @@ if ($method === 'DELETE' && count($segments) === 4 && ($segments[2] ?? '') === '
         return true;
     }));
     if (!$found) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(404, ['error' => 'Fotografia no pertenece al reporte.']);
     }
     $path = api_photo_directory($id) . '/' . $name;
     if (is_file($path) && !unlink($path)) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(500, ['error' => 'No se pudo eliminar la fotografia.']);
     }
@@ -362,6 +372,7 @@ if ($method === 'DELETE' && count($segments) === 4 && ($segments[2] ?? '') === '
     $statement->bind_param('si', $encoded, $id);
     $statement->execute();
     $statement->close();
+    $connection->commit();
     mysqli_close($connection);
     api_response(200, ['message' => 'Fotografia eliminada.']);
 }
@@ -425,10 +436,18 @@ if ($method === 'GET' && count($segments) === 2) {
 
 if ($method === 'PUT' && count($segments) === 2) {
     $payload = api_payload();
-    $report = api_report($connection, $id);
+    $connection->begin_transaction();
+    $report = api_report_for_update($connection, $id);
     if ($report === null) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $reportState = json_decode($report['state_reporte'] ?? '', true) ?: [];
+    if (($reportState['status'] ?? '') === 'close') {
+        $connection->rollback();
+        mysqli_close($connection);
+        api_response(409, ['error' => 'No se puede modificar un reporte aprobado. Debe volverlo a PENDIENTE.']);
     }
     $title = api_string($payload, 'title', 255);
     $client = api_string($payload, 'client', 255);
@@ -437,10 +456,10 @@ if ($method === 'PUT' && count($segments) === 2) {
     $technician = api_string($payload, 'technician', 255);
     if (array_key_exists('data', $payload)) {
         if (!is_array($payload['data'])) {
+            $connection->rollback();
             mysqli_close($connection);
             api_response(400, ['error' => 'Campo invalido: data']);
         }
-        $reportState = json_decode($report['state_reporte'] ?? '', true) ?: [];
         api_validate_photo_metadata($payload['data'], (string) ($reportState['reporte'] ?? 'elevador'));
         $data = json_encode($payload['data'], JSON_UNESCAPED_UNICODE);
     } else {
@@ -452,6 +471,7 @@ if ($method === 'PUT' && count($segments) === 2) {
     $statement->execute();
     $statement->close();
     $updated = api_report($connection, $id);
+    $connection->commit();
     mysqli_close($connection);
     api_response(200, ['data' => api_decode_report($updated)]);
 }

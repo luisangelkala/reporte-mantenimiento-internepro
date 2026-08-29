@@ -171,9 +171,25 @@ fun App() {
                                 ReportCard(
                                     report = report,
                                     onEdit = {
+                                        if (report.status == "close") {
+                                            message = "Un reporte aprobado no puede editarse. Debe volverlo a PENDIENTE desde la web."
+                                            return@ReportCard
+                                        }
                                         loading = true
                                         Thread {
-                                            try { editor = ReportApi.getReport(report.id) } catch (error: Exception) { message = error.message ?: "No se pudo abrir el reporte." } finally { loading = false }
+                                            try {
+                                                val current = ReportApi.getReport(report.id)
+                                                if (current.status == "close") {
+                                                    message = "El reporte ya fue aprobado. Debe volverlo a PENDIENTE desde la web para editarlo."
+                                                    reports = reports.map { if (it.id == current.id) it.copy(status = "close", pdfUrl = current.pdfUrl) else it }
+                                                } else {
+                                                    editor = current
+                                                }
+                                            } catch (error: Exception) {
+                                                message = error.message ?: "No se pudo abrir el reporte."
+                                            } finally {
+                                                loading = false
+                                            }
                                         }.start()
                                     },
                                     onView = {
@@ -298,7 +314,13 @@ private fun ReportCard(
                         Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "Enviar PDF por WhatsApp", tint = if (pdfAvailable) Color(0xFF25D366) else Color.Gray)
                     }
                     IconButton(onClick = onView, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Visibility, contentDescription = "Ver", tint = MaterialTheme.colorScheme.primary) }
-                    IconButton(onClick = onEdit, modifier = Modifier.size(26.dp)) { Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(enabled = !approved, onClick = onEdit, modifier = Modifier.size(26.dp)) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = if (approved) "Un reporte aprobado no puede editarse" else "Editar",
+                            tint = if (approved) Color.Gray else MaterialTheme.colorScheme.primary
+                        )
+                    }
                     if (approved) {
                         Icon(Icons.Filled.Delete, contentDescription = "Un reporte aprobado no puede ser eliminado", tint = Color.Gray, modifier = Modifier.size(22.dp))
                     } else {

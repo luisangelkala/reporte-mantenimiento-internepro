@@ -107,7 +107,7 @@ fun App() {
                 Image(
                     painter = painterResource(R.drawable.logo_internepro),
                     contentDescription = "Internepro",
-                    modifier = Modifier.height(100.dp).align(Alignment.CenterHorizontally)
+                    modifier = Modifier.height(60.dp).align(Alignment.CenterHorizontally)
                 )
                 Button(
                     enabled = !loading,

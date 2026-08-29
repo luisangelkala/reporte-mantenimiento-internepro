@@ -303,9 +303,9 @@ Objetivo: ampliar la evidencia de mantenimiento permitiendo comentarios opcional
 
 - Se descargó y versionó exactamente el recurso oficial `https://reportes.internepro.com.pa/images/logo-internepro.jpg`, validando visualmente que coincide con la imagen entregada por QA.
 - `index.php`, las vistas Elevador/ALIMAK y las pantallas web de edición utilizan el JPG oficial con altura fija de `100px`, ancho automático, límite responsive y proporción preservada.
-- El encabezado de la APK utiliza el mismo recurso empaquetado a `100dp` de alto, centrado y sin forzar el ancho.
+- El encabezado de la APK utiliza el mismo recurso empaquetado a `60dp` de alto, centrado y sin forzar el ancho.
 - Los cinco iconos launcher Android (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi` y `xxxhdpi`) fueron regenerados sobre lienzo blanco, centrando el logo y conservando su proporción.
-- El generador backend incrusta el JPG oficial centrado a `100` puntos de alto antes del título del reporte. Si el recurso falta o es inválido, la aprobación falla controladamente para evitar un PDF incompleto.
+- El generador backend incrusta el JPG oficial centrado a `60` puntos de alto antes del título del reporte. Si el recurso falta o es inválido, la aprobación falla controladamente para evitar un PDF incompleto.
 - Los PDF existentes permanecen inmutables. El nuevo logo aparece al generar una versión nueva mediante una nueva aprobación.
 
 ### Secciones ALIMAK autorizadas para fotografías (Microfase 5.2)

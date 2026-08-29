@@ -410,7 +410,7 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     $document = new ReportPdfDocument();
     $reportTitle = report_pdf_display_value($report['title_reporte'] ?? '');
 
-    $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 100.0);
+    $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 60.0);
     $document->text($reportTitle, 16, true, 0, 4);
     $document->text('Reporte #' . $reportId . ' - Mantenimiento ' . ($type === 'alimak' ? 'ALIMAK' : 'ELEVADOR'), 12, true, 0, 8);
     $document->rule();

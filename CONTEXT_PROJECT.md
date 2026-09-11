@@ -154,15 +154,15 @@ Registro del PR:
 
 ### REQ-005 — Incorporar fotografías generales
 
-**Comportamiento requerido:** Llamada debe tener un solo bloque de fotografías generales al inicio del reporte, con un máximo de cinco imágenes. No debe crear grupos por sección. Las fotos deben admitir comentario opcional, miniatura, ampliación y eliminación mientras el reporte esté pendiente. La web permitirá cargar y eliminar fotos únicamente para Llamada; esta excepción no modifica Elevador ni ALIMAK.
+**Comportamiento requerido:** Llamada debe tener un solo bloque de fotografías generales al inicio del reporte, con un máximo de diez imágenes. No debe crear grupos por sección. Cada foto admite una descripción opcional, miniatura y ampliación. La captura, selección, carga, modificación de la descripción y eliminación pertenecen exclusivamente a la APK mientras el reporte esté pendiente. La web es de solo lectura fotográfica: únicamente debe mostrar las fotos recibidas desde la APK junto con sus descripciones y permitir ampliarlas, igual que en los demás tipos de reporte.
 
-**ISSUES relacionados:** `ISSUE-005`, `ISSUE-006`, `ISSUE-016`.
+**ISSUES relacionados:** `ISSUE-005`, `ISSUE-006`, `ISSUE-016`, `ISSUE-017`.
 
 ### REQ-006 — Mantener las reglas de estado
 
 **Comportamiento requerido:** un reporte Llamada pendiente puede modificarse y eliminarse. Después de aprobarlo, web, API y APK deben impedir su modificación, eliminación y cambios fotográficos hasta que sea devuelto a `PENDIENTE` desde la web.
 
-**ISSUES relacionados:** `ISSUE-007`, `ISSUE-016`.
+**ISSUES relacionados:** `ISSUE-007`, `ISSUE-016`, `ISSUE-017`.
 
 ### REQ-007 — Mantener las acciones del listado
 
@@ -186,13 +186,13 @@ Registro del PR:
 
 **Comportamiento requerido:** después de la aprobación web, la APK debe permitir listar, filtrar, crear, editar, fotografiar, visualizar, aprobar, abrir PDF y compartir reportes Llamada con paridad funcional y diseño responsive.
 
-**ISSUES relacionados:** `ISSUE-009`, `ISSUE-013`.
+**ISSUES relacionados:** `ISSUE-009`, `ISSUE-013`, `ISSUE-017`.
 
 ### REQ-011 — Proteger compatibilidad y seguridad
 
 **Comportamiento requerido:** incorporar Llamada no debe romper Elevador/ALIMAK ni debilitar autenticación, CSRF, consultas preparadas, almacenamiento privado, URLs firmadas, bloqueo de aprobados o compatibilidad con versiones anteriores de la APK.
 
-**ISSUES relacionados:** `ISSUE-009`, `ISSUE-014`, `ISSUE-016`.
+**ISSUES relacionados:** `ISSUE-009`, `ISSUE-014`, `ISSUE-016`, `ISSUE-017`.
 
 ## ISSUES
 
@@ -244,9 +244,9 @@ Registro del PR:
 
 **Tipo:** decisión funcional.
 
-**Estado:** `RESOLVED BY PR-001`.
+**Estado:** `SUPERSEDED BY ISSUE-017`.
 
-**Resolución aprobada:** “única” significa un único bloque general con un máximo de cinco fotografías; no significa una sola fotografía.
+**Resolución histórica:** “única” significaba un único bloque general y no una sola fotografía. El límite histórico de cinco fue reemplazado por el máximo vigente de diez definido por QA en `ISSUE-017`.
 
 **REQ relacionados:** `REQ-005`.
 **Bugs relacionados:** permitir más evidencia de la autorizada o bloquear fotografías necesarias.
@@ -255,9 +255,9 @@ Registro del PR:
 
 **Tipo:** decisión de alcance.
 
-**Estado:** `RESOLVED BY PR-001`.
+**Estado:** `SUPERSEDED BY ISSUE-017`.
 
-**Resolución aprobada:** la web permitirá cargar y eliminar fotografías de Llamada mientras el reporte esté pendiente. Es una excepción exclusiva del nuevo tipo y no habilita edición fotográfica en Elevador o ALIMAK.
+**Resolución histórica:** se había autorizado por error la carga y eliminación desde la web. QA aclaró que la captura y gestión corresponden únicamente a la APK; la web solo presenta las fotos y descripciones recibidas. La definición vigente está en `ISSUE-017`.
 
 **REQ relacionados:** `REQ-005`.
 **Bugs relacionados:** reactivar accidentalmente edición fotográfica web para Elevador/ALIMAK.
@@ -365,12 +365,27 @@ Registro del PR:
 
 **Tipo:** trabajo funcional planificado.
 
-**Estado:** `IMPLEMENTED IN PR-004 — PENDING QA`.
+**Estado:** `SUPERSEDED BY ISSUE-017 — PR-004 OPEN`.
 
-**Trabajo existente:** incorporar al editor web de Llamada un único bloque general que permita cargar hasta cinco fotografías, escribir comentarios opcionales, comprobar la subida, mostrar miniaturas, ampliar imágenes y eliminar evidencia mientras el reporte esté pendiente.
+**Trabajo implementado bajo el alcance anterior:** se incorporó al editor web de Llamada un bloque para cargar hasta cinco fotografías, escribir comentarios opcionales, mostrar miniaturas, ampliar imágenes y eliminar evidencia. QA determinó posteriormente que ese comportamiento no corresponde a la web; queda sustituido por `ISSUE-017`.
 
 **REQ relacionados:** `REQ-005`, `REQ-006`, `REQ-011`.
 **Bugs relacionados:** superar el límite por solicitudes simultáneas, pérdida de comentarios, archivos subidos sin metadatos, eliminación de evidencia de un aprobado o habilitación accidental de carga web para Elevador/ALIMAK.
+
+### ISSUE-017 — La web de Llamada permite cargar fotos y aplica un límite incorrecto
+
+**Tipo:** BUG funcional y de alcance detectado por QA.
+
+**Estado:** `OPEN IN PR-004`.
+
+**Comportamiento observado:** `PR-004` incorporó en el editor web controles para seleccionar, capturar, subir, comentar y eliminar fotografías, y aplicó un máximo de cinco imágenes.
+
+**Comportamiento requerido:** únicamente la APK podrá capturar, seleccionar, subir, modificar la descripción y eliminar fotografías generales de Llamada mientras el reporte esté pendiente. El límite autoritativo de API/APK será de diez fotografías. La web no tendrá controles de carga o eliminación; mostrará en modo lectura cada fotografía subida desde la APK, su descripción opcional, su miniatura y el visor ampliado.
+
+**Trabajo pendiente:** retirar de la web los controles y endpoints exclusivos introducidos para la carga fotográfica de Llamada; conservar la lectura segura mediante URLs firmadas; actualizar a diez el contrato y la validación autoritativa que utilizará Android; comprobar posteriormente con fotografías reales cargadas desde la APK que la web muestra imagen y descripción.
+
+**REQ relacionados:** `REQ-005`, `REQ-006`, `REQ-010`, `REQ-011`.
+**Bugs relacionados:** carga desde un canal no autorizado, límite de cinco en lugar de diez, divergencia web/API/APK y ausencia de evidencia para validar el visor antes de implementar Android.
 
 ## IMIPLEMENTATION
 
@@ -381,11 +396,11 @@ Registro del PR:
 | `PR-001` | `COMPLETED` | Contrato funcional inicial cerrado; la interpretación histórica de firmas fue sustituida por los campos de texto definidos posteriormente por QA. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010`; corrección posterior `ISSUE-015` | Validado y cerrado por QA; conserva trazabilidad histórica. |
 | `PR-002` | `COMPLETED` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | Resuelve `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Desplegado y validado completamente por QA en DEMO. |
 | `PR-003` | `DEPLOYMENT WEB` | Botón `Llamada`, formulario web responsive y dos campos finales de texto alineados horizontalmente. | `REQ-001`, `REQ-002`, `REQ-003`, `REQ-004` | Implementa `ISSUE-002` y `ISSUE-015`, pendientes de validación QA; respeta los contratos cerrados en `ISSUE-003` e `ISSUE-010` | Corrección lista para despliegue en la VPS DEMO por QA. |
-| `PR-004` | `DEPLOYMENT WEB` | Bloque fotográfico general web implementado con carga asíncrona, máximo de cinco, comentarios, miniaturas, visor y eliminación segura. | `REQ-005`, `REQ-006`, `REQ-011` | Implementa `ISSUE-016`, pendiente de validación QA; depende de `ISSUE-005`, `ISSUE-006` e `ISSUE-007`; aporta evidencia para `ISSUE-014` | Código listo para despliegue en la VPS DEMO por QA. |
+| `PR-004` | `DEVELOPING` | Corregir el bloque web de fotografías de Llamada para dejarlo en modo lectura: miniaturas, descripción y visor de hasta diez fotos cargadas exclusivamente desde la APK. | `REQ-005`, `REQ-006`, `REQ-010`, `REQ-011` | Corrige `ISSUE-017`; sustituye el alcance de `ISSUE-016` y las decisiones históricas `ISSUE-005`/`ISSUE-006`; aporta evidencia para `ISSUE-014` | PR abierto: requiere corrección técnica y su validación final dependerá de fotografías cargadas durante `PR-008`. |
 | `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011`, `ISSUE-015` | `DEPLOYMENT WEB`. |
 | `PR-006` | `PENDING` | Ejecutar correcciones derivadas del despliegue web y preparar la matriz de regresión de Llamada, Elevador y ALIMAK. | `REQ-009`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-014` | `TESTING` cuando QA confirme el despliegue; `COMPLETED` solo tras su validación. |
 | `PR-007` | `PENDING` | Preparar compatibilidad Android con el tipo `llamada` en modelos, parser, API, filtros y navegación, sin publicar aún la interfaz completa. | `REQ-001`, `REQ-010`, `REQ-011` | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | `DEPLOYMENT & COMPILING`. |
-| `PR-008` | `PENDING` | Implementar interfaz Android completa: alta, card, edición, fotos generales, visualización, aprobación, PDF, WhatsApp y bloqueo por estado. | `REQ-003`, `REQ-004`, `REQ-005`, `REQ-006`, `REQ-007`, `REQ-008`, `REQ-010` | `ISSUE-003`, `ISSUE-005`, `ISSUE-007`, `ISSUE-008`, `ISSUE-011`, `ISSUE-013`, `ISSUE-015` | `DEPLOYMENT & COMPILING`. |
+| `PR-008` | `PENDING` | Implementar interfaz Android completa: alta, card, edición, máximo de diez fotos generales con descripción opcional, visualización, aprobación, PDF, WhatsApp y bloqueo por estado. | `REQ-003`, `REQ-004`, `REQ-005`, `REQ-006`, `REQ-007`, `REQ-008`, `REQ-010` | `ISSUE-003`, `ISSUE-005`, `ISSUE-007`, `ISSUE-008`, `ISSUE-011`, `ISSUE-013`, `ISSUE-015`, `ISSUE-017` | `DEPLOYMENT & COMPILING`. |
 | `PR-009` | `PENDING` | Corregir hallazgos de compilación/prueba Android y realizar regresión en móvil/tablet, vertical/horizontal y APK release firmada. | `REQ-009`, `REQ-010`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-013`, `ISSUE-014` | `TESTING` cuando QA compile/instale; `COMPLETED` solo tras su validación. |
 
 ### Registro Git por PR
@@ -429,10 +444,11 @@ Los campos narrativos preservarán saltos de línea. Los dos campos finales son 
 
 ### Fotografías
 
-- Llamada tendrá exactamente un bloque general con capacidad de cero a cinco fotografías.
+- Llamada tendrá exactamente un bloque general con capacidad de cero a diez fotografías.
 - Cada comentario será opcional y mantendrá el máximo vigente de 500 caracteres.
-- La web podrá cargar y eliminar fotos únicamente para reportes Llamada pendientes.
-- Elevador y ALIMAK conservarán su comportamiento web actual sin controles de carga o eliminación.
+- La APK será el único canal que podrá capturar, seleccionar, cargar, cambiar la descripción y eliminar fotos de reportes Llamada pendientes.
+- La web únicamente mostrará las fotografías y sus descripciones, sin controles de inserción, modificación o eliminación.
+- Elevador y ALIMAK conservarán su comportamiento web actual de solo visualización.
 - La API será autoridad del límite y del bloqueo por estado.
 
 ### Título
@@ -460,7 +476,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - `GET /reports` y `GET /reports/{id}` devuelven el nuevo tipo y sus datos sin convertirlo en Elevador.
 - `PUT /reports/{id}` valida fecha `YYYY-MM-DD`, campos permitidos y límite de 10 000 caracteres por campo narrativo; calcula el título automáticamente.
 - Los cambios de metadatos fotográficos no pueden agregar o retirar archivos mediante `PUT`; esas operaciones deben usar los endpoints de fotos.
-- Llamada admite exclusivamente fotos `general`, con comentario opcional de hasta 500 caracteres y máximo de cinco.
+- PR-002 implementó originalmente fotos `general` con comentario opcional de hasta 500 caracteres y máximo de cinco. QA elevó posteriormente el límite a diez; la corrección queda trazada en `ISSUE-017` y debe estar vigente antes de probar la APK.
 - `POST /reports/{id}/approve` conserva el tipo y genera un PDF backend base con los datos y fotos generales. La plantilla visual definitiva corresponde a PR posteriores.
 - `POST /reports/{id}/reopen` invalida el PDF activo y devuelve un aprobado a estado pendiente.
 - `DELETE /reports/{id}` y `DELETE /reports/{id}/photos/{name}` rechazan reportes aprobados y usan bloqueo transaccional.
@@ -558,63 +574,34 @@ QA informó durante la revisión de `PR-003` que la fila Llamada todavía no per
 - El trabajo pendiente ya está representado por `ISSUE-008` e `ISSUE-011`; no se abre un ISSUE duplicado.
 - Esta observación no impide probar en `PR-003` la creación, edición, persistencia, título y campos finales de texto.
 
-## Alcance previsto de PR-004
+## Alcance corregido de PR-004
 
-**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
+**Estado:** `DEVELOPING`. PR abierto por el BUG `ISSUE-017`; no puede pasar todavía a `TESTING` ni `COMPLETED`.
 
-**Objetivo:** completar en el editor web de Llamada el único bloque de fotografías generales aprobado, sin modificar la gestión web de fotografías de Elevador o ALIMAK.
+**Objetivo vigente:** presentar en la web el único bloque general de fotografías de Llamada en modo de solo lectura, con hasta diez imágenes cargadas exclusivamente desde la APK. Cada elemento mostrará miniatura, descripción opcional y visor ampliado.
 
-### ISSUE que resolverá
+### ISSUE vigente
 
-- `ISSUE-016` — La web de Llamada no tiene gestión de fotografías generales. Es el único ISSUE funcional abierto que `PR-004` cerrará directamente.
+- `ISSUE-017` — La implementación web permitió cargar y eliminar fotos y fijó el límite en cinco. Debe corregirse a visualización web y gestión exclusiva desde Android con máximo de diez.
+- `ISSUE-016` queda sustituido porque fue redactado bajo el alcance incorrecto anterior.
 
-### Contratos y riesgos relacionados
+### Corrección técnica pendiente
 
-- `ISSUE-005`, resuelto: define un solo bloque general y un máximo de cinco fotografías.
-- `ISSUE-006`, resuelto: autoriza carga y eliminación web únicamente para Llamada pendiente.
-- `ISSUE-007`, resuelto: obliga al servidor a rechazar cambios fotográficos en reportes aprobados.
-- `ISSUE-014`, abierto: recibirá evidencia de regresión, pero no se cerrará hasta la fase integral de pruebas.
+- Retirar del formulario web de Llamada los controles para seleccionar, capturar, subir, cambiar comentarios y eliminar fotografías.
+- Mantener únicamente el bloque de miniaturas, la descripción de cada foto y el visor ampliado.
+- Actualizar el contrato autoritativo de fotografías generales de Llamada a un máximo de diez.
+- Reservar para `PR-008` la captura, selección, carga, edición de descripción y eliminación desde la APK.
+- Mantener almacenamiento privado, URLs firmadas y bloqueo de modificaciones cuando el reporte esté aprobado.
 
-### Implementación ejecutada
+### Criterios de aceptación vigentes
 
-- Colocar el bloque `Fotografías generales` al inicio del contenido editable del reporte Llamada.
-- Permitir seleccionar o capturar imágenes desde un navegador compatible.
-- Limitar el bloque a cinco fotografías mediante validación autoritativa del servidor.
-- Admitir un comentario opcional de hasta 500 caracteres por fotografía.
-- Mostrar progreso y resultado verificable de cada subida sin perder los demás datos del formulario.
-- Mostrar las fotografías guardadas como miniaturas y permitir ampliarlas mediante el visor existente.
-- Permitir eliminar fotografías con confirmación únicamente mientras el reporte esté pendiente.
-- Mantener los archivos en el almacenamiento fotográfico privado y servirlos mediante las URLs protegidas existentes.
-- Conservar sin cambios la interfaz de carga fotográfica de Elevador y ALIMAK.
+- La web no ofrece ningún control para insertar, reemplazar, comentar o eliminar fotos.
+- La web muestra hasta diez fotografías procedentes de la APK y la descripción opcional asociada a cada una.
+- Cada miniatura abre el visor ampliado.
+- La API rechaza la fotografía número once y cualquier cambio fotográfico sobre un reporte aprobado.
+- La APK permite gestionar las fotografías solamente mientras el reporte esté pendiente.
+- Elevador y ALIMAK conservan su comportamiento actual.
 
-### Fuera de alcance
+### Dependencia de validación
 
-- Habilitar el ojo, crear la visualización final o aprobar el reporte: `PR-005`.
-- Generar el PDF definitivo y compartirlo por WhatsApp: `PR-005`.
-- Implementar Llamada en Android: `PR-007` y `PR-008`.
-
-### Criterios de aceptación previstos
-
-- Un reporte Llamada pendiente admite entre cero y cinco fotografías generales.
-- La sexta fotografía es rechazada por el servidor y la interfaz explica el límite.
-- Los comentarios pueden quedar vacíos y persisten cuando se completan.
-- Las miniaturas reaparecen al volver a editar y abren el visor ampliado.
-- La eliminación requiere confirmación y desaparece tanto de la interfaz como del servidor.
-- Un reporte aprobado rechaza carga, cambio de comentario y eliminación mediante interfaz y solicitud directa.
-- Elevador y ALIMAK no adquieren controles web nuevos de carga o eliminación.
-
-### Evidencia Dev
-
-- El bloque aparece al inicio del contenido editable y trabaja sin recargar el formulario.
-- Carga, comentario y eliminación son operaciones asíncronas independientes protegidas con CSRF.
-- Cada operación abre una transacción, bloquea el reporte y vuelve a comprobar tipo, estado y cantidad.
-- El servidor acepta únicamente JPEG, PNG o WEBP de hasta 5 MB y valida dimensiones antes de almacenarlos.
-- El límite de cinco se aplica dentro del bloqueo transaccional para impedir sobrepasarlo mediante solicitudes simultáneas.
-- Los comentarios son opcionales, admiten hasta 500 caracteres y se guardan por fotografía.
-- Las respuestas devuelven la lista confirmada por el servidor; la interfaz reconstruye miniaturas, contador y visor desde ella.
-- Los archivos permanecen bajo `storage/report-photos`, cuyo acceso HTTP directo queda bloqueado; la visualización usa URLs temporales firmadas.
-- `node --check` validó `assets/js/call-photos.js` y `assets/js/report-gallery.js`.
-- `git diff --check` no reportó errores.
-- PHP CLI no está disponible en Windows ni WSL local; QA debe ejecutar lint PHP y pruebas integradas en DEMO.
-
-`PR-004` está en `DEPLOYMENT WEB`. `ISSUE-016` seguirá pendiente de cierre hasta que QA autorice `TESTING` y valide todos los casos.
+QA podrá comprobar inmediatamente que los controles incorrectos desaparecieron de la web. La validación integral de miniaturas, descripciones, visor y límite quedará pendiente hasta `PR-008`, cuando la APK pueda subir fotografías reales de Llamada. Por esta dependencia, `PR-004` permanecerá abierto aunque la corrección web sea desplegada.

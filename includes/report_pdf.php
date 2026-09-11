@@ -454,8 +454,8 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
         $document->heading('OBSERVACIONES Y RECOMENDACIONES', 13);
         $document->text(report_pdf_display_value($data['observaciones_recomendaciones'] ?? ''), 10, false, 0, 10);
         $document->rule();
-        $document->text('Firma de la empresa: No registrada', 10, true, 0, 6);
-        $document->text('Firma del cliente: No registrada', 10, true, 0, 10);
+        $document->text('La empresa: ' . report_pdf_display_value($data['firma_empresa'] ?? ''), 10, true, 0, 6);
+        $document->text('Cliente: ' . report_pdf_display_value($data['firma_cliente'] ?? ''), 10, true, 0, 10);
     }
 
     foreach (report_pdf_sections($type) as $index => $section) {

@@ -418,14 +418,8 @@ th textarea{
 .call-fields label, .call-narrative label { color:#343038; display:grid; font-weight:600; gap:7px; }
 .call-narrative { display:grid; gap:20px; }
 .call-narrative textarea { min-height:105px; resize:vertical; }
-.call-signatures { border-top:1px solid #ddd7df; margin-top:32px; padding-top:26px; }
-.call-signatures > h2 { font-size:24px; font-weight:700; }
-.call-signatures > p { color:#625b65; font-size:14px; }
-.call-signature { margin:22px 0; }
-.call-signature h3 { font-size:17px; font-weight:700; }
-.call-signature canvas { background:#fff; border:2px solid #aca5af; border-radius:10px; cursor:crosshair; display:block; height:min(220px,27vw); min-height:145px; touch-action:none; width:100%; }
-.call-signature-actions { align-items:center; display:flex; gap:15px; margin-top:9px; }
-.call-signature-actions span { color:#625b65; font-size:13px; }
+.call-conformity { border-top:1px solid #ddd7df; display:grid; gap:28px; grid-template-columns:1fr 1fr; margin-top:32px; padding-top:26px; }
+.call-conformity label { color:#343038; display:grid; font-weight:600; gap:7px; }
 .call-form-actions { display:flex; gap:14px; justify-content:flex-end; margin-top:34px; }
 .call-form-actions .btn-danger { background:#bd1229; border-color:#bd1229; }
 @media (max-width:767px) {
@@ -434,7 +428,7 @@ th textarea{
 	.call-header { gap:12px; grid-template-columns:1fr; }
 	.call-header img { height:72px; margin:auto; }
 	.call-fields { grid-template-columns:1fr; }
-	.call-signature canvas { height:180px; }
+	.call-conformity { gap:14px; grid-template-columns:1fr 1fr; }
 	.call-form-actions { flex-direction:column-reverse; }
 	.call-form-actions .btn { width:100%; }
 }

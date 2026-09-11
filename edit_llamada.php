@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/report_signatures.php';
 session_start();
 
 function call_edit_error(int $status, string $message): void
@@ -43,11 +42,6 @@ if (!isset($_SESSION['call_edit_csrf']) || !is_string($_SESSION['call_edit_csrf'
     $_SESSION['call_edit_csrf'] = bin2hex(random_bytes(32));
 }
 $csrf = $_SESSION['call_edit_csrf'];
-$signatureUrls = [];
-foreach (report_signature_types() as $signatureType) {
-    $reference = report_signature_reference($data, $signatureType);
-    $signatureUrls[$signatureType] = $reference === null ? '' : report_signature_url($reportId, $signatureType, $reference);
-}
 function call_value($value): string
 {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
@@ -61,7 +55,7 @@ function call_value($value): string
     <title>Editar reporte Llamada #<?php echo $reportId; ?></title>
     <link rel="stylesheet" href="assets/css/bootstrap5/bootstrap.min.css">
     <link rel="stylesheet" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?ver=0.62">
+    <link rel="stylesheet" href="assets/css/style.css?ver=0.63">
 </head>
 <body>
 <main class="call-page">
@@ -110,21 +104,13 @@ function call_value($value): string
                 </label>
             </section>
 
-            <section class="call-signatures" aria-labelledby="signature-title">
-                <h2 id="signature-title">Firmas opcionales</h2>
-                <p>Las firmas no son obligatorias para guardar ni aprobar el reporte.</p>
-                <?php foreach (['empresa' => 'La empresa', 'cliente' => 'Cliente'] as $signatureType => $signatureLabel): ?>
-                    <div class="call-signature" data-signature-pad data-existing-url="<?php echo call_value($signatureUrls[$signatureType]); ?>">
-                        <h3><?php echo $signatureLabel; ?></h3>
-                        <canvas width="900" height="260" aria-label="Firma de <?php echo call_value($signatureLabel); ?>"></canvas>
-                        <input type="hidden" name="firma_<?php echo $signatureType; ?>_data" value="">
-                        <input type="hidden" name="firma_<?php echo $signatureType; ?>_clear" value="0">
-                        <div class="call-signature-actions">
-                            <button class="btn btn-outline-secondary" type="button" data-signature-clear>Limpiar</button>
-                            <span data-signature-status><?php echo $signatureUrls[$signatureType] === '' ? 'Sin firma' : 'Firma guardada'; ?></span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+            <section class="call-conformity" aria-label="Conformidad de empresa y cliente">
+                <label>La empresa
+                    <input class="form-control" name="firma_empresa" maxlength="255" value="<?php echo call_value(preg_match('/^[a-f0-9]{32}\.png$/', (string) ($data['firma_empresa'] ?? '')) ? '' : ($data['firma_empresa'] ?? '')); ?>">
+                </label>
+                <label>Cliente
+                    <input class="form-control" name="firma_cliente" maxlength="255" value="<?php echo call_value(preg_match('/^[a-f0-9]{32}\.png$/', (string) ($data['firma_cliente'] ?? '')) ? '' : ($data['firma_cliente'] ?? '')); ?>">
+                </label>
             </section>
 
             <div class="call-form-actions">
@@ -150,63 +136,6 @@ function call_value($value): string
     client.addEventListener('input', refreshTitle);
     date.addEventListener('change', refreshTitle);
 
-    document.querySelectorAll('[data-signature-pad]').forEach(function (pad) {
-        var canvas = pad.querySelector('canvas');
-        var context = canvas.getContext('2d');
-        var dataInput = pad.querySelector('input[name$="_data"]');
-        var clearInput = pad.querySelector('input[name$="_clear"]');
-        var status = pad.querySelector('[data-signature-status]');
-        var drawing = false;
-        var dirty = false;
-        var existing = pad.getAttribute('data-existing-url') || '';
-        context.lineWidth = 4;
-        context.lineCap = 'round';
-        context.lineJoin = 'round';
-        context.strokeStyle = '#202020';
-        if (existing) {
-            var image = new Image();
-            image.onload = function () { context.drawImage(image, 0, 0, canvas.width, canvas.height); };
-            image.src = existing;
-        }
-        function point(event) {
-            var rect = canvas.getBoundingClientRect();
-            return {
-                x: (event.clientX - rect.left) * canvas.width / rect.width,
-                y: (event.clientY - rect.top) * canvas.height / rect.height
-            };
-        }
-        canvas.addEventListener('pointerdown', function (event) {
-            drawing = true;
-            dirty = true;
-            clearInput.value = '0';
-            canvas.setPointerCapture(event.pointerId);
-            var current = point(event);
-            context.beginPath();
-            context.moveTo(current.x, current.y);
-            status.textContent = 'Firma modificada';
-        });
-        canvas.addEventListener('pointermove', function (event) {
-            if (!drawing) return;
-            var current = point(event);
-            context.lineTo(current.x, current.y);
-            context.stroke();
-        });
-        function finish() { drawing = false; }
-        canvas.addEventListener('pointerup', finish);
-        canvas.addEventListener('pointercancel', finish);
-        pad.querySelector('[data-signature-clear]').addEventListener('click', function () {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            dataInput.value = '';
-            clearInput.value = existing ? '1' : '0';
-            dirty = false;
-            status.textContent = 'Sin firma';
-        });
-        pad.closest('form').addEventListener('submit', function () {
-            if (dirty) {
-                dataInput.value = canvas.toDataURL('image/png');
-            }
-        });
-    });
 }());
 </script>
 </body>

@@ -51,8 +51,8 @@ Campos identificados en el formato:
 - Motivo.
 - Piezas reemplazadas.
 - Observaciones y recomendaciones.
-- Espacio de conformidad o firma de `La empresa`.
-- Espacio de conformidad o firma de `Cliente`.
+- Campo simple de texto `La empresa`.
+- Campo simple de texto `Cliente`, alineado junto al anterior.
 
 El reporte tendrá un único bloque de fotografías generales al inicio y no tendrá fotografías por sección.
 
@@ -130,9 +130,9 @@ Registro del PR:
 
 ### REQ-001 — Incorporar el tipo Llamada
 
-**Comportamiento requerido:** el sistema debe reconocer `llamada` como tercer tipo de reporte sin modificar el comportamiento de `elevador` y `alimak`. La etiqueta visible será `Llamada`.
+**Comportamiento requerido:** el sistema debe reconocer `llamada` como tercer tipo de reporte sin modificar el comportamiento de `elevador` y `alimak`. La etiqueta visible será `Llamada` y su formulario debe representar fielmente el formato operativo aprobado, incluidos los campos de texto `La empresa` y `Cliente` ubicados uno al lado del otro.
 
-**ISSUES relacionados:** `ISSUE-001`, `ISSUE-009`.
+**ISSUES relacionados:** `ISSUE-001`, `ISSUE-009`, `ISSUE-015`.
 
 ### REQ-002 — Crear Llamada desde la web
 
@@ -146,11 +146,11 @@ Registro del PR:
 
 **ISSUES relacionados:** `ISSUE-003`.
 
-### REQ-004 — Representar la conformidad de empresa y cliente
+### REQ-004 — Representar los campos finales de empresa y cliente
 
-**Comportamiento requerido:** la web y la APK deben proporcionar áreas de firma manuscrita digital para `La empresa` y `Cliente`, y la visualización/PDF deben mostrar las firmas existentes. En este alcance las firmas son opcionales y su ausencia no bloquea el guardado ni la aprobación.
+**Comportamiento requerido:** la web y la APK deben proporcionar dos campos simples de texto, `La empresa` y `Cliente`, alineados uno al lado del otro como en el formato físico. Ambos son opcionales y su ausencia no bloquea el guardado ni la aprobación. No son áreas de firma manuscrita ni archivos de imagen.
 
-**ISSUES relacionados:** `ISSUE-004`.
+**ISSUES relacionados:** `ISSUE-004`, `ISSUE-015`.
 
 ### REQ-005 — Incorporar fotografías generales
 
@@ -233,9 +233,9 @@ Registro del PR:
 
 **Tipo:** decisión funcional.
 
-**Estado:** `RESOLVED BY PR-001`.
+**Estado:** `SUPERSEDED BY ISSUE-015`.
 
-**Resolución aprobada:** se usarán dos áreas de firma manuscrita digital, una para `La empresa` y otra para `Cliente`. Serán opcionales en el alcance actual y su ausencia no bloqueará la aprobación. Una obligación futura requerirá un ISSUE nuevo.
+**Resolución histórica corregida por QA:** la interpretación de dos áreas de firma manuscrita fue incorrecta. La definición vigente está documentada en `ISSUE-015`.
 
 **REQ relacionados:** `REQ-004`.
 **Bugs relacionados:** implementar una captura incompatible con la operación real o generar un PDF incompleto.
@@ -312,7 +312,7 @@ Registro del PR:
 
 **Estado:** `OPEN`.
 
-**Trabajo existente:** diseñar el documento multipágina respetando el orden del formato, fotos, comentarios, firmas y reglas transaccionales de aprobación.
+**Trabajo existente:** diseñar el documento multipágina respetando el orden del formato, fotos, comentarios, campos finales de empresa/cliente y reglas transaccionales de aprobación.
 
 **REQ relacionados:** `REQ-008`.
 **Bugs relacionados:** cierre sin PDF, campos truncados, fotos omitidas o archivo compartido desactualizado.
@@ -350,20 +350,31 @@ Registro del PR:
 **REQ relacionados:** `REQ-011`.
 **Bugs relacionados:** degradación de flujos ya validados.
 
+### ISSUE-015 — Los campos finales fueron implementados erróneamente como firmas manuscritas
+
+**Tipo:** BUG funcional y visual detectado por QA.
+
+**Estado:** `IMPLEMENTED IN PR-003 — PENDING QA`.
+
+**Trabajo existente:** retirar las dos áreas de dibujo, el almacenamiento de imágenes de firma y sus controles; reemplazarlos por dos campos simples de texto llamados `La empresa` y `Cliente`, alineados horizontalmente. Los valores deben ser opcionales, persistir en `data_reporte` y conservarse al volver a editar.
+
+**REQ relacionados:** `REQ-001`, `REQ-004`.
+**Bugs relacionados:** interpretación incorrecta del formato físico, interfaz sobredimensionada y almacenamiento innecesario de archivos de firma.
+
 ## IMIPLEMENTATION
 
 > El nombre de esta sección conserva la nomenclatura solicitada por QA. Cada PR es una fase técnica interna y no representa un Pull Request de GitHub.
 
 | PR | Estado | Implementación prevista | REQ relacionados | ISSUE relacionados | Salida esperada |
 | --- | --- | --- | --- | --- | --- |
-| `PR-001` | `COMPLETED` | Contrato funcional cerrado: firmas digitales opcionales, máximo de cinco fotos, carga web exclusiva para Llamada y título automático. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010` | Validado y cerrado por QA. |
+| `PR-001` | `COMPLETED` | Contrato funcional inicial cerrado; la interpretación histórica de firmas fue sustituida por los campos de texto definidos posteriormente por QA. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010`; corrección posterior `ISSUE-015` | Validado y cerrado por QA; conserva trazabilidad histórica. |
 | `PR-002` | `COMPLETED` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | Resuelve `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Desplegado y validado completamente por QA en DEMO. |
-| `PR-003` | `DEPLOYMENT WEB` | Botón `Llamada`, formulario web responsive, título automático y firmas digitales opcionales implementados. | `REQ-002`, `REQ-003`, `REQ-004` | Implementa `ISSUE-002`, pendiente de validación QA; respeta los contratos cerrados en `ISSUE-003`, `ISSUE-004` e `ISSUE-010` | Código listo para despliegue en la VPS DEMO por QA. |
+| `PR-003` | `DEPLOYMENT WEB` | Botón `Llamada`, formulario web responsive y dos campos finales de texto alineados horizontalmente. | `REQ-001`, `REQ-002`, `REQ-003`, `REQ-004` | Implementa `ISSUE-002` y `ISSUE-015`, pendientes de validación QA; respeta los contratos cerrados en `ISSUE-003` e `ISSUE-010` | Corrección lista para despliegue en la VPS DEMO por QA. |
 | `PR-004` | `PENDING` | Implementar el único bloque fotográfico general en la web conforme al límite y alcance aprobados, con comentarios, miniaturas, visor y eliminación segura si corresponde. | `REQ-005`, `REQ-006`, `REQ-011` | `ISSUE-005`, `ISSUE-006`, `ISSUE-007`, `ISSUE-014` | `DEPLOYMENT WEB`. |
-| `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-004`, `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011` | `DEPLOYMENT WEB`. |
+| `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011`, `ISSUE-015` | `DEPLOYMENT WEB`. |
 | `PR-006` | `PENDING` | Ejecutar correcciones derivadas del despliegue web y preparar la matriz de regresión de Llamada, Elevador y ALIMAK. | `REQ-009`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-014` | `TESTING` cuando QA confirme el despliegue; `COMPLETED` solo tras su validación. |
 | `PR-007` | `PENDING` | Preparar compatibilidad Android con el tipo `llamada` en modelos, parser, API, filtros y navegación, sin publicar aún la interfaz completa. | `REQ-001`, `REQ-010`, `REQ-011` | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | `DEPLOYMENT & COMPILING`. |
-| `PR-008` | `PENDING` | Implementar interfaz Android completa: alta, card, edición, fotos generales, visualización, aprobación, PDF, WhatsApp y bloqueo por estado. | `REQ-003`, `REQ-004`, `REQ-005`, `REQ-006`, `REQ-007`, `REQ-008`, `REQ-010` | `ISSUE-003`, `ISSUE-004`, `ISSUE-005`, `ISSUE-007`, `ISSUE-008`, `ISSUE-011`, `ISSUE-013` | `DEPLOYMENT & COMPILING`. |
+| `PR-008` | `PENDING` | Implementar interfaz Android completa: alta, card, edición, fotos generales, visualización, aprobación, PDF, WhatsApp y bloqueo por estado. | `REQ-003`, `REQ-004`, `REQ-005`, `REQ-006`, `REQ-007`, `REQ-008`, `REQ-010` | `ISSUE-003`, `ISSUE-005`, `ISSUE-007`, `ISSUE-008`, `ISSUE-011`, `ISSUE-013`, `ISSUE-015` | `DEPLOYMENT & COMPILING`. |
 | `PR-009` | `PENDING` | Corregir hallazgos de compilación/prueba Android y realizar regresión en móvil/tablet, vertical/horizontal y APK release firmada. | `REQ-009`, `REQ-010`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-013`, `ISSUE-014` | `TESTING` cuando QA compile/instale; `COMPLETED` solo tras su validación. |
 
 ### Registro Git por PR
@@ -391,19 +402,19 @@ Registro del PR:
 - `motivo`: texto multilínea dentro de `data_reporte`.
 - `piezas_reemplazadas`: texto multilínea dentro de `data_reporte`; puede quedar vacío.
 - `observaciones_recomendaciones`: texto multilínea dentro de `data_reporte`; puede quedar vacío.
-- `firma_empresa`: referencia segura a la firma manuscrita digital de la empresa.
-- `firma_cliente`: referencia segura a la firma manuscrita digital del cliente.
+- `firma_empresa`: texto opcional de `La empresa`, con máximo de 255 caracteres.
+- `firma_cliente`: texto opcional de `Cliente`, con máximo de 255 caracteres.
 - `_photos`: colección fotográfica existente, utilizando únicamente ámbito `general` para Llamada.
 
-Los campos narrativos preservarán saltos de línea. Las firmas se almacenarán como recursos privados y no como datos Base64 embebidos en HTML o JSON.
+Los campos narrativos preservarán saltos de línea. Los dos campos finales son texto simple almacenado en `data_reporte`; no representan imágenes ni firmas manuscritas.
 
-### Firmas
+### Campos finales de conformidad
 
-- Habrá un área de firma manuscrita digital para `La empresa` y otra para `Cliente`.
-- Ambas firmas serán opcionales durante creación, edición y aprobación en el alcance actual.
-- Si existe una firma se mostrará en la visualización y en el PDF.
-- Mientras el reporte esté pendiente podrá reemplazarse o eliminarse con confirmación.
-- Una vez aprobado quedará bloqueada junto con el resto del reporte.
+- Habrá un campo simple de texto para `La empresa` y otro para `Cliente`.
+- Ambos estarán uno al lado del otro, incluso en la presentación móvil, reproduciendo el formato entregado por QA.
+- Son opcionales durante creación, edición y aprobación.
+- Sus valores se mostrarán posteriormente en la visualización y el PDF.
+- Una vez aprobado quedarán bloqueados junto con el resto del reporte.
 
 ### Fotografías
 
@@ -439,7 +450,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - `PUT /reports/{id}` valida fecha `YYYY-MM-DD`, campos permitidos y límite de 10 000 caracteres por campo narrativo; calcula el título automáticamente.
 - Los cambios de metadatos fotográficos no pueden agregar o retirar archivos mediante `PUT`; esas operaciones deben usar los endpoints de fotos.
 - Llamada admite exclusivamente fotos `general`, con comentario opcional de hasta 500 caracteres y máximo de cinco.
-- `POST /reports/{id}/approve` conserva el tipo y genera un PDF backend base con los datos y fotos generales. La plantilla visual definitiva y firmas corresponden a PR posteriores.
+- `POST /reports/{id}/approve` conserva el tipo y genera un PDF backend base con los datos y fotos generales. La plantilla visual definitiva corresponde a PR posteriores.
 - `POST /reports/{id}/reopen` invalida el PDF activo y devuelve un aprobado a estado pendiente.
 - `DELETE /reports/{id}` y `DELETE /reports/{id}/photos/{name}` rechazan reportes aprobados y usan bloqueo transaccional.
 - El backend web admite crear el tipo mediante sentencia preparada y preservarlo al reabrir.
@@ -465,7 +476,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 
 ## Alcance previsto de PR-003
 
-**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
+**Estado:** `DEPLOYMENT WEB`. La corrección de `ISSUE-015` está terminada; QA debe desplegarla en DEMO.
 
 **Objetivo:** entregar en la web el flujo de creación y edición de un reporte `Llamada`, consumiendo el backend validado en `PR-002`.
 
@@ -476,7 +487,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 ### Dependencias ya resueltas
 
 - `ISSUE-003`: aporta las claves, validaciones y persistencia de los campos; no se vuelve a cerrar en este PR.
-- `ISSUE-004`: aporta la decisión de usar dos firmas manuscritas digitales opcionales.
+- `ISSUE-004`: conserva la interpretación histórica descartada; `ISSUE-015` contiene la definición vigente de dos textos opcionales.
 - `ISSUE-010`: aporta la regla de título automático `LLAMADA - CLIENTE - FECHA`, con respaldo `LLAMADA #ID`.
 
 ### Implementación ejecutada
@@ -485,8 +496,8 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - Crear un reporte pendiente de tipo `llamada` una sola vez y abrir su formulario específico.
 - Construir un formulario responsive para Cliente, Equipo, Fecha, Trabajo realizado, Motivo, Piezas reemplazadas y Observaciones y recomendaciones.
 - Mostrar el título calculado por el sistema sin permitir que el usuario lo edite manualmente.
-- Incorporar las áreas opcionales de firma manuscrita digital `La empresa` y `Cliente`, con controles para limpiar o reemplazar mientras el reporte esté pendiente.
-- Guardar y volver a cargar los datos y firmas sin pérdida de saltos de línea.
+- Incorporar dos campos opcionales de texto, `La empresa` y `Cliente`, alineados uno al lado del otro.
+- Guardar y volver a cargar todos los datos sin pérdida de saltos de línea.
 - Impedir desde la interfaz la edición de un reporte aprobado y conservar también la validación del servidor.
 - Mantener sin cambios funcionales los flujos web de Elevador y ALIMAK.
 
@@ -502,7 +513,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - Un solo clic genera exactamente un reporte pendiente de tipo `llamada`.
 - Todos los campos se guardan, conservan saltos de línea y reaparecen al volver a editar.
 - El título cambia automáticamente según Cliente y Fecha y no puede editarse directamente.
-- Ambas firmas son opcionales; si se capturan, persisten al reabrir el formulario pendiente y pueden limpiarse o reemplazarse.
+- Los textos `La empresa` y `Cliente` son opcionales, permanecen uno al lado del otro y persisten al volver a editar.
 - Un reporte aprobado no puede modificarse, incluso intentando acceder directamente a la ruta.
 - Crear y editar Elevador y ALIMAK continúa funcionando sin regresiones.
 
@@ -510,11 +521,19 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 
 - Se creó `edit_llamada.php` con lectura preparada, validación de tipo/estado, formulario responsive y escape de salida.
 - El guardado usa bloqueo transaccional, consultas preparadas, validación de fecha y límites de longitud.
-- Las firmas se guardan como PNG privados; la base conserva únicamente nombres aleatorios validados y su lectura requiere una URL firmada temporal.
-- El directorio de firmas bloquea acceso HTTP directo mediante `.htaccess` y no versiona archivos operativos.
-- La API preserva referencias de firma cuando una actualización de Llamada proviene de otro cliente.
+- Los dos campos finales se validan como texto de hasta 255 caracteres y se guardan dentro de `data_reporte`.
+- Se retiraron el canvas, la recepción Base64, la creación de PNG y el endpoint temporal de firmas de la implementación activa.
+- La API acepta y preserva los textos cuando una actualización de Llamada proviene de otro cliente compatible.
 - El botón de alta utiliza CSRF y se deshabilita durante la solicitud para evitar doble creación por clic repetido.
 - `git diff --check` no reportó errores.
 - No existe PHP CLI en Windows ni en WSL local; el lint PHP y la prueba integrada con Apache/MariaDB corresponden a QA en DEMO.
 
-`PR-003` está en `DEPLOYMENT WEB`. QA decidirá posteriormente su paso a `TESTING` y `COMPLETED`; `ISSUE-002` no se cerrará hasta esa validación.
+### Corrección QA de ISSUE-015
+
+- QA detectó que las áreas de firma manuscrita no correspondían al formato físico entregado.
+- `PR-003` volvió temporalmente a `DEVELOPING` para ejecutar la corrección.
+- Los controles de dibujo fueron reemplazados por dos entradas de texto de igual ancho y en una sola fila.
+- El PDF backend base dejó de rotular esos valores como firmas y ahora los representa como `La empresa` y `Cliente`.
+- Cualquier referencia PNG creada durante la prueba incorrecta se ignora y se sustituye al guardar los nuevos textos.
+
+`PR-003` volvió a `DEPLOYMENT WEB`. QA decidirá posteriormente su paso a `TESTING` y `COMPLETED`; `ISSUE-002` e `ISSUE-015` no se cerrarán hasta esa validación.

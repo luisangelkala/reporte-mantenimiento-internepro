@@ -154,8 +154,8 @@ function api_call_text(array $data, string $key, int $maxLength = 10000): string
 function api_call_data(array $submitted, array $current): array
 {
     $textKeys = ['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'];
-    $signatureKeys = ['firma_empresa', 'firma_cliente'];
-    $allowedKeys = array_merge($textKeys, $signatureKeys, ['_photos']);
+    $conformityKeys = ['firma_empresa', 'firma_cliente'];
+    $allowedKeys = array_merge($textKeys, $conformityKeys, ['_photos']);
     foreach (array_keys($submitted) as $key) {
         if (!is_string($key) || !in_array($key, $allowedKeys, true)) {
             api_response(400, ['error' => 'Campo no permitido para el reporte Llamada.']);
@@ -197,11 +197,12 @@ function api_call_data(array $submitted, array $current): array
     } else {
         $normalized['_photos'] = [];
     }
-    foreach ($signatureKeys as $signatureKey) {
-        $currentReference = $current[$signatureKey] ?? null;
-        if (is_string($currentReference) && preg_match('/^[a-f0-9]{32}\.png$/', $currentReference)) {
-            $normalized[$signatureKey] = $currentReference;
-        }
+    foreach ($conformityKeys as $conformityKey) {
+        $normalized[$conformityKey] = array_key_exists($conformityKey, $submitted)
+            ? api_call_text($submitted, $conformityKey, 255)
+            : (is_string($current[$conformityKey] ?? null) && !preg_match('/^[a-f0-9]{32}\.png$/', $current[$conformityKey])
+                ? substr(trim($current[$conformityKey]), 0, 255)
+                : '');
     }
     api_validate_photo_metadata($normalized, 'llamada');
     return $normalized;
@@ -427,6 +428,8 @@ if ($method === 'POST' && count($segments) === 1) {
             'motivo' => '',
             'piezas_reemplazadas' => '',
             'observaciones_recomendaciones' => '',
+            'firma_empresa' => '',
+            'firma_cliente' => '',
             '_photos' => [],
         ], JSON_UNESCAPED_UNICODE);
         $statement = $connection->prepare('UPDATE reporte SET title_reporte = ?, data_reporte = ? WHERE id = ?');

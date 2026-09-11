@@ -2,7 +2,6 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/report_photos.php';
 require_once __DIR__ . '/includes/report_pdf.php';
-require_once __DIR__ . '/includes/report_signatures.php';
 session_start();
 /**
  * Password generator
@@ -97,6 +96,8 @@ function report_create($reporte){
 			'motivo' => '',
 			'piezas_reemplazadas' => '',
 			'observaciones_recomendaciones' => '',
+			'firma_empresa' => '',
+			'firma_cliente' => '',
 			'_photos' => [],
 		], JSON_UNESCAPED_UNICODE);
 		$statement = $db->prepare('UPDATE reporte SET title_reporte = ?, data_reporte = ? WHERE id = ?');
@@ -625,8 +626,6 @@ function report_call_update($id, $csrfToken): array
 	}
 
 	$reportId = (int) $id;
-	$newFiles = [];
-	$oldFilesToDelete = [];
 	$db = db();
 	$db->begin_transaction();
 	try {
@@ -657,28 +656,8 @@ function report_call_update($id, $csrfToken): array
 			$data['_photos'] = [];
 		}
 
-		foreach (report_signature_types() as $signatureType) {
-			$key = 'firma_' . $signatureType;
-			$oldReference = report_signature_reference($data, $signatureType);
-			$submittedData = $_POST[$key . '_data'] ?? '';
-			$clear = ($_POST[$key . '_clear'] ?? '0') === '1';
-			if (!is_string($submittedData)) {
-				throw new InvalidArgumentException('La firma enviada no es válida.');
-			}
-			if ($submittedData !== '') {
-				$newReference = report_signature_store_data_url($reportId, $submittedData);
-				$newFiles[] = $newReference;
-				$data[$key] = $newReference;
-				if ($oldReference !== null && $oldReference !== $newReference) {
-					$oldFilesToDelete[] = $oldReference;
-				}
-			} elseif ($clear) {
-				unset($data[$key]);
-				if ($oldReference !== null) {
-					$oldFilesToDelete[] = $oldReference;
-				}
-			}
-		}
+		$data['firma_empresa'] = report_call_post_text('firma_empresa', 255);
+		$data['firma_cliente'] = report_call_post_text('firma_cliente', 255);
 
 		$title = report_call_title($reportId, $client, $date);
 		$encodedData = json_encode($data, JSON_UNESCAPED_UNICODE);
@@ -692,17 +671,11 @@ function report_call_update($id, $csrfToken): array
 		$statement->close();
 		$db->commit();
 		mysqli_close($db);
-		foreach ($oldFilesToDelete as $oldFile) {
-			report_signature_delete($reportId, $oldFile);
-		}
 		unset($_SESSION['call_edit_csrf']);
 		return ['result' => 'updated'];
 	} catch (Throwable $error) {
 		$db->rollback();
 		mysqli_close($db);
-		foreach ($newFiles as $newFile) {
-			report_signature_delete($reportId, $newFile);
-		}
 		if ($error instanceof OutOfBoundsException) {
 			return ['result' => 'not_found', 'message' => $error->getMessage()];
 		}

@@ -2,7 +2,6 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/report_photos.php';
 require_once __DIR__ . '/includes/report_pdf.php';
-require_once __DIR__ . '/includes/report_call_photos.php';
 session_start();
 /**
  * Password generator
@@ -700,29 +699,6 @@ $responseStatus = 200;
 
 $type = isset($_POST["type"]) ? $_POST["type"] : 'list';
 $reporte = isset($_POST["reporte"]) ? $_POST["reporte"] : 'elevador';
-
-if (in_array($type, ['llamada_photo_upload', 'llamada_photo_comment', 'llamada_photo_delete'], true)) {
-	header('Content-Type: application/json; charset=utf-8');
-	try {
-		if ($type === 'llamada_photo_upload') {
-			$photos = report_call_photo_upload($_POST['id'] ?? '', $_POST['csrf_token'] ?? '', $_FILES, $_POST['comment'] ?? '');
-			$message = 'Fotografía subida y verificada.';
-		} elseif ($type === 'llamada_photo_comment') {
-			$photos = report_call_photo_update_comment($_POST['id'] ?? '', $_POST['csrf_token'] ?? '', $_POST['name'] ?? '', $_POST['comment'] ?? '');
-			$message = 'Comentario guardado.';
-		} else {
-			$photos = report_call_photo_delete($_POST['id'] ?? '', $_POST['csrf_token'] ?? '', $_POST['name'] ?? '');
-			$message = 'Fotografía eliminada.';
-		}
-		http_response_code(200);
-		echo json_encode(['status' => 200, 'message' => $message, 'photos' => $photos], JSON_UNESCAPED_UNICODE);
-	} catch (Throwable $error) {
-		list($photoStatus, $photoMessage) = report_call_photo_error_response($error);
-		http_response_code($photoStatus);
-		echo json_encode(['status' => $photoStatus, 'message' => $photoMessage], JSON_UNESCAPED_UNICODE);
-	}
-	exit;
-}
 
 if ($type == 'list'){
 	$message = 'Listado de reportes cargado.';

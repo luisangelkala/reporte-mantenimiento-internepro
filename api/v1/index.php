@@ -266,6 +266,11 @@ function api_photos_for_bucket(array $data, string $scope, ?string $sectionKey):
     }));
 }
 
+function api_photo_bucket_limit(string $reportType, string $scope): int
+{
+    return $reportType === 'llamada' && $scope === 'general' ? 10 : 5;
+}
+
 function api_validate_photo_metadata(array $data, string $reportType): void
 {
     $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
@@ -293,8 +298,9 @@ function api_validate_photo_metadata(array $data, string $reportType): void
             api_response(400, ['error' => 'El ambito de la fotografia es invalido.']);
         }
         $bucketCounts[$bucket] = ($bucketCounts[$bucket] ?? 0) + 1;
-        if ($bucketCounts[$bucket] > 5) {
-            api_response(409, ['error' => 'Solo se permiten 5 fotografias por bloque.']);
+        $limit = api_photo_bucket_limit($reportType, $scope);
+        if ($bucketCounts[$bucket] > $limit) {
+            api_response(409, ['error' => 'Solo se permiten ' . $limit . ' fotografias por bloque.']);
         }
     }
 }
@@ -321,8 +327,10 @@ function api_store_photo(mysqli $connection, array $report, int $id): array
     $data = json_decode($report['data_reporte'] ?? '', true);
     $data = is_array($data) ? $data : [];
     $photos = is_array($data['_photos'] ?? null) ? $data['_photos'] : [];
-    if (count(api_photos_for_bucket($data, $scope, $sectionKey)) >= 5) {
-        api_response(409, ['error' => 'Solo se permiten 5 fotografias por bloque.']);
+    $reportType = api_report_type($report);
+    $limit = api_photo_bucket_limit($reportType, $scope);
+    if (count(api_photos_for_bucket($data, $scope, $sectionKey)) >= $limit) {
+        api_response(409, ['error' => 'Solo se permiten ' . $limit . ' fotografias por bloque.']);
     }
 
     $upload = $_FILES['photo'] ?? null;

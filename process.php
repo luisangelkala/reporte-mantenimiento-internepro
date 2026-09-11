@@ -2,6 +2,7 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/report_photos.php';
 require_once __DIR__ . '/includes/report_pdf.php';
+require_once __DIR__ . '/includes/report_signatures.php';
 session_start();
 /**
  * Password generator
@@ -33,13 +34,18 @@ function report_list(){
         ''
         ;
         $red = (($state['status'] ?? '') == 'close') ? 'red' : '';
+        $escapedTitle = htmlspecialchars((string) $row['title_reporte'], ENT_QUOTES, 'UTF-8');
 
         $reportType = report_type_from_record(is_array($state) ? $state : [], $row['data_reporte'] ?? null);
         if ($reportType === 'llamada') {
             $viewAction = '<span title="Vista de Llamada disponible al completar PR-005" aria-label="Vista de Llamada pendiente" style="margin:0 5px;color:#aaa"><i class="fa fa-eye" aria-hidden="true"></i></span>';
+            $editAction = (($state['status'] ?? '') === 'close')
+                ? '<span title="Un reporte aprobado no puede editarse" aria-label="Edición no disponible" style="margin:0 5px;color:#aaa"><i class="fa fa-pencil" aria-hidden="true"></i></span>'
+                : '<a href="edit_llamada.php?id=' . (int) $row['id'] . '" title="Editar reporte Llamada" aria-label="Editar reporte Llamada" style="margin:0 5px"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
         } else {
             $viewSuffix = $reportType === 'alimak' ? '_alimak' : '';
             $viewAction = '<a href="view' . $viewSuffix . '.php?id=' . (int) $row['id'] . '" class="view" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"> <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></a>';
+            $editAction = '';
         }
         $pdfUrl = report_pdf_active_url((int) $row['id'], is_array($state) ? $state : []);
         if ($pdfUrl !== null) {
@@ -55,11 +61,12 @@ function report_list(){
 
    		$table .= '<tr class="'. $red .'">
                    <th scope="row">'. $row['id'] .'</th>
-                   <td class="text-left">'.$status.' '. $row['title_reporte'] .'</td>
+                   <td class="text-left">'.$status.' '. $escapedTitle .'</td>
                    <td>
                    <div>
                    '.$pdfActions.'
                    '.$viewAction.'
+                   '.$editAction.'
                    <a href="#" data-filter="'. $row['id'] .'" class="delete" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/></svg></a>
                    </div>
                    </td>
@@ -98,7 +105,7 @@ function report_create($reporte){
 		$statement->close();
 	}
 	mysqli_close($db);
-	return $created;
+	return $created ? ['created' => true, 'id' => $id] : false;
 }
 
 function report_delete($id){
@@ -570,6 +577,146 @@ function report_reopen($id, $csrfToken){
 	return $updated ? 'reopened' : 'error';
 }
 
+function report_call_post_text(string $key, int $maxLength): string
+{
+	$value = $_POST[$key] ?? '';
+	if (!is_string($value)) {
+		throw new InvalidArgumentException('El campo ' . $key . ' no es válido.');
+	}
+	$value = trim($value);
+	$length = function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+	if ($length > $maxLength) {
+		throw new InvalidArgumentException('El campo ' . $key . ' supera el límite permitido.');
+	}
+	return $value;
+}
+
+function report_call_date(string $date): string
+{
+	if ($date === '') {
+		return '';
+	}
+	$parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+	$errors = DateTimeImmutable::getLastErrors();
+	if ($parsed === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+		throw new InvalidArgumentException('La fecha debe usar el formato YYYY-MM-DD.');
+	}
+	return $date;
+}
+
+function report_call_title(int $id, string $client, string $date): string
+{
+	$client = preg_replace('/\s+/u', ' ', trim($client)) ?: '';
+	if ($client === '' || $date === '') {
+		return 'LLAMADA #' . $id;
+	}
+	$title = 'LLAMADA - ' . $client . ' - ' . $date;
+	return function_exists('mb_substr') ? mb_substr($title, 0, 255, 'UTF-8') : substr($title, 0, 255);
+}
+
+function report_call_update($id, $csrfToken): array
+{
+	if (!ctype_digit((string) $id) || (int) $id < 1) {
+		return ['result' => 'invalid', 'message' => 'El identificador del reporte no es válido.'];
+	}
+	$sessionToken = $_SESSION['call_edit_csrf'] ?? '';
+	if (!is_string($csrfToken) || !is_string($sessionToken) || $sessionToken === '' || !hash_equals($sessionToken, $csrfToken)) {
+		return ['result' => 'forbidden', 'message' => 'La sesión del formulario expiró. Recargue la página e intente nuevamente.'];
+	}
+
+	$reportId = (int) $id;
+	$newFiles = [];
+	$oldFilesToDelete = [];
+	$db = db();
+	$db->begin_transaction();
+	try {
+		$statement = $db->prepare('SELECT * FROM reporte WHERE id = ? FOR UPDATE');
+		$statement->bind_param('i', $reportId);
+		$statement->execute();
+		$report = $statement->get_result()->fetch_assoc() ?: null;
+		$statement->close();
+		if ($report === null) {
+			throw new OutOfBoundsException('El reporte no existe.');
+		}
+		$state = json_decode((string) $report['state_reporte'], true) ?: [];
+		if (($state['reporte'] ?? '') !== 'llamada') {
+			throw new InvalidArgumentException('El registro no es un reporte de Llamada.');
+		}
+		if (($state['status'] ?? '') === 'close') {
+			throw new DomainException('El reporte está aprobado y no puede editarse.');
+		}
+
+		$client = report_call_post_text('cliente', 255);
+		$equipment = report_call_post_text('equipo', 255);
+		$date = report_call_date(report_call_post_text('fecha', 20));
+		$data = json_decode((string) ($report['data_reporte'] ?? ''), true) ?: [];
+		foreach (['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'] as $key) {
+			$data[$key] = report_call_post_text($key, 10000);
+		}
+		if (!isset($data['_photos']) || !is_array($data['_photos'])) {
+			$data['_photos'] = [];
+		}
+
+		foreach (report_signature_types() as $signatureType) {
+			$key = 'firma_' . $signatureType;
+			$oldReference = report_signature_reference($data, $signatureType);
+			$submittedData = $_POST[$key . '_data'] ?? '';
+			$clear = ($_POST[$key . '_clear'] ?? '0') === '1';
+			if (!is_string($submittedData)) {
+				throw new InvalidArgumentException('La firma enviada no es válida.');
+			}
+			if ($submittedData !== '') {
+				$newReference = report_signature_store_data_url($reportId, $submittedData);
+				$newFiles[] = $newReference;
+				$data[$key] = $newReference;
+				if ($oldReference !== null && $oldReference !== $newReference) {
+					$oldFilesToDelete[] = $oldReference;
+				}
+			} elseif ($clear) {
+				unset($data[$key]);
+				if ($oldReference !== null) {
+					$oldFilesToDelete[] = $oldReference;
+				}
+			}
+		}
+
+		$title = report_call_title($reportId, $client, $date);
+		$encodedData = json_encode($data, JSON_UNESCAPED_UNICODE);
+		if ($encodedData === false) {
+			throw new RuntimeException('No se pudieron preparar los datos del reporte.');
+		}
+		$technician = '';
+		$statement = $db->prepare('UPDATE reporte SET title_reporte = ?, cliente_reporte = ?, fecha_reporte = ?, equipo_reporte = ?, tecnico_reporte = ?, data_reporte = ?, updated_at = NOW() WHERE id = ?');
+		$statement->bind_param('ssssssi', $title, $client, $date, $equipment, $technician, $encodedData, $reportId);
+		$statement->execute();
+		$statement->close();
+		$db->commit();
+		mysqli_close($db);
+		foreach ($oldFilesToDelete as $oldFile) {
+			report_signature_delete($reportId, $oldFile);
+		}
+		unset($_SESSION['call_edit_csrf']);
+		return ['result' => 'updated'];
+	} catch (Throwable $error) {
+		$db->rollback();
+		mysqli_close($db);
+		foreach ($newFiles as $newFile) {
+			report_signature_delete($reportId, $newFile);
+		}
+		if ($error instanceof OutOfBoundsException) {
+			return ['result' => 'not_found', 'message' => $error->getMessage()];
+		}
+		if ($error instanceof DomainException) {
+			return ['result' => 'approved', 'message' => $error->getMessage()];
+		}
+		if ($error instanceof InvalidArgumentException) {
+			return ['result' => 'invalid', 'message' => $error->getMessage()];
+		}
+		error_log('No se pudo actualizar reporte Llamada ' . $reportId . ': ' . $error->getMessage());
+		return ['result' => 'error', 'message' => 'No se pudo guardar el reporte.'];
+	}
+}
+
 /**
  * Receive data
  */
@@ -586,8 +733,29 @@ if ($type == 'list'){
 }
 
 if ($type == 'create'){
-	report_create($reporte);
-	$message = 'Reporte creado.';
+	if ($reporte === 'llamada') {
+		$submittedToken = $_POST['csrf_token'] ?? '';
+		$sessionToken = $_SESSION['call_create_csrf'] ?? '';
+		if (!is_string($submittedToken) || !is_string($sessionToken) || $sessionToken === '' || !hash_equals($sessionToken, $submittedToken)) {
+			$responseStatus = 403;
+			$message = 'La solicitud expiró. Recargue el listado e intente nuevamente.';
+			$content = '';
+			$created = false;
+		} else {
+			$created = report_create($reporte);
+		}
+	} else {
+		$created = report_create($reporte);
+	}
+	if ($created === false && $responseStatus === 200) {
+		$responseStatus = 500;
+		$message = 'No se pudo crear el reporte.';
+	} elseif ($created !== false) {
+		$message = 'Reporte creado.';
+		if ($reporte === 'llamada') {
+			$data['redirect'] = 'edit_llamada.php?id=' . (int) $created['id'];
+		}
+	}
 	$content = '';
 }
 
@@ -629,6 +797,23 @@ if ($type == 'aprobando'){
 		$message = 'Debe indicar un reporte valido y el nombre de quien aprueba.';
 		$content = '';
 	}
+}
+
+if ($type == 'insert_llamada'){
+	$id = $_POST['id'] ?? '';
+	$result = report_call_update($id, $_POST['csrf_token'] ?? '');
+	if (($result['result'] ?? '') === 'updated') {
+		header('Location: edit_llamada.php?id=' . (int) $id . '&saved=1');
+		exit;
+	}
+	$statusMap = ['forbidden' => 403, 'not_found' => 404, 'approved' => 409, 'invalid' => 400];
+	http_response_code($statusMap[$result['result'] ?? ''] ?? 500);
+	header('Content-Type: text/html; charset=utf-8');
+	echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Error al guardar</title>'
+		. '<link rel="stylesheet" href="assets/css/bootstrap5/bootstrap.min.css"></head><body><main class="container py-5"><div class="alert alert-danger">'
+		. htmlspecialchars((string) ($result['message'] ?? 'No se pudo guardar el reporte.'), ENT_QUOTES, 'UTF-8')
+		. '</div><a class="btn btn-secondary" href="edit_llamada.php?id=' . (int) $id . '">Volver al formulario</a></main></body></html>';
+	exit;
 }
 
 if ($type == 'reopen'){

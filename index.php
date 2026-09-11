@@ -6,6 +6,10 @@
 *
 * @author LAGC
  */
+session_start();
+if (!isset($_SESSION['call_create_csrf']) || !is_string($_SESSION['call_create_csrf'])) {
+    $_SESSION['call_create_csrf'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,6 +38,7 @@
                 <h2>Registro de Mantenimiento</h2>
 		<input type="button" class="reporte" value="Nuevo Reporte">
 		<input type="button" class="alimak" value="Nuevo Reporte ALIMAK">
+		<input type="button" class="llamada" value="Llamada">
             </div>
             <div class="status" style="height:40px; color:red;"></div>
 
@@ -86,6 +91,14 @@
 
                             console.log(data);
                             console.log(XMLHttpRequest);
+                },
+                error: function(XMLHttpRequest) {
+                            var message = 'No se pudo completar la solicitud.';
+                            if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                message = XMLHttpRequest.responseJSON.message;
+                            }
+                            $status.text(message);
+                            $('.head .llamada').prop('disabled', false).val('Llamada');
                 }
             });
         }
@@ -103,7 +116,10 @@
                 success: function(data, XMLHttpRequest) {
                             if (data.status === 200) {
                                 $status.html(data.message);
-                                /*location.reload();*/
+                                if (data.redirect) {
+                                    window.location.assign(data.redirect);
+                                    return;
+                                }
                                 list();
                             }
                             else {
@@ -112,6 +128,14 @@
 
                             console.log(data);
                             console.log(XMLHttpRequest);
+                },
+                error: function(XMLHttpRequest) {
+                            var message = 'No se pudo completar la solicitud.';
+                            if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.message) {
+                                message = XMLHttpRequest.responseJSON.message;
+                            }
+                            $status.text(message);
+                            $('.head .llamada').prop('disabled', false).val('Llamada');
                 }
             });
         }
@@ -139,6 +163,19 @@
 
             // Run query
             send($params);
+        });
+
+	/** CREAR REPORTE LLAMADA */
+	$('.head').on('click', '.llamada', function(event) {
+            if(event.preventDefault) { event.preventDefault(); }
+            var $button = $(this);
+            if ($button.prop('disabled')) { return; }
+            $button.prop('disabled', true).val('Creando...');
+            send({
+                'type': 'create',
+                'reporte': 'llamada',
+                'csrf_token': <?php echo json_encode($_SESSION['call_create_csrf']); ?>
+            });
         });
 	
         /** DELETE REPORTE */

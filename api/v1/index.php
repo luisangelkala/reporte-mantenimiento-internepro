@@ -154,7 +154,8 @@ function api_call_text(array $data, string $key, int $maxLength = 10000): string
 function api_call_data(array $submitted, array $current): array
 {
     $textKeys = ['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'];
-    $allowedKeys = array_merge($textKeys, ['_photos']);
+    $signatureKeys = ['firma_empresa', 'firma_cliente'];
+    $allowedKeys = array_merge($textKeys, $signatureKeys, ['_photos']);
     foreach (array_keys($submitted) as $key) {
         if (!is_string($key) || !in_array($key, $allowedKeys, true)) {
             api_response(400, ['error' => 'Campo no permitido para el reporte Llamada.']);
@@ -195,6 +196,12 @@ function api_call_data(array $submitted, array $current): array
         $normalized['_photos'] = array_values($current['_photos']);
     } else {
         $normalized['_photos'] = [];
+    }
+    foreach ($signatureKeys as $signatureKey) {
+        $currentReference = $current[$signatureKey] ?? null;
+        if (is_string($currentReference) && preg_match('/^[a-f0-9]{32}\.png$/', $currentReference)) {
+            $normalized[$signatureKey] = $currentReference;
+        }
     }
     api_validate_photo_metadata($normalized, 'llamada');
     return $normalized;

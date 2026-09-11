@@ -211,7 +211,7 @@ Registro del PR:
 
 **Tipo:** trabajo funcional.
 
-**Estado:** `OPEN`.
+**Estado:** `IMPLEMENTED IN PR-003 — PENDING QA`.
 
 **Trabajo existente:** añadir el botón `Llamada`, crear el registro pendiente y dirigirlo a su formulario.
 
@@ -358,7 +358,7 @@ Registro del PR:
 | --- | --- | --- | --- | --- | --- |
 | `PR-001` | `COMPLETED` | Contrato funcional cerrado: firmas digitales opcionales, máximo de cinco fotos, carga web exclusiva para Llamada y título automático. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010` | Validado y cerrado por QA. |
 | `PR-002` | `COMPLETED` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | Resuelve `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Desplegado y validado completamente por QA en DEMO. |
-| `PR-003` | `PENDING` | Añadir botón `Llamada` y formulario web responsive con todos los campos aprobados, título automático y firmas digitales opcionales. | `REQ-002`, `REQ-003`, `REQ-004` | Resuelve `ISSUE-002`; depende de los contratos cerrados en `ISSUE-003`, `ISSUE-004` e `ISSUE-010` | `DEPLOYMENT WEB`. |
+| `PR-003` | `DEPLOYMENT WEB` | Botón `Llamada`, formulario web responsive, título automático y firmas digitales opcionales implementados. | `REQ-002`, `REQ-003`, `REQ-004` | Implementa `ISSUE-002`, pendiente de validación QA; respeta los contratos cerrados en `ISSUE-003`, `ISSUE-004` e `ISSUE-010` | Código listo para despliegue en la VPS DEMO por QA. |
 | `PR-004` | `PENDING` | Implementar el único bloque fotográfico general en la web conforme al límite y alcance aprobados, con comentarios, miniaturas, visor y eliminación segura si corresponde. | `REQ-005`, `REQ-006`, `REQ-011` | `ISSUE-005`, `ISSUE-006`, `ISSUE-007`, `ISSUE-014` | `DEPLOYMENT WEB`. |
 | `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-004`, `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011` | `DEPLOYMENT WEB`. |
 | `PR-006` | `PENDING` | Ejecutar correcciones derivadas del despliegue web y preparar la matriz de regresión de Llamada, Elevador y ALIMAK. | `REQ-009`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-014` | `TESTING` cuando QA confirme el despliegue; `COMPLETED` solo tras su validación. |
@@ -465,7 +465,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 
 ## Alcance previsto de PR-003
 
-**Estado:** `PENDING`. No existe autorización técnica para iniciarlo.
+**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
 
 **Objetivo:** entregar en la web el flujo de creación y edición de un reporte `Llamada`, consumiendo el backend validado en `PR-002`.
 
@@ -479,7 +479,7 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - `ISSUE-004`: aporta la decisión de usar dos firmas manuscritas digitales opcionales.
 - `ISSUE-010`: aporta la regla de título automático `LLAMADA - CLIENTE - FECHA`, con respaldo `LLAMADA #ID`.
 
-### Implementación prevista
+### Implementación ejecutada
 
 - Añadir el tercer botón `Llamada` al listado web, conservando los botones de Elevador y ALIMAK.
 - Crear un reporte pendiente de tipo `llamada` una sola vez y abrir su formulario específico.
@@ -506,4 +506,15 @@ QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e
 - Un reporte aprobado no puede modificarse, incluso intentando acceder directamente a la ruta.
 - Crear y editar Elevador y ALIMAK continúa funcionando sin regresiones.
 
-Cuando Dev termine la implementación, `PR-003` pasará a `DEPLOYMENT WEB`. QA decidirá posteriormente su paso a `TESTING` y `COMPLETED`.
+### Evidencia Dev
+
+- Se creó `edit_llamada.php` con lectura preparada, validación de tipo/estado, formulario responsive y escape de salida.
+- El guardado usa bloqueo transaccional, consultas preparadas, validación de fecha y límites de longitud.
+- Las firmas se guardan como PNG privados; la base conserva únicamente nombres aleatorios validados y su lectura requiere una URL firmada temporal.
+- El directorio de firmas bloquea acceso HTTP directo mediante `.htaccess` y no versiona archivos operativos.
+- La API preserva referencias de firma cuando una actualización de Llamada proviene de otro cliente.
+- El botón de alta utiliza CSRF y se deshabilita durante la solicitud para evitar doble creación por clic repetido.
+- `git diff --check` no reportó errores.
+- No existe PHP CLI en Windows ni en WSL local; el lint PHP y la prueba integrada con Apache/MariaDB corresponden a QA en DEMO.
+
+`PR-003` está en `DEPLOYMENT WEB`. QA decidirá posteriormente su paso a `TESTING` y `COMPLETED`; `ISSUE-002` no se cerrará hasta esa validación.

@@ -105,6 +105,101 @@ function api_json_field(array $payload, string $key): ?string
     return json_encode($payload[$key], JSON_UNESCAPED_UNICODE);
 }
 
+function api_report_type(array $report): string
+{
+    $state = json_decode((string) ($report['state_reporte'] ?? ''), true) ?: [];
+    $type = (string) ($state['reporte'] ?? '');
+    return in_array($type, ['elevador', 'alimak', 'llamada'], true) ? $type : 'elevador';
+}
+
+function api_call_date(string $date): string
+{
+    if ($date === '') {
+        return '';
+    }
+    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+    $errors = DateTimeImmutable::getLastErrors();
+    if ($parsed === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+        api_response(400, ['error' => 'La fecha de Llamada debe usar el formato YYYY-MM-DD.']);
+    }
+    return $date;
+}
+
+function api_call_title(int $id, string $client, string $date): string
+{
+    $client = preg_replace('/\s+/u', ' ', trim($client)) ?: '';
+    if ($client === '' || $date === '') {
+        return 'LLAMADA #' . $id;
+    }
+    $title = 'LLAMADA - ' . $client . ' - ' . $date;
+    return function_exists('mb_substr') ? mb_substr($title, 0, 255, 'UTF-8') : substr($title, 0, 255);
+}
+
+function api_call_text(array $data, string $key, int $maxLength = 10000): string
+{
+    if (!array_key_exists($key, $data)) {
+        return '';
+    }
+    if (!is_string($data[$key])) {
+        api_response(400, ['error' => 'El campo de Llamada ' . $key . ' es invalido.']);
+    }
+    $value = trim($data[$key]);
+    $length = function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+    if ($length > $maxLength) {
+        api_response(400, ['error' => 'El campo de Llamada ' . $key . ' supera ' . $maxLength . ' caracteres.']);
+    }
+    return $value;
+}
+
+function api_call_data(array $submitted, array $current): array
+{
+    $textKeys = ['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'];
+    $allowedKeys = array_merge($textKeys, ['_photos']);
+    foreach (array_keys($submitted) as $key) {
+        if (!is_string($key) || !in_array($key, $allowedKeys, true)) {
+            api_response(400, ['error' => 'Campo no permitido para el reporte Llamada.']);
+        }
+    }
+
+    $normalized = [];
+    foreach ($textKeys as $key) {
+        $normalized[$key] = api_call_text($submitted, $key);
+    }
+    if (array_key_exists('_photos', $submitted)) {
+        if (!is_array($submitted['_photos'])) {
+            api_response(400, ['error' => 'Las fotografias de Llamada son invalidas.']);
+        }
+        $currentPhotos = isset($current['_photos']) && is_array($current['_photos']) ? $current['_photos'] : [];
+        $currentByName = [];
+        foreach ($currentPhotos as $photo) {
+            if (is_array($photo) && is_string($photo['name'] ?? null)) {
+                $currentByName[$photo['name']] = $photo;
+            }
+        }
+        if (count($submitted['_photos']) !== count($currentByName)) {
+            api_response(409, ['error' => 'Use los endpoints de fotografias para agregar o eliminar archivos.']);
+        }
+        $normalized['_photos'] = [];
+        foreach ($submitted['_photos'] as $photo) {
+            $name = is_array($photo) ? (string) ($photo['name'] ?? '') : '';
+            if ($name === '' || !isset($currentByName[$name])) {
+                api_response(409, ['error' => 'La fotografia no pertenece al reporte Llamada.']);
+            }
+            $stored = $currentByName[$name];
+            $stored['comment'] = api_photo_comment($photo['comment'] ?? null);
+            $stored['scope'] = 'general';
+            unset($stored['section_key']);
+            $normalized['_photos'][] = $stored;
+        }
+    } elseif (isset($current['_photos']) && is_array($current['_photos'])) {
+        $normalized['_photos'] = array_values($current['_photos']);
+    } else {
+        $normalized['_photos'] = [];
+    }
+    api_validate_photo_metadata($normalized, 'llamada');
+    return $normalized;
+}
+
 function api_photo_directory(int $reportId): string
 {
     return dirname(__DIR__, 2) . '/storage/report-photos/' . $reportId;
@@ -308,16 +403,30 @@ if ($method === 'GET' && count($segments) === 1) {
 if ($method === 'POST' && count($segments) === 1) {
     $payload = api_payload();
     $type = api_string($payload, 'type', 20);
-    if (!in_array($type, ['elevador', 'alimak'], true)) {
+    if (!in_array($type, ['elevador', 'alimak', 'llamada'], true)) {
         api_response(400, ['error' => 'Tipo de reporte inválido.']);
     }
     $state = json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $type]);
-    $title = api_string($payload, 'title', 255) ?: 'Añadir título del reporte...';
+    $title = $type === 'llamada' ? 'LLAMADA' : (api_string($payload, 'title', 255) ?: 'Añadir título del reporte...');
     $statement = $connection->prepare('INSERT INTO reporte (title_reporte, state_reporte, created_at) VALUES (?, ?, NOW())');
     $statement->bind_param('ss', $title, $state);
     $statement->execute();
     $id = $connection->insert_id;
     $statement->close();
+    if ($type === 'llamada') {
+        $title = api_call_title((int) $id, '', '');
+        $initialData = json_encode([
+            'trabajo_realizado' => '',
+            'motivo' => '',
+            'piezas_reemplazadas' => '',
+            'observaciones_recomendaciones' => '',
+            '_photos' => [],
+        ], JSON_UNESCAPED_UNICODE);
+        $statement = $connection->prepare('UPDATE reporte SET title_reporte = ?, data_reporte = ? WHERE id = ?');
+        $statement->bind_param('ssi', $title, $initialData, $id);
+        $statement->execute();
+        $statement->close();
+    }
     $report = api_report($connection, $id);
     mysqli_close($connection);
     api_response(201, ['data' => api_decode_report($report)]);
@@ -449,23 +558,38 @@ if ($method === 'PUT' && count($segments) === 2) {
         mysqli_close($connection);
         api_response(409, ['error' => 'No se puede modificar un reporte aprobado. Debe volverlo a PENDIENTE.']);
     }
-    $title = api_string($payload, 'title', 255);
+    $reportType = api_report_type($report);
     $client = api_string($payload, 'client', 255);
     $date = api_string($payload, 'date', 20);
     $equipment = api_string($payload, 'equipment', 255);
     $technician = api_string($payload, 'technician', 255);
+    if ($reportType === 'llamada') {
+        $date = api_call_date($date);
+        $title = api_call_title($id, $client, $date);
+        $technician = '';
+    } else {
+        $title = api_string($payload, 'title', 255);
+    }
     if (array_key_exists('data', $payload)) {
         if (!is_array($payload['data'])) {
             $connection->rollback();
             mysqli_close($connection);
             api_response(400, ['error' => 'Campo invalido: data']);
         }
-        api_validate_photo_metadata($payload['data'], (string) ($reportState['reporte'] ?? 'elevador'));
-        $data = json_encode($payload['data'], JSON_UNESCAPED_UNICODE);
+        if ($reportType === 'llamada') {
+            $currentData = json_decode((string) ($report['data_reporte'] ?? ''), true) ?: [];
+            $normalizedData = api_call_data($payload['data'], $currentData);
+            $data = json_encode($normalizedData, JSON_UNESCAPED_UNICODE);
+        } else {
+            api_validate_photo_metadata($payload['data'], $reportType);
+            $data = json_encode($payload['data'], JSON_UNESCAPED_UNICODE);
+        }
     } else {
         $data = $report['data_reporte'];
     }
-    $observations = api_json_field($payload, 'observations') ?? $report['obs_reporte'];
+    $observations = $reportType === 'llamada'
+        ? $report['obs_reporte']
+        : (api_json_field($payload, 'observations') ?? $report['obs_reporte']);
     $statement = $connection->prepare('UPDATE reporte SET title_reporte = ?, cliente_reporte = ?, fecha_reporte = ?, equipo_reporte = ?, tecnico_reporte = ?, data_reporte = ?, obs_reporte = ?, updated_at = NOW() WHERE id = ?');
     $statement->bind_param('sssssssi', $title, $client, $date, $equipment, $technician, $data, $observations, $id);
     $statement->execute();
@@ -476,7 +600,43 @@ if ($method === 'PUT' && count($segments) === 2) {
     api_response(200, ['data' => api_decode_report($updated)]);
 }
 
-if ($method === 'POST' && ($segments[2] ?? '') === 'approve') {
+if ($method === 'POST' && count($segments) === 3 && ($segments[2] ?? '') === 'reopen') {
+    $connection->begin_transaction();
+    $report = api_report_for_update($connection, $id);
+    if ($report === null) {
+        $connection->rollback();
+        mysqli_close($connection);
+        api_response(404, ['error' => 'Reporte no encontrado.']);
+    }
+    $state = json_decode((string) ($report['state_reporte'] ?? ''), true) ?: [];
+    if (($state['status'] ?? '') !== 'close') {
+        $connection->rollback();
+        mysqli_close($connection);
+        api_response(409, ['error' => 'Solo un reporte aprobado puede volver a PENDIENTE.']);
+    }
+    $state['status'] = 'open';
+    $state['aprobado'] = '';
+    $state['fecha'] = '';
+    $state['reporte'] = api_report_type($report);
+    $state = report_pdf_invalidate_state($state);
+    $encodedState = json_encode($state, JSON_UNESCAPED_UNICODE);
+    $statement = $connection->prepare('UPDATE reporte SET state_reporte = ?, updated_at = NOW() WHERE id = ?');
+    $statement->bind_param('si', $encodedState, $id);
+    $statement->execute();
+    $updatedSuccessfully = $statement->affected_rows === 1;
+    $statement->close();
+    if (!$updatedSuccessfully) {
+        $connection->rollback();
+        mysqli_close($connection);
+        api_response(500, ['error' => 'No se pudo volver el reporte a PENDIENTE.']);
+    }
+    $updated = api_report($connection, $id);
+    $connection->commit();
+    mysqli_close($connection);
+    api_response(200, ['data' => api_decode_report($updated)]);
+}
+
+if ($method === 'POST' && count($segments) === 3 && ($segments[2] ?? '') === 'approve') {
     $payload = api_payload();
     $approvedBy = api_string($payload, 'approved_by', 255);
     try {
@@ -501,13 +661,16 @@ if ($method === 'POST' && ($segments[2] ?? '') === 'approve') {
 }
 
 if ($method === 'DELETE' && count($segments) === 2) {
-    $report = api_report($connection, $id);
+    $connection->begin_transaction();
+    $report = api_report_for_update($connection, $id);
     if ($report === null) {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(404, ['error' => 'Reporte no encontrado.']);
     }
     $state = json_decode($report['state_reporte'], true) ?: [];
     if (($state['status'] ?? '') === 'close') {
+        $connection->rollback();
         mysqli_close($connection);
         api_response(409, ['error' => 'Un reporte aprobado no puede ser eliminado.']);
     }
@@ -516,6 +679,11 @@ if ($method === 'DELETE' && count($segments) === 2) {
     $statement->execute();
     $deleted = $statement->affected_rows === 1;
     $statement->close();
+    if ($deleted) {
+        $connection->commit();
+    } else {
+        $connection->rollback();
+    }
     mysqli_close($connection);
     if (!$deleted) {
         api_response(404, ['error' => 'Reporte no encontrado.']);

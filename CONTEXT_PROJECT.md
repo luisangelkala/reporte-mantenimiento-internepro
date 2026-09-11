@@ -200,7 +200,7 @@ Registro del PR:
 
 **Tipo:** trabajo funcional.
 
-**Estado:** `OPEN`.
+**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
 
 **Trabajo existente:** ampliar la lista de tipos, serialización, deserialización y enrutamiento para aceptar `llamada` sin interpretar el registro como Elevador.
 
@@ -222,7 +222,7 @@ Registro del PR:
 
 **Tipo:** trabajo de datos.
 
-**Estado:** `OPEN`.
+**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
 
 **Trabajo existente:** definir claves estables, límites, validación, persistencia JSON y presentación de los campos del formato.
 
@@ -266,7 +266,7 @@ Registro del PR:
 
 **Tipo:** trabajo de reglas y seguridad.
 
-**Estado:** `OPEN`.
+**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
 
 **Trabajo existente:** aplicar a Llamada las validaciones de edición, fotos, eliminación, aprobación y reapertura existentes en interfaz y servidor.
 
@@ -356,8 +356,8 @@ Registro del PR:
 
 | PR | Estado | Implementación prevista | REQ relacionados | ISSUE relacionados | Salida esperada |
 | --- | --- | --- | --- | --- | --- |
-| `PR-001` | `DEVELOPING` | Contrato funcional cerrado: firmas digitales opcionales, máximo de cinco fotos, carga web exclusiva para Llamada y título automático. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010` | Documentación terminada; pendiente de instrucción de QA para pasar a `TESTING`. |
-| `PR-002` | `PENDING` | Extender backend/API al tipo `llamada`: alta, detalle, actualización, fotos según contrato, aprobación, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-011` | `ISSUE-001`, `ISSUE-003`, `ISSUE-005`, `ISSUE-006`, `ISSUE-007`, `ISSUE-009`, `ISSUE-014` | `DEPLOYMENT WEB`. |
+| `PR-001` | `COMPLETED` | Contrato funcional cerrado: firmas digitales opcionales, máximo de cinco fotos, carga web exclusiva para Llamada y título automático. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010` | Validado y cerrado por QA. |
+| `PR-002` | `DEPLOYMENT WEB` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Código listo; QA debe desplegar el SHA documentado en la VPS DEMO. |
 | `PR-003` | `PENDING` | Añadir botón `Llamada` y formulario web responsive con todos los campos aprobados. | `REQ-002`, `REQ-003`, `REQ-004` | `ISSUE-002`, `ISSUE-003`, `ISSUE-004`, `ISSUE-010` | `DEPLOYMENT WEB`. |
 | `PR-004` | `PENDING` | Implementar el único bloque fotográfico general en la web conforme al límite y alcance aprobados, con comentarios, miniaturas, visor y eliminación segura si corresponde. | `REQ-005`, `REQ-006`, `REQ-011` | `ISSUE-005`, `ISSUE-006`, `ISSUE-007`, `ISSUE-014` | `DEPLOYMENT WEB`. |
 | `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-004`, `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011` | `DEPLOYMENT WEB`. |
@@ -370,7 +370,7 @@ Registro del PR:
 
 | PR | Nombre previsto del commit principal | SHA principal | Commits de corrección/evidencia |
 | --- | --- | --- | --- |
-| `PR-001` | `docs(PR-001): cerrar contrato del reporte Llamada` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `PENDING` |
+| `PR-001` | `docs(PR-001): cerrar contrato del reporte Llamada` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `24ad246` |
 | `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `PENDING` | `PENDING` |
 | `PR-003` | `feat(PR-003): crear formulario web del reporte Llamada` | `PENDING` | `PENDING` |
 | `PR-004` | `feat(PR-004): incorporar fotografías generales de Llamada` | `PENDING` | `PENDING` |
@@ -420,4 +420,36 @@ Los campos narrativos preservarán saltos de línea. Las firmas se almacenarán 
 - Antes de completar esos datos se mostrará `LLAMADA #ID`.
 - Web, API, APK, PDF y WhatsApp utilizarán el mismo título calculado.
 
-`PR-001` permanece en `DEVELOPING` hasta que QA indique expresamente su paso a `TESTING`. Los demás PR permanecen en `PENDING`.
+`PR-001` fue validado por QA y está `COMPLETED`.
+
+## Implementación ejecutada en PR-002
+
+### Issues resueltos técnicamente
+
+- `ISSUE-001`: backend y API reconocen y preservan el tipo `llamada` durante alta, consulta, aprobación y reapertura.
+- `ISSUE-003`: la API inicializa, valida, normaliza, guarda y recupera las cuatro claves narrativas definidas en el contrato.
+- `ISSUE-007`: actualización, carga/eliminación de fotos, eliminación del reporte y reapertura respetan el estado bajo bloqueo transaccional.
+
+Estos tres ISSUE permanecerán pendientes de cierre administrativo hasta que QA valide `PR-002` en DEMO. `ISSUE-008`, `ISSUE-009`, `ISSUE-011` e `ISSUE-014` solo reciben avances y no se consideran resueltos por este PR.
+
+### Comportamiento implementado
+
+- `POST /api/v1/index.php/reports` acepta `type=llamada`, crea el estado `open`, inicializa su estructura JSON y asigna `LLAMADA #ID`.
+- `GET /reports` y `GET /reports/{id}` devuelven el nuevo tipo y sus datos sin convertirlo en Elevador.
+- `PUT /reports/{id}` valida fecha `YYYY-MM-DD`, campos permitidos y límite de 10 000 caracteres por campo narrativo; calcula el título automáticamente.
+- Los cambios de metadatos fotográficos no pueden agregar o retirar archivos mediante `PUT`; esas operaciones deben usar los endpoints de fotos.
+- Llamada admite exclusivamente fotos `general`, con comentario opcional de hasta 500 caracteres y máximo de cinco.
+- `POST /reports/{id}/approve` conserva el tipo y genera un PDF backend base con los datos y fotos generales. La plantilla visual definitiva y firmas corresponden a PR posteriores.
+- `POST /reports/{id}/reopen` invalida el PDF activo y devuelve un aprobado a estado pendiente.
+- `DELETE /reports/{id}` y `DELETE /reports/{id}/photos/{name}` rechazan reportes aprobados y usan bloqueo transaccional.
+- El backend web admite crear el tipo mediante sentencia preparada y preservarlo al reabrir.
+- Mientras no exista la vista web propia, el listado deshabilita su icono de visualización en lugar de abrir incorrectamente la vista Elevador.
+- No se requiere migración de tabla: se reutilizan las columnas existentes y `data_reporte`.
+
+### Evidencia Dev
+
+- Revisión estática de rutas, tipos, estados y consultas preparadas completada.
+- `git diff --check` sin errores.
+- Localhost y WSL no disponen de PHP CLI; QA debe ejecutar `php -l` y las pruebas integradas con Apache/MariaDB en DEMO.
+
+`PR-002` está en `DEPLOYMENT WEB`. `PR-003` a `PR-009` permanecen en `PENDING`.

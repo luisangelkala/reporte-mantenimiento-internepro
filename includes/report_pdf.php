@@ -300,6 +300,9 @@ function report_pdf_prepare_image(string $path): ?array
 
 function report_pdf_sections(string $type): array
 {
+    if ($type === 'llamada') {
+        return [];
+    }
     $raw = $type === 'alimak' ? [
         ['a_0', 'INSTRUCCIONES GENERALES', null, ['Comportamiento del equipo informado por la persona a cargo', 'Funcionamiento: aceleracion, desaceleracion, vibracion y ruido', 'Inspeccion general en condiciones de operacion']],
         ['a_1', 'CUARTO DE MAQUINAS', 'ab_1', ['Informacion de instrucciones y de seguridad escalera']],
@@ -371,11 +374,17 @@ function report_pdf_sections(string $type): array
 
 function report_pdf_type(array $state, $dataReporte): string
 {
-    if (($state['reporte'] ?? '') === 'alimak') {
-        return 'alimak';
+    $stateType = (string) ($state['reporte'] ?? '');
+    if (in_array($stateType, ['elevador', 'alimak', 'llamada'], true)) {
+        return $stateType;
     }
     $data = is_string($dataReporte) ? json_decode($dataReporte, true) : $dataReporte;
     if (is_array($data)) {
+        foreach (['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'] as $callKey) {
+            if (array_key_exists($callKey, $data)) {
+                return 'llamada';
+            }
+        }
         foreach (array_keys($data) as $key) {
             if (is_string($key) && strpos($key, 'a_') === 0) {
                 return 'alimak';
@@ -409,18 +418,23 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     $photos = report_photo_entries($data);
     $document = new ReportPdfDocument();
     $reportTitle = report_pdf_display_value($report['title_reporte'] ?? '');
+    $typeLabel = $type === 'alimak' ? 'Mantenimiento ALIMAK' : ($type === 'llamada' ? 'Reporte de trabajo, mantenimiento y correctivos' : 'Mantenimiento ELEVADOR');
 
     $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 60.0);
     $document->text($reportTitle, 16, true, 0, 4);
-    $document->text('Reporte #' . $reportId . ' - Mantenimiento ' . ($type === 'alimak' ? 'ALIMAK' : 'ELEVADOR'), 12, true, 0, 8);
+    $document->text('Reporte #' . $reportId . ' - ' . $typeLabel, 12, true, 0, 8);
     $document->rule();
     $document->text('Cliente: ' . report_pdf_display_value($report['cliente_reporte'] ?? ''), 10, true);
-    $document->text('Fecha del mantenimiento: ' . report_pdf_display_value($report['fecha_reporte'] ?? ''), 10);
+    $document->text(($type === 'llamada' ? 'Fecha: ' : 'Fecha del mantenimiento: ') . report_pdf_display_value($report['fecha_reporte'] ?? ''), 10);
     $document->text('Equipo: ' . report_pdf_display_value($report['equipo_reporte'] ?? ''), 10);
-    $document->text('Tecnico: ' . report_pdf_display_value($report['tecnico_reporte'] ?? ''), 10);
+    if ($type !== 'llamada') {
+        $document->text('Tecnico: ' . report_pdf_display_value($report['tecnico_reporte'] ?? ''), 10);
+    }
     $document->text('Aprobado por: ' . report_pdf_display_value($approvalState['aprobado'] ?? ''), 10, true);
     $document->text('Fecha de aprobacion: ' . report_pdf_display_value($approvalState['fecha'] ?? ''), 10, false, 0, 8);
-    $document->text('Nomenclatura: OK = inspeccionado y en optimas condiciones; X = requiere otras acciones; R = reparacion realizada.', 9, false, 0, 10);
+    if ($type !== 'llamada') {
+        $document->text('Nomenclatura: OK = inspeccionado y en optimas condiciones; X = requiere otras acciones; R = reparacion realizada.', 9, false, 0, 10);
+    }
 
     $generalPhotos = array_values(array_filter($photos, function ($photo) {
         return ($photo['scope'] ?? 'general') === 'general';
@@ -428,6 +442,20 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     if ($generalPhotos !== []) {
         $document->heading('FOTOGRAFIAS GENERALES', 13);
         report_pdf_add_photos($document, $reportId, $generalPhotos);
+    }
+
+    if ($type === 'llamada') {
+        $document->heading('TRABAJO REALIZADO', 13);
+        $document->text(report_pdf_display_value($data['trabajo_realizado'] ?? ''), 10, false, 0, 8);
+        $document->heading('MOTIVO', 13);
+        $document->text(report_pdf_display_value($data['motivo'] ?? ''), 10, false, 0, 8);
+        $document->heading('PIEZAS REEMPLAZADAS', 13);
+        $document->text(report_pdf_display_value($data['piezas_reemplazadas'] ?? ''), 10, false, 0, 8);
+        $document->heading('OBSERVACIONES Y RECOMENDACIONES', 13);
+        $document->text(report_pdf_display_value($data['observaciones_recomendaciones'] ?? ''), 10, false, 0, 10);
+        $document->rule();
+        $document->text('Firma de la empresa: No registrada', 10, true, 0, 6);
+        $document->text('Firma del cliente: No registrada', 10, true, 0, 10);
     }
 
     foreach (report_pdf_sections($type) as $index => $section) {
@@ -448,9 +476,11 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
         $document->rule();
     }
 
-    $document->heading('OBSERVACIONES GENERALES', 13);
-    $document->text('Comentarios: ' . report_pdf_display_value($observations['ob_comentario'] ?? ''), 10, false, 0, 5);
-    $document->text('Recomendaciones: ' . report_pdf_display_value($observations['ob_recomendacion'] ?? ''), 10, false, 0, 8);
+    if ($type !== 'llamada') {
+        $document->heading('OBSERVACIONES GENERALES', 13);
+        $document->text('Comentarios: ' . report_pdf_display_value($observations['ob_comentario'] ?? ''), 10, false, 0, 5);
+        $document->text('Recomendaciones: ' . report_pdf_display_value($observations['ob_recomendacion'] ?? ''), 10, false, 0, 8);
+    }
     $document->text('Documento generado por el backend de Internepro al aprobar el reporte. Version ' . $version . '.', 8);
 
     $directory = dirname(__DIR__) . '/storage/report-pdfs/' . $reportId;

@@ -34,7 +34,13 @@ function report_list(){
         ;
         $red = (($state['status'] ?? '') == 'close') ? 'red' : '';
 
-        $alimak = (($state['reporte'] ?? '') == 'alimak') ? '_alimak' : '';
+        $reportType = report_type_from_record(is_array($state) ? $state : [], $row['data_reporte'] ?? null);
+        if ($reportType === 'llamada') {
+            $viewAction = '<span title="Vista de Llamada disponible al completar PR-005" aria-label="Vista de Llamada pendiente" style="margin:0 5px;color:#aaa"><i class="fa fa-eye" aria-hidden="true"></i></span>';
+        } else {
+            $viewSuffix = $reportType === 'alimak' ? '_alimak' : '';
+            $viewAction = '<a href="view' . $viewSuffix . '.php?id=' . (int) $row['id'] . '" class="view" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"> <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></a>';
+        }
         $pdfUrl = report_pdf_active_url((int) $row['id'], is_array($state) ? $state : []);
         if ($pdfUrl !== null) {
             $escapedPdfUrl = htmlspecialchars($pdfUrl, ENT_QUOTES, 'UTF-8');
@@ -53,7 +59,7 @@ function report_list(){
                    <td>
                    <div>
                    '.$pdfActions.'
-                   <a href="view'.$alimak.'.php?id='. $row['id'] .'" class="view" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"> <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></a>
+                   '.$viewAction.'
                    <a href="#" data-filter="'. $row['id'] .'" class="delete" style="margin:0 5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/></svg></a>
                    </div>
                    </td>
@@ -65,16 +71,34 @@ function report_list(){
 }
 
 function report_create($reporte){
+	if (!in_array($reporte, ['elevador', 'alimak', 'llamada'], true)) {
+		return false;
+	}
 	$status = json_encode(['status' => 'open', 'aprobado' => '', 'fecha' => '', 'reporte' => $reporte]);
-
-	$sql = "INSERT INTO `reporte`(`title_reporte`,`state_reporte`,`created_at`) VALUES ('Añadir titulo del reporte...', '$status', NOW())";
-
 	$db = db();
-
-	$data = $db->query($sql);
-
-   	mysqli_close($db);
-   	return $data;
+	$title = $reporte === 'llamada' ? 'LLAMADA' : 'Añadir titulo del reporte...';
+	$statement = $db->prepare('INSERT INTO reporte (title_reporte, state_reporte, created_at) VALUES (?, ?, NOW())');
+	$statement->bind_param('ss', $title, $status);
+	$statement->execute();
+	$created = $statement->affected_rows === 1;
+	$id = (int) $db->insert_id;
+	$statement->close();
+	if ($created && $reporte === 'llamada') {
+		$title = 'LLAMADA #' . $id;
+		$initialData = json_encode([
+			'trabajo_realizado' => '',
+			'motivo' => '',
+			'piezas_reemplazadas' => '',
+			'observaciones_recomendaciones' => '',
+			'_photos' => [],
+		], JSON_UNESCAPED_UNICODE);
+		$statement = $db->prepare('UPDATE reporte SET title_reporte = ?, data_reporte = ? WHERE id = ?');
+		$statement->bind_param('ssi', $title, $initialData, $id);
+		$statement->execute();
+		$statement->close();
+	}
+	mysqli_close($db);
+	return $created;
 }
 
 function report_delete($id){
@@ -82,17 +106,20 @@ function report_delete($id){
         return 'invalid';
     }
     $db = db();
-    $statement = $db->prepare('SELECT state_reporte FROM reporte WHERE id = ?');
+    $db->begin_transaction();
+    $statement = $db->prepare('SELECT state_reporte FROM reporte WHERE id = ? FOR UPDATE');
     $statement->bind_param('i', $id);
     $statement->execute();
     $report = $statement->get_result()->fetch_assoc();
     $statement->close();
     if (!$report) {
+        $db->rollback();
         mysqli_close($db);
         return 'not_found';
     }
     $state = json_decode($report['state_reporte'], true) ?: [];
     if (($state['status'] ?? '') === 'close') {
+        $db->rollback();
         mysqli_close($db);
         return 'approved';
     }
@@ -101,6 +128,11 @@ function report_delete($id){
     $statement->execute();
     $deleted = $statement->affected_rows === 1;
     $statement->close();
+    if ($deleted) {
+        $db->commit();
+    } else {
+        $db->rollback();
+    }
     mysqli_close($db);
     return $deleted ? 'deleted' : 'not_found';
 }
@@ -439,14 +471,16 @@ function report_insert($id, $reporte){
 }
 
 function report_type_from_record(array $state, $dataReporte){
-	if (($state['reporte'] ?? '') === 'alimak') {
-		return 'alimak';
-	}
-	if (($state['reporte'] ?? '') === 'elevador') {
-		return 'elevador';
+	if (in_array(($state['reporte'] ?? ''), ['elevador', 'alimak', 'llamada'], true)) {
+		return $state['reporte'];
 	}
 	$data = is_string($dataReporte) ? json_decode($dataReporte, true) : $dataReporte;
 	if (is_array($data)) {
+		foreach (['trabajo_realizado', 'motivo', 'piezas_reemplazadas', 'observaciones_recomendaciones'] as $callKey) {
+			if (array_key_exists($callKey, $data)) {
+				return 'llamada';
+			}
+		}
 		foreach (array_keys($data) as $key) {
 			if (is_string($key) && strpos($key, 'a_') === 0) {
 				return 'alimak';

@@ -371,7 +371,7 @@ Registro del PR:
 | PR | Nombre previsto del commit principal | SHA principal | Commits de corrección/evidencia |
 | --- | --- | --- | --- |
 | `PR-001` | `docs(PR-001): cerrar contrato del reporte Llamada` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `24ad246` |
-| `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `PENDING` | `PENDING` |
+| `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `0932b3ed22980bc146c6363b9ee3d67a8f338b4d` | `PENDING` |
 | `PR-003` | `feat(PR-003): crear formulario web del reporte Llamada` | `PENDING` | `PENDING` |
 | `PR-004` | `feat(PR-004): incorporar fotografías generales de Llamada` | `PENDING` | `PENDING` |
 | `PR-005` | `feat(PR-005): añadir vista PDF y acciones de Llamada` | `PENDING` | `PENDING` |

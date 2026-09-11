@@ -383,7 +383,7 @@ Registro del PR:
 | --- | --- | --- | --- |
 | `PR-001` | `docs(PR-001): cerrar contrato del reporte Llamada` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `24ad246` |
 | `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `0932b3ed22980bc146c6363b9ee3d67a8f338b4d` | `7d6a509` |
-| `PR-003` | `feat(PR-003): crear formulario web del reporte Llamada` | `214b74a60c3e538d014d67404deb1318e303438f` | `PENDING` |
+| `PR-003` | `feat(PR-003): crear formulario web del reporte Llamada` | `214b74a60c3e538d014d67404deb1318e303438f` | `24f598716f36708c6e4e6c03e526472091ab7a5c` (`ISSUE-015`) |
 | `PR-004` | `feat(PR-004): incorporar fotografías generales de Llamada` | `PENDING` | `PENDING` |
 | `PR-005` | `feat(PR-005): añadir vista PDF y acciones de Llamada` | `PENDING` | `PENDING` |
 | `PR-006` | `test(PR-006): registrar regresión web de reportes` | `PENDING` | `PENDING` |

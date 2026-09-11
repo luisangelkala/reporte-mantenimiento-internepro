@@ -205,7 +205,7 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-001` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `24ad246` |
 | `PR-002` | `0932b3ed22980bc146c6363b9ee3d67a8f338b4d` | `7d6a509` |
 | `PR-003` | `214b74a60c3e538d014d67404deb1318e303438f` | `24f598716f36708c6e4e6c03e526472091ab7a5c` (`ISSUE-015`) |
-| `PR-004` | `293eeb21840b0b582eca5a424607233d5c6b15e5` | `03902d2d01e660192df51fcf729cc5e5c5108e4e` (`ISSUE-017`, documentación); `PENDING` (corrección técnica actual) |
+| `PR-004` | `293eeb21840b0b582eca5a424607233d5c6b15e5` | `03902d2d01e660192df51fcf729cc5e5c5108e4e` (`ISSUE-017`, documentación); `a79a54106fc5a9e0406f9b4c14e7f0be1b03050f` (`ISSUE-017`, corrección técnica) |
 
 ### Entrega actual de PR-004
 

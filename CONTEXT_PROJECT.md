@@ -200,7 +200,7 @@ Registro del PR:
 
 **Tipo:** trabajo funcional.
 
-**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
+**Estado:** `RESOLVED BY PR-002`.
 
 **Trabajo existente:** ampliar la lista de tipos, serialización, deserialización y enrutamiento para aceptar `llamada` sin interpretar el registro como Elevador.
 
@@ -222,7 +222,7 @@ Registro del PR:
 
 **Tipo:** trabajo de datos.
 
-**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
+**Estado:** `RESOLVED BY PR-002`.
 
 **Trabajo existente:** definir claves estables, límites, validación, persistencia JSON y presentación de los campos del formato.
 
@@ -266,7 +266,7 @@ Registro del PR:
 
 **Tipo:** trabajo de reglas y seguridad.
 
-**Estado:** `IMPLEMENTED IN PR-002 — PENDING QA`.
+**Estado:** `RESOLVED BY PR-002`.
 
 **Trabajo existente:** aplicar a Llamada las validaciones de edición, fotos, eliminación, aprobación y reapertura existentes en interfaz y servidor.
 
@@ -357,8 +357,8 @@ Registro del PR:
 | PR | Estado | Implementación prevista | REQ relacionados | ISSUE relacionados | Salida esperada |
 | --- | --- | --- | --- | --- | --- |
 | `PR-001` | `COMPLETED` | Contrato funcional cerrado: firmas digitales opcionales, máximo de cinco fotos, carga web exclusiva para Llamada y título automático. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010` | Validado y cerrado por QA. |
-| `PR-002` | `DEPLOYMENT WEB` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Código listo; QA debe desplegar el SHA documentado en la VPS DEMO. |
-| `PR-003` | `PENDING` | Añadir botón `Llamada` y formulario web responsive con todos los campos aprobados. | `REQ-002`, `REQ-003`, `REQ-004` | `ISSUE-002`, `ISSUE-003`, `ISSUE-004`, `ISSUE-010` | `DEPLOYMENT WEB`. |
+| `PR-002` | `COMPLETED` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | Resuelve `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Desplegado y validado completamente por QA en DEMO. |
+| `PR-003` | `PENDING` | Añadir botón `Llamada` y formulario web responsive con todos los campos aprobados, título automático y firmas digitales opcionales. | `REQ-002`, `REQ-003`, `REQ-004` | Resuelve `ISSUE-002`; depende de los contratos cerrados en `ISSUE-003`, `ISSUE-004` e `ISSUE-010` | `DEPLOYMENT WEB`. |
 | `PR-004` | `PENDING` | Implementar el único bloque fotográfico general en la web conforme al límite y alcance aprobados, con comentarios, miniaturas, visor y eliminación segura si corresponde. | `REQ-005`, `REQ-006`, `REQ-011` | `ISSUE-005`, `ISSUE-006`, `ISSUE-007`, `ISSUE-014` | `DEPLOYMENT WEB`. |
 | `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-004`, `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011` | `DEPLOYMENT WEB`. |
 | `PR-006` | `PENDING` | Ejecutar correcciones derivadas del despliegue web y preparar la matriz de regresión de Llamada, Elevador y ALIMAK. | `REQ-009`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-014` | `TESTING` cuando QA confirme el despliegue; `COMPLETED` solo tras su validación. |
@@ -371,7 +371,7 @@ Registro del PR:
 | PR | Nombre previsto del commit principal | SHA principal | Commits de corrección/evidencia |
 | --- | --- | --- | --- |
 | `PR-001` | `docs(PR-001): cerrar contrato del reporte Llamada` | `696a595e6f37badb4c91fe583bbb96b385f23722` | `24ad246` |
-| `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `0932b3ed22980bc146c6363b9ee3d67a8f338b4d` | `PENDING` |
+| `PR-002` | `feat(PR-002): incorporar reporte Llamada en backend y API` | `0932b3ed22980bc146c6363b9ee3d67a8f338b4d` | `7d6a509` |
 | `PR-003` | `feat(PR-003): crear formulario web del reporte Llamada` | `PENDING` | `PENDING` |
 | `PR-004` | `feat(PR-004): incorporar fotografías generales de Llamada` | `PENDING` | `PENDING` |
 | `PR-005` | `feat(PR-005): añadir vista PDF y acciones de Llamada` | `PENDING` | `PENDING` |
@@ -430,7 +430,7 @@ Los campos narrativos preservarán saltos de línea. Las firmas se almacenarán 
 - `ISSUE-003`: la API inicializa, valida, normaliza, guarda y recupera las cuatro claves narrativas definidas en el contrato.
 - `ISSUE-007`: actualización, carga/eliminación de fotos, eliminación del reporte y reapertura respetan el estado bajo bloqueo transaccional.
 
-Estos tres ISSUE permanecerán pendientes de cierre administrativo hasta que QA valide `PR-002` en DEMO. `ISSUE-008`, `ISSUE-009`, `ISSUE-011` e `ISSUE-014` solo reciben avances y no se consideran resueltos por este PR.
+QA validó los casos funcionales de `PR-002` en DEMO; `ISSUE-001`, `ISSUE-003` e `ISSUE-007` quedan resueltos. `ISSUE-008`, `ISSUE-009`, `ISSUE-011` e `ISSUE-014` solo recibieron avances y no se consideran resueltos por este PR.
 
 ### Comportamiento implementado
 
@@ -452,4 +452,58 @@ Estos tres ISSUE permanecerán pendientes de cierre administrativo hasta que QA 
 - `git diff --check` sin errores.
 - Localhost y WSL no disponen de PHP CLI; QA debe ejecutar `php -l` y las pruebas integradas con Apache/MariaDB en DEMO.
 
-`PR-002` está en `DEPLOYMENT WEB`. `PR-003` a `PR-009` permanecen en `PENDING`.
+### Evidencia QA
+
+- Lint PHP ejecutado en el servidor autorizado sin errores informados.
+- Alta, detalle, listado, actualización y título automático de Llamada validados.
+- Fecha y campos inválidos rechazados correctamente.
+- Fotografías generales, comentario opcional, límite de cinco y rechazo de secciones validados.
+- Aprobación, PDF base, bloqueo del aprobado, reapertura e invalidación del PDF validados.
+- Eliminación del reporte pendiente validada.
+
+`PR-002` está `COMPLETED`. `PR-003` a `PR-009` permanecen en `PENDING`.
+
+## Alcance previsto de PR-003
+
+**Estado:** `PENDING`. No existe autorización técnica para iniciarlo.
+
+**Objetivo:** entregar en la web el flujo de creación y edición de un reporte `Llamada`, consumiendo el backend validado en `PR-002`.
+
+### ISSUE que resolverá
+
+- `ISSUE-002` — No existe el tercer botón ni el flujo web de alta. Es el único ISSUE abierto que este PR cerrará directamente.
+
+### Dependencias ya resueltas
+
+- `ISSUE-003`: aporta las claves, validaciones y persistencia de los campos; no se vuelve a cerrar en este PR.
+- `ISSUE-004`: aporta la decisión de usar dos firmas manuscritas digitales opcionales.
+- `ISSUE-010`: aporta la regla de título automático `LLAMADA - CLIENTE - FECHA`, con respaldo `LLAMADA #ID`.
+
+### Implementación prevista
+
+- Añadir el tercer botón `Llamada` al listado web, conservando los botones de Elevador y ALIMAK.
+- Crear un reporte pendiente de tipo `llamada` una sola vez y abrir su formulario específico.
+- Construir un formulario responsive para Cliente, Equipo, Fecha, Trabajo realizado, Motivo, Piezas reemplazadas y Observaciones y recomendaciones.
+- Mostrar el título calculado por el sistema sin permitir que el usuario lo edite manualmente.
+- Incorporar las áreas opcionales de firma manuscrita digital `La empresa` y `Cliente`, con controles para limpiar o reemplazar mientras el reporte esté pendiente.
+- Guardar y volver a cargar los datos y firmas sin pérdida de saltos de línea.
+- Impedir desde la interfaz la edición de un reporte aprobado y conservar también la validación del servidor.
+- Mantener sin cambios funcionales los flujos web de Elevador y ALIMAK.
+
+### Fuera de alcance
+
+- Fotografías generales, comentarios, miniaturas y visor: `PR-004`.
+- Visualización final, aprobación, PDF, URL firmada y WhatsApp: `PR-005`.
+- Cambios en Android: `PR-007` y `PR-008`.
+
+### Criterios de aceptación para QA
+
+- El listado muestra los tres botones y `Llamada` abre el formulario correcto.
+- Un solo clic genera exactamente un reporte pendiente de tipo `llamada`.
+- Todos los campos se guardan, conservan saltos de línea y reaparecen al volver a editar.
+- El título cambia automáticamente según Cliente y Fecha y no puede editarse directamente.
+- Ambas firmas son opcionales; si se capturan, persisten al reabrir el formulario pendiente y pueden limpiarse o reemplazarse.
+- Un reporte aprobado no puede modificarse, incluso intentando acceder directamente a la ruta.
+- Crear y editar Elevador y ALIMAK continúa funcionando sin regresiones.
+
+Cuando Dev termine la implementación, `PR-003` pasará a `DEPLOYMENT WEB`. QA decidirá posteriormente su paso a `TESTING` y `COMPLETED`.

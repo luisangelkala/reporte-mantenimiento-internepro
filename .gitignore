@@ -5,5 +5,7 @@ android/local.properties
 
 # Documentos generados en cada ambiente; nunca se versionan.
 storage/report-pdfs/
+storage/report-photos/*
+!storage/report-photos/.htaccess
 storage/report-signatures/*
 !storage/report-signatures/.htaccess

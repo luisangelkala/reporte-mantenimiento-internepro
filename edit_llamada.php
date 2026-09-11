@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/includes/report_photos.php';
+require_once __DIR__ . '/includes/report_call_photos.php';
 session_start();
 
 function call_edit_error(int $status, string $message): void
@@ -42,6 +44,7 @@ if (!isset($_SESSION['call_edit_csrf']) || !is_string($_SESSION['call_edit_csrf'
     $_SESSION['call_edit_csrf'] = bin2hex(random_bytes(32));
 }
 $csrf = $_SESSION['call_edit_csrf'];
+$photoItems = report_call_photo_public_items($reportId, $data);
 function call_value($value): string
 {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
@@ -55,7 +58,7 @@ function call_value($value): string
     <title>Editar reporte Llamada #<?php echo $reportId; ?></title>
     <link rel="stylesheet" href="assets/css/bootstrap5/bootstrap.min.css">
     <link rel="stylesheet" href="assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?ver=0.63">
+    <link rel="stylesheet" href="assets/css/style.css?ver=0.64">
 </head>
 <body>
 <main class="call-page">
@@ -76,6 +79,30 @@ function call_value($value): string
             <input type="hidden" name="type" value="insert_llamada">
             <input type="hidden" name="id" value="<?php echo $reportId; ?>">
             <input type="hidden" name="csrf_token" value="<?php echo call_value($csrf); ?>">
+
+            <section class="call-photos" id="call-photos" data-report-id="<?php echo $reportId; ?>" data-csrf-token="<?php echo call_value($csrf); ?>" aria-labelledby="call-photos-title">
+                <div class="call-photos-heading">
+                    <div>
+                        <h2 id="call-photos-title">Fotografías generales</h2>
+                        <p>Hasta 5 fotografías. El comentario es opcional.</p>
+                    </div>
+                    <span class="call-photo-count" data-photo-count><?php echo count($photoItems); ?> / 5</span>
+                </div>
+                <div class="call-photo-upload">
+                    <label class="call-photo-picker">Tomar o seleccionar fotografía
+                        <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-photo-file>
+                    </label>
+                    <label>Comentario opcional
+                        <textarea class="form-control" maxlength="500" rows="2" data-photo-new-comment></textarea>
+                    </label>
+                    <button class="btn btn-danger" type="button" data-photo-upload disabled><i class="fa fa-camera" aria-hidden="true"></i> Subir fotografía</button>
+                </div>
+                <div class="call-photo-progress" data-photo-progress hidden>
+                    <div data-photo-progress-bar></div>
+                </div>
+                <p class="call-photo-status" data-photo-status role="status" aria-live="polite"></p>
+                <div class="call-photo-grid" data-photo-grid></div>
+            </section>
 
             <section class="call-fields" aria-label="Datos del reporte">
                 <label>Cliente
@@ -120,6 +147,9 @@ function call_value($value): string
         </form>
     </div>
 </main>
+<script id="call-photo-data" type="application/json"><?php echo json_encode($photoItems, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?></script>
+<script src="assets/js/report-gallery.js?ver=1.0"></script>
+<script src="assets/js/call-photos.js?ver=1.0"></script>
 <script>
 (function () {
     'use strict';

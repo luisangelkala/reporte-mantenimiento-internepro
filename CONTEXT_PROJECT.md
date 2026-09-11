@@ -365,7 +365,7 @@ Registro del PR:
 
 **Tipo:** trabajo funcional planificado.
 
-**Estado:** `OPEN`.
+**Estado:** `IMPLEMENTED IN PR-004 — PENDING QA`.
 
 **Trabajo existente:** incorporar al editor web de Llamada un único bloque general que permita cargar hasta cinco fotografías, escribir comentarios opcionales, comprobar la subida, mostrar miniaturas, ampliar imágenes y eliminar evidencia mientras el reporte esté pendiente.
 
@@ -381,7 +381,7 @@ Registro del PR:
 | `PR-001` | `COMPLETED` | Contrato funcional inicial cerrado; la interpretación histórica de firmas fue sustituida por los campos de texto definidos posteriormente por QA. | `REQ-002`, `REQ-003`, `REQ-004`, `REQ-005` | `ISSUE-004`, `ISSUE-005`, `ISSUE-006`, `ISSUE-010`; corrección posterior `ISSUE-015` | Validado y cerrado por QA; conserva trazabilidad histórica. |
 | `PR-002` | `COMPLETED` | Backend/API implementado para `llamada`: alta, detalle, actualización validada, fotos generales, aprobación/PDF base, reapertura y eliminación protegida. | `REQ-001`, `REQ-003`, `REQ-005`, `REQ-006`, `REQ-008`, `REQ-011` | Resuelve `ISSUE-001`, `ISSUE-003`, `ISSUE-007`; avances en `ISSUE-008`, `ISSUE-009`, `ISSUE-011`, `ISSUE-014` | Desplegado y validado completamente por QA en DEMO. |
 | `PR-003` | `DEPLOYMENT WEB` | Botón `Llamada`, formulario web responsive y dos campos finales de texto alineados horizontalmente. | `REQ-001`, `REQ-002`, `REQ-003`, `REQ-004` | Implementa `ISSUE-002` y `ISSUE-015`, pendientes de validación QA; respeta los contratos cerrados en `ISSUE-003` e `ISSUE-010` | Corrección lista para despliegue en la VPS DEMO por QA. |
-| `PR-004` | `PENDING` | Implementar el único bloque fotográfico general en la web conforme al límite y alcance aprobados, con comentarios, miniaturas, visor y eliminación segura. | `REQ-005`, `REQ-006`, `REQ-011` | Resolverá `ISSUE-016`; depende de `ISSUE-005`, `ISSUE-006` e `ISSUE-007`; aporta evidencia para `ISSUE-014` | `DEPLOYMENT WEB`. |
+| `PR-004` | `DEPLOYMENT WEB` | Bloque fotográfico general web implementado con carga asíncrona, máximo de cinco, comentarios, miniaturas, visor y eliminación segura. | `REQ-005`, `REQ-006`, `REQ-011` | Implementa `ISSUE-016`, pendiente de validación QA; depende de `ISSUE-005`, `ISSUE-006` e `ISSUE-007`; aporta evidencia para `ISSUE-014` | Código listo para despliegue en la VPS DEMO por QA. |
 | `PR-005` | `PENDING` | Implementar vista web, acciones de fila, aprobación, plantilla PDF, URL firmada y WhatsApp para Llamada. | `REQ-004`, `REQ-006`, `REQ-007`, `REQ-008` | `ISSUE-007`, `ISSUE-008`, `ISSUE-010`, `ISSUE-011`, `ISSUE-015` | `DEPLOYMENT WEB`. |
 | `PR-006` | `PENDING` | Ejecutar correcciones derivadas del despliegue web y preparar la matriz de regresión de Llamada, Elevador y ALIMAK. | `REQ-009`, `REQ-011` | `ISSUE-009`, `ISSUE-012`, `ISSUE-014` | `TESTING` cuando QA confirme el despliegue; `COMPLETED` solo tras su validación. |
 | `PR-007` | `PENDING` | Preparar compatibilidad Android con el tipo `llamada` en modelos, parser, API, filtros y navegación, sin publicar aún la interfaz completa. | `REQ-001`, `REQ-010`, `REQ-011` | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | `DEPLOYMENT & COMPILING`. |
@@ -560,7 +560,7 @@ QA informó durante la revisión de `PR-003` que la fila Llamada todavía no per
 
 ## Alcance previsto de PR-004
 
-**Estado:** `PENDING`. No existe autorización técnica para iniciarlo.
+**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
 
 **Objetivo:** completar en el editor web de Llamada el único bloque de fotografías generales aprobado, sin modificar la gestión web de fotografías de Elevador o ALIMAK.
 
@@ -575,7 +575,7 @@ QA informó durante la revisión de `PR-003` que la fila Llamada todavía no per
 - `ISSUE-007`, resuelto: obliga al servidor a rechazar cambios fotográficos en reportes aprobados.
 - `ISSUE-014`, abierto: recibirá evidencia de regresión, pero no se cerrará hasta la fase integral de pruebas.
 
-### Implementación prevista
+### Implementación ejecutada
 
 - Colocar el bloque `Fotografías generales` al inicio del contenido editable del reporte Llamada.
 - Permitir seleccionar o capturar imágenes desde un navegador compatible.
@@ -603,4 +603,18 @@ QA informó durante la revisión de `PR-003` que la fila Llamada todavía no per
 - Un reporte aprobado rechaza carga, cambio de comentario y eliminación mediante interfaz y solicitud directa.
 - Elevador y ALIMAK no adquieren controles web nuevos de carga o eliminación.
 
-Después de la implementación, `PR-004` pasará a `DEPLOYMENT WEB`; QA controlará sus estados `TESTING` y `COMPLETED`.
+### Evidencia Dev
+
+- El bloque aparece al inicio del contenido editable y trabaja sin recargar el formulario.
+- Carga, comentario y eliminación son operaciones asíncronas independientes protegidas con CSRF.
+- Cada operación abre una transacción, bloquea el reporte y vuelve a comprobar tipo, estado y cantidad.
+- El servidor acepta únicamente JPEG, PNG o WEBP de hasta 5 MB y valida dimensiones antes de almacenarlos.
+- El límite de cinco se aplica dentro del bloqueo transaccional para impedir sobrepasarlo mediante solicitudes simultáneas.
+- Los comentarios son opcionales, admiten hasta 500 caracteres y se guardan por fotografía.
+- Las respuestas devuelven la lista confirmada por el servidor; la interfaz reconstruye miniaturas, contador y visor desde ella.
+- Los archivos permanecen bajo `storage/report-photos`, cuyo acceso HTTP directo queda bloqueado; la visualización usa URLs temporales firmadas.
+- `node --check` validó `assets/js/call-photos.js` y `assets/js/report-gallery.js`.
+- `git diff --check` no reportó errores.
+- PHP CLI no está disponible en Windows ni WSL local; QA debe ejecutar lint PHP y pruebas integradas en DEMO.
+
+`PR-004` está en `DEPLOYMENT WEB`. `ISSUE-016` seguirá pendiente de cierre hasta que QA autorice `TESTING` y valide todos los casos.

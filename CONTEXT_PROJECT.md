@@ -259,6 +259,7 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-003` | `214b74a60c3e538d014d67404deb1318e303438f` | `24f598716f36708c6e4e6c03e526472091ab7a5c` (`ISSUE-015`) |
 | `PR-004` | `293eeb21840b0b582eca5a424607233d5c6b15e5` | `03902d2d01e660192df51fcf729cc5e5c5108e4e` (`ISSUE-017`, documentación); `a79a54106fc5a9e0406f9b4c14e7f0be1b03050f` (`ISSUE-017`, corrección técnica) |
 | `PR-005` | `87a5a7de2ab711f58fa06027a607880b6b248766` | `b888ff9067eebe0317a9388985cc7cd31ce80867` (definición); `a82118cd2f75b08b70c41884650febc5c3ce0f80` (`ISSUE-018`, documentación); `bad8134c36c6ba837066a2aef8008de0e4e3efbb` (`BUG-003`, corrección técnica); `8ffd1b90d322d8b061b356d52a33da1aa0ecaa70` (`BUG-004`, corrección técnica) |
+| `PR-006` | `7c8391b` | Implementación Android de Llamada; evidencia documental en el commit siguiente. |
 
 ### Entrega actual de PR-004
 
@@ -357,7 +358,7 @@ Detalles técnicos verificados por Dev:
 8. Crear, editar, visualizar, fotografiar, aprobar y compartir funcionan en la tablet física en ambas orientaciones.
 9. Una regresión básica confirma que Elevador y ALIMAK conservan creación, edición, fotos, visualización, aprobación, PDF, WhatsApp, filtro y borrado según estado.
 
-**Nombre de commit previsto:** `feat(PR-006): incorporar reporte Llamada en Android`.
+**Commit técnico ejecutado:** `7c8391b` — `feat(PR-006): incorporar reporte Llamada en Android`.
 
 **Implementación ejecutada:**
 

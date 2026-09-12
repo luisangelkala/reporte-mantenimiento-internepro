@@ -604,15 +604,9 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
             ['LA EMPRESA', $data['firma_empresa'] ?? ''],
             ['CLIENTE', $data['firma_cliente'] ?? ''],
         ]);
-        $document->fieldRow([
-            ['APROBADO POR', $approvalState['aprobado'] ?? ''],
-            ['FECHA DE APROBACION', $approvalState['fecha'] ?? ''],
-        ]);
-        $document->text('Reporte #' . $reportId . ' - Documento generado por el backend de Internepro. Version ' . $version . '.', 8);
         if ($generalPhotos !== []) {
             $document->pageBreak('EVIDENCIA FOTOGRAFICA GENERAL');
             report_pdf_add_photos($document, $reportId, $generalPhotos);
-            $document->text('Reporte #' . $reportId . ' - Evidencia fotografica. Version ' . $version . '.', 8);
         }
     } else {
         $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 60.0);

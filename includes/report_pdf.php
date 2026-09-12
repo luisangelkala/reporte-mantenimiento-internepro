@@ -15,9 +15,18 @@ final class ReportPdfDocument
     private $imageByHash = [];
     private $pageIndex = 0;
     private $y = 800.0;
+    private $pageWidth = 595.28;
+    private $pageHeight = 841.89;
+    private $topY = 800.0;
 
-    public function __construct()
+    public function __construct(bool $landscape = false)
     {
+        if ($landscape) {
+            $this->pageWidth = 841.89;
+            $this->pageHeight = 595.28;
+            $this->topY = 553.0;
+            $this->y = $this->topY;
+        }
         $this->pages[] = ['content' => '', 'images' => []];
     }
 
@@ -29,7 +38,7 @@ final class ReportPdfDocument
 
     public function text(string $text, int $size = 10, bool $bold = false, float $indent = 0, float $after = 3): void
     {
-        $lines = $this->wrap($text, $size, 515 - $indent);
+        $lines = $this->wrap($text, $size, $this->pageWidth - 80 - $indent);
         foreach ($lines as $line) {
             $this->ensureSpace($size + 5);
             $font = $bold ? 'F2' : 'F1';
@@ -58,6 +67,96 @@ final class ReportPdfDocument
         $this->y -= 10;
     }
 
+    public function band(string $text): void
+    {
+        $this->ensureSpace(34);
+        $height = 24.0;
+        $bottom = $this->y - $height;
+        $width = $this->pageWidth - 80;
+        $encoded = $this->encodeText($text);
+        $estimated = strlen($encoded) * 11 * 0.52;
+        $x = max(44.0, 40 + (($width - $estimated) / 2));
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "q 0.74 0.07 0.15 rg 40 %.2F %.2F %.2F re f Q\n",
+            $bottom,
+            $width,
+            $height
+        );
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "q 1 1 1 rg BT /F2 11 Tf 1 0 0 1 %.2F %.2F Tm (%s) Tj ET Q\n",
+            $x,
+            $bottom + 7,
+            $this->escapeText($encoded)
+        );
+        $this->y = $bottom - 12;
+    }
+
+    public function fieldRow(array $fields): void
+    {
+        if ($fields === []) {
+            return;
+        }
+        $gap = 18.0;
+        $available = $this->pageWidth - 80 - ($gap * (count($fields) - 1));
+        $columnWidth = $available / count($fields);
+        $prepared = [];
+        $maxLines = 1;
+        foreach ($fields as $field) {
+            $value = report_pdf_display_value($field[1] ?? '');
+            $lines = $this->wrap($value, 9, $columnWidth);
+            $prepared[] = [(string) ($field[0] ?? ''), $lines];
+            $maxLines = max($maxLines, count($lines));
+        }
+        $height = 24 + ($maxLines * 12);
+        $this->ensureSpace($height + 8);
+        foreach ($prepared as $index => $field) {
+            $x = 40 + ($index * ($columnWidth + $gap));
+            $this->drawTextAt($field[0], $x, $this->y, 9, true);
+            foreach ($field[1] as $lineIndex => $line) {
+                $this->drawTextAt($line, $x, $this->y - 15 - ($lineIndex * 12), 9, false);
+            }
+            $lineY = $this->y - 19 - ($maxLines * 12);
+            $this->pages[$this->pageIndex]['content'] .= sprintf(
+                "0.6 w 0.55 G %.2F %.2F m %.2F %.2F l S\n",
+                $x,
+                $lineY,
+                $x + $columnWidth,
+                $lineY
+            );
+        }
+        $this->y -= $height + 6;
+    }
+
+    public function labeledBox(string $label, string $value, float $minimumHeight = 42.0): void
+    {
+        $lines = $this->wrap(report_pdf_display_value($value), 9, $this->pageWidth - 100);
+        $boxHeight = max($minimumHeight, 16 + (count($lines) * 12));
+        $this->ensureSpace($boxHeight + 30);
+        $this->drawTextAt($label, 40, $this->y, 10, true);
+        $top = $this->y - 14;
+        $bottom = $top - $boxHeight;
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "0.7 w 0.55 G 40 %.2F %.2F %.2F re S\n",
+            $bottom,
+            $this->pageWidth - 80,
+            $boxHeight
+        );
+        foreach ($lines as $index => $line) {
+            $this->drawTextAt($line, 50, $top - 16 - ($index * 12), 9, false);
+        }
+        $this->y = $bottom - 12;
+    }
+
+    public function pageBreak(?string $heading = null): void
+    {
+        $this->pages[] = ['content' => '', 'images' => []];
+        $this->pageIndex++;
+        $this->y = $this->topY;
+        if (is_string($heading) && trim($heading) !== '') {
+            $this->band($heading);
+        }
+    }
+
     public function image(string $path, string $caption): void
     {
         $prepared = report_pdf_prepare_image($path);
@@ -65,8 +164,8 @@ final class ReportPdfDocument
             throw new RuntimeException('Una fotografia registrada no esta disponible o no es valida para el PDF.');
         }
 
-        $maxWidth = 500.0;
-        $maxHeight = 310.0;
+        $maxWidth = $this->pageWidth - 90;
+        $maxHeight = min(360.0, $this->pageHeight - 150);
         $scale = min($maxWidth / $prepared['width'], $maxHeight / $prepared['height'], 1.0);
         $width = max(1.0, $prepared['width'] * $scale);
         $height = max(1.0, $prepared['height'] * $scale);
@@ -81,7 +180,7 @@ final class ReportPdfDocument
         }
         $name = $this->imageByHash[$hash];
         $this->pages[$this->pageIndex]['images'][$name] = true;
-        $x = 40 + (($maxWidth - $width) / 2);
+        $x = 45 + (($maxWidth - $width) / 2);
         $bottom = $this->y - $height;
         $this->pages[$this->pageIndex]['content'] .= sprintf(
             "q %.2F 0 0 %.2F %.2F %.2F cm /%s Do Q\n",
@@ -95,13 +194,13 @@ final class ReportPdfDocument
         $this->text($caption, 9, false, 6, 8);
     }
 
-    public function logo(string $path, float $height = 100.0): void
+    public function companyHeader(string $path, array $contactLines, float $height = 60.0): void
     {
         $prepared = report_pdf_prepare_image($path);
         if ($prepared === null) {
             throw new RuntimeException('El logo oficial no esta disponible o no es valido para el PDF.');
         }
-        $scale = min($height / $prepared['height'], 515.0 / $prepared['width']);
+        $scale = min($height / $prepared['height'], ($this->pageWidth * 0.42) / $prepared['width']);
         $width = max(1.0, $prepared['width'] * $scale);
         $renderedHeight = max(1.0, $prepared['height'] * $scale);
         $this->ensureSpace($renderedHeight + 12);
@@ -114,7 +213,43 @@ final class ReportPdfDocument
         }
         $name = $this->imageByHash[$hash];
         $this->pages[$this->pageIndex]['images'][$name] = true;
-        $x = (595.28 - $width) / 2;
+        $bottom = $this->y - $renderedHeight;
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "q %.2F 0 0 %.2F 40 %.2F cm /%s Do Q\n",
+            $width,
+            $renderedHeight,
+            $bottom,
+            $name
+        );
+        foreach ($contactLines as $index => $line) {
+            $line = (string) $line;
+            $estimated = strlen($this->encodeText($line)) * 9 * 0.52;
+            $x = max($this->pageWidth * 0.55, $this->pageWidth - 40 - $estimated);
+            $this->drawTextAt($line, $x, $this->y - 10 - ($index * 13), 9, $index === 0);
+        }
+        $this->y = $bottom - 12;
+    }
+
+    public function logo(string $path, float $height = 100.0): void
+    {
+        $prepared = report_pdf_prepare_image($path);
+        if ($prepared === null) {
+            throw new RuntimeException('El logo oficial no esta disponible o no es valido para el PDF.');
+        }
+        $scale = min($height / $prepared['height'], ($this->pageWidth - 80) / $prepared['width']);
+        $width = max(1.0, $prepared['width'] * $scale);
+        $renderedHeight = max(1.0, $prepared['height'] * $scale);
+        $this->ensureSpace($renderedHeight + 12);
+
+        $hash = hash('sha256', $prepared['data']);
+        if (!isset($this->imageByHash[$hash])) {
+            $name = 'Im' . (count($this->images) + 1);
+            $this->images[$name] = $prepared;
+            $this->imageByHash[$hash] = $name;
+        }
+        $name = $this->imageByHash[$hash];
+        $this->pages[$this->pageIndex]['images'][$name] = true;
+        $x = ($this->pageWidth - $width) / 2;
         $bottom = $this->y - $renderedHeight;
         $this->pages[$this->pageIndex]['content'] .= sprintf(
             "q %.2F 0 0 %.2F %.2F %.2F cm /%s Do Q\n",
@@ -167,7 +302,9 @@ final class ReportPdfDocument
             }
             $resources .= ' >>';
             $objects[$pageId] = sprintf(
-                '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources %s /Contents %d 0 R >>',
+                '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2F %.2F] /Resources %s /Contents %d 0 R >>',
+                $this->pageWidth,
+                $this->pageHeight,
                 $resources,
                 $contentId
             );
@@ -202,8 +339,22 @@ final class ReportPdfDocument
         }
         $this->pages[] = ['content' => '', 'images' => []];
         $this->pageIndex++;
-        $this->y = 800.0;
+        $this->y = $this->topY;
         $this->text('Internepro S.A. - Continuacion del reporte', 9, true, 0, 10);
+    }
+
+    private function drawTextAt(string $text, float $x, float $y, int $size, bool $bold): void
+    {
+        $font = $bold ? 'F2' : 'F1';
+        $encoded = $this->encodeText($text);
+        $this->pages[$this->pageIndex]['content'] .= sprintf(
+            "BT /%s %d Tf 0 g 1 0 0 1 %.2F %.2F Tm (%s) Tj ET\n",
+            $font,
+            $size,
+            $x,
+            $y,
+            $this->escapeText($encoded)
+        );
     }
 
     private function wrap(string $text, int $size, float $width): array
@@ -423,72 +574,86 @@ function report_pdf_generate(array $report, array $approvalState, int $version):
     $data = json_decode((string) ($report['data_reporte'] ?? ''), true) ?: [];
     $observations = json_decode((string) ($report['obs_reporte'] ?? ''), true) ?: [];
     $photos = report_photo_entries($data);
-    $document = new ReportPdfDocument();
+    $document = new ReportPdfDocument($type === 'llamada');
     $reportTitle = report_pdf_display_value($report['title_reporte'] ?? '');
     $typeLabel = $type === 'alimak' ? 'Mantenimiento ALIMAK' : ($type === 'llamada' ? 'Reporte de trabajo, mantenimiento y correctivos' : 'Mantenimiento ELEVADOR');
-
-    $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 60.0);
-    $document->text($reportTitle, 16, true, 0, 4);
-    $document->text('Reporte #' . $reportId . ' - ' . $typeLabel, 12, true, 0, 8);
-    $document->rule();
-    $document->text('Cliente: ' . report_pdf_display_value($report['cliente_reporte'] ?? ''), 10, true);
-    $document->text(($type === 'llamada' ? 'Fecha: ' : 'Fecha del mantenimiento: ') . report_pdf_display_value($report['fecha_reporte'] ?? ''), 10);
-    $document->text('Equipo: ' . report_pdf_display_value($report['equipo_reporte'] ?? ''), 10);
-    if ($type !== 'llamada') {
-        $document->text('Tecnico: ' . report_pdf_display_value($report['tecnico_reporte'] ?? ''), 10);
-    }
-    $document->text('Aprobado por: ' . report_pdf_display_value($approvalState['aprobado'] ?? ''), 10, true);
-    $document->text('Fecha de aprobacion: ' . report_pdf_display_value($approvalState['fecha'] ?? ''), 10, false, 0, 8);
-    if ($type !== 'llamada') {
-        $document->text('Nomenclatura: OK = inspeccionado y en optimas condiciones; X = requiere otras acciones; R = reparacion realizada.', 9, false, 0, 10);
-    }
-
     $generalPhotos = array_values(array_filter($photos, function ($photo) {
         return ($photo['scope'] ?? 'general') === 'general';
     }));
-    if ($generalPhotos !== []) {
-        $document->heading('FOTOGRAFIAS GENERALES', 13);
-        report_pdf_add_photos($document, $reportId, $generalPhotos);
-    }
 
     if ($type === 'llamada') {
-        $document->heading('TRABAJO REALIZADO', 13);
-        $document->text(report_pdf_display_value($data['trabajo_realizado'] ?? ''), 10, false, 0, 8);
-        $document->heading('MOTIVO', 13);
-        $document->text(report_pdf_display_value($data['motivo'] ?? ''), 10, false, 0, 8);
-        $document->heading('PIEZAS REEMPLAZADAS', 13);
-        $document->text(report_pdf_display_value($data['piezas_reemplazadas'] ?? ''), 10, false, 0, 8);
-        $document->heading('OBSERVACIONES Y RECOMENDACIONES', 13);
-        $document->text(report_pdf_display_value($data['observaciones_recomendaciones'] ?? ''), 10, false, 0, 10);
+        $document->companyHeader(dirname(__DIR__) . '/images/logo-internepro.jpg', [
+            '+507 233-1326',
+            'comercial@internepro.com.pa',
+            'RUC: 155588193-2-2014 DV 66',
+        ], 60.0);
+        $document->band('REPORTE DE TRABAJO, MANTENIMIENTO Y CORRECTIVOS');
+        $document->fieldRow([
+            ['Reporte', $reportTitle],
+        ]);
+        $document->fieldRow([
+            ['Cliente', $report['cliente_reporte'] ?? ''],
+            ['Equipo', $report['equipo_reporte'] ?? ''],
+            ['Fecha', $report['fecha_reporte'] ?? ''],
+        ]);
+        $document->labeledBox('TRABAJO REALIZADO', (string) ($data['trabajo_realizado'] ?? ''), 32);
+        $document->labeledBox('MOTIVO', (string) ($data['motivo'] ?? ''), 26);
+        $document->labeledBox('PIEZAS REEMPLAZADAS', (string) ($data['piezas_reemplazadas'] ?? ''), 26);
+        $document->labeledBox('OBSERVACIONES Y RECOMENDACIONES', (string) ($data['observaciones_recomendaciones'] ?? ''), 32);
+        $document->fieldRow([
+            ['LA EMPRESA', $data['firma_empresa'] ?? ''],
+            ['CLIENTE', $data['firma_cliente'] ?? ''],
+        ]);
+        $document->fieldRow([
+            ['APROBADO POR', $approvalState['aprobado'] ?? ''],
+            ['FECHA DE APROBACION', $approvalState['fecha'] ?? ''],
+        ]);
+        $document->text('Reporte #' . $reportId . ' - Documento generado por el backend de Internepro. Version ' . $version . '.', 8);
+        if ($generalPhotos !== []) {
+            $document->pageBreak('EVIDENCIA FOTOGRAFICA GENERAL');
+            report_pdf_add_photos($document, $reportId, $generalPhotos);
+            $document->text('Reporte #' . $reportId . ' - Evidencia fotografica. Version ' . $version . '.', 8);
+        }
+    } else {
+        $document->logo(dirname(__DIR__) . '/images/logo-internepro.jpg', 60.0);
+        $document->text($reportTitle, 16, true, 0, 4);
+        $document->text('Reporte #' . $reportId . ' - ' . $typeLabel, 12, true, 0, 8);
         $document->rule();
-        $document->text('La empresa: ' . report_pdf_display_value($data['firma_empresa'] ?? ''), 10, true, 0, 6);
-        $document->text('Cliente: ' . report_pdf_display_value($data['firma_cliente'] ?? ''), 10, true, 0, 10);
-    }
+        $document->text('Cliente: ' . report_pdf_display_value($report['cliente_reporte'] ?? ''), 10, true);
+        $document->text('Fecha del mantenimiento: ' . report_pdf_display_value($report['fecha_reporte'] ?? ''), 10);
+        $document->text('Equipo: ' . report_pdf_display_value($report['equipo_reporte'] ?? ''), 10);
+        $document->text('Tecnico: ' . report_pdf_display_value($report['tecnico_reporte'] ?? ''), 10);
+        $document->text('Aprobado por: ' . report_pdf_display_value($approvalState['aprobado'] ?? ''), 10, true);
+        $document->text('Fecha de aprobacion: ' . report_pdf_display_value($approvalState['fecha'] ?? ''), 10, false, 0, 8);
+        $document->text('Nomenclatura: OK = inspeccionado y en optimas condiciones; X = requiere otras acciones; R = reparacion realizada.', 9, false, 0, 10);
+        if ($generalPhotos !== []) {
+            $document->heading('FOTOGRAFIAS GENERALES', 13);
+            report_pdf_add_photos($document, $reportId, $generalPhotos);
+        }
 
-    foreach (report_pdf_sections($type) as $index => $section) {
-        $document->heading(($index + 1) . '. ' . $section['title'], 12);
-        foreach ($section['items'] as $item) {
-            $document->text($item['label'] . ': ' . report_pdf_display_value($data[$item['key']] ?? ''), 9, false, 8, 2);
+        foreach (report_pdf_sections($type) as $index => $section) {
+            $document->heading(($index + 1) . '. ' . $section['title'], 12);
+            foreach ($section['items'] as $item) {
+                $document->text($item['label'] . ': ' . report_pdf_display_value($data[$item['key']] ?? ''), 9, false, 8, 2);
+            }
+            if ($section['observation'] !== null) {
+                $document->text('Observaciones: ' . report_pdf_display_value($observations[$section['observation']] ?? ''), 9, true, 8, 5);
+            }
+            $sectionPhotos = array_values(array_filter($photos, function ($photo) use ($section) {
+                return ($photo['scope'] ?? '') === 'section' && ($photo['section_key'] ?? '') === $section['key'];
+            }));
+            if ($sectionPhotos !== []) {
+                $document->text('Evidencia fotografica de ' . $section['title'], 10, true, 8, 5);
+                report_pdf_add_photos($document, $reportId, $sectionPhotos);
+            }
+            $document->rule();
         }
-        if ($section['observation'] !== null) {
-            $document->text('Observaciones: ' . report_pdf_display_value($observations[$section['observation']] ?? ''), 9, true, 8, 5);
-        }
-        $sectionPhotos = array_values(array_filter($photos, function ($photo) use ($section) {
-            return ($photo['scope'] ?? '') === 'section' && ($photo['section_key'] ?? '') === $section['key'];
-        }));
-        if ($sectionPhotos !== []) {
-            $document->text('Evidencia fotografica de ' . $section['title'], 10, true, 8, 5);
-            report_pdf_add_photos($document, $reportId, $sectionPhotos);
-        }
-        $document->rule();
-    }
 
-    if ($type !== 'llamada') {
         $document->heading('OBSERVACIONES GENERALES', 13);
         $document->text('Comentarios: ' . report_pdf_display_value($observations['ob_comentario'] ?? ''), 10, false, 0, 5);
         $document->text('Recomendaciones: ' . report_pdf_display_value($observations['ob_recomendacion'] ?? ''), 10, false, 0, 8);
+        $document->text('Documento generado por el backend de Internepro al aprobar el reporte. Version ' . $version . '.', 8);
     }
-    $document->text('Documento generado por el backend de Internepro al aprobar el reporte. Version ' . $version . '.', 8);
 
     $directory = dirname(__DIR__) . '/storage/report-pdfs/' . $reportId;
     if (!is_dir($directory) && !@mkdir($directory, 0770, true) && !is_dir($directory)) {

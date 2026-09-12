@@ -30,7 +30,7 @@ Reglas de transición:
 - Dev solo mueve `PENDING` a `DEVELOPING` después de autorización expresa de QA.
 - Dev puede entregar en `DEPLOYMENT WEB` o `DEPLOYMENT & COMPILING`; esos estados no significan que el código ya esté en el servidor o dispositivo.
 - Solo QA ordena el paso a `TESTING` y confirma `COMPLETED`.
-- Un BUG encontrado en un PR abierto devuelve ese PR a `DEVELOPING`, recibe un ISSUE nuevo y conserva el mismo número de PR.
+- Un BUG encontrado en un PR abierto devuelve ese PR a `DEVELOPING`, recibe simultáneamente el siguiente `BUG-###` y el siguiente `ISSUE-###`, y conserva el mismo número de PR.
 - No se crean fases futuras ni se reservan números PR sin que QA solicite definirlas.
 
 ### Control de identificadores
@@ -38,10 +38,11 @@ Reglas de transición:
 | Registro | Último ID utilizado | Próximo ID disponible | Regla |
 | --- | --- | --- | --- |
 | Requisito | `REQ-001` | `REQ-002` | Solo se crea otro REQ si QA aprueba un comportamiento independiente. |
-| Issue o BUG | `ISSUE-018` | `ISSUE-019` | Todo trabajo o defecto nuevo toma el siguiente número; los IDs retirados nunca se reutilizan. |
+| Issue | `ISSUE-018` | `ISSUE-019` | Todo trabajo o defecto nuevo toma el siguiente número; los IDs retirados nunca se reutilizan. |
+| BUG | `BUG-003` | `BUG-004` | Cada defecto confirmado toma un consecutivo propio y referencia su ISSUE, REQ y PR. |
 | Fase interna | `PR-005` | `PR-006` | Solo se asigna cuando QA solicita describir una nueva fase. No representa un Pull Request de GitHub. |
 
-Por tanto, el próximo BUG que QA identifique será `ISSUE-019`, salvo que sea exactamente otra manifestación de un ISSUE ya abierto.
+Por tanto, el próximo defecto será `BUG-004` y, si requiere un ISSUE nuevo, usará `ISSUE-019`. Ninguno de esos números se reutilizará.
 
 ### Trazabilidad con Git
 
@@ -123,13 +124,13 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 
 ### Registro visible de BUGS
 
-| BUG (ID de ISSUE) | Estado | Defecto | PR |
-| --- | --- | --- | --- |
-| `ISSUE-015` | `IMPLEMENTED — PENDING QA` | `La empresa` y `Cliente` fueron creados erróneamente como firmas manuscritas en lugar de campos simples de texto. | `PR-003` |
-| `ISSUE-017` | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotografías de Llamada y aplicaba límite 5 en lugar de 10. QA ya validó que los controles web desaparecieron; falta validar API, fotos y descripciones con Android. | `PR-004` |
-| `ISSUE-018` | `OPEN — UNASSIGNED` | El PDF de Llamada se genera en orientación vertical y con una composición genérica que no reproduce el formato físico original. | Sin PR |
+| BUG | ISSUE | REQ | Estado | Defecto | PR |
+| --- | --- | --- | --- | --- | --- |
+| `BUG-001` | `ISSUE-015` | `REQ-001` | `IMPLEMENTED — PENDING QA` | `La empresa` y `Cliente` fueron creados erróneamente como firmas manuscritas. | `PR-003` |
+| `BUG-002` | `ISSUE-017` | `REQ-001` | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotografías y aplicaba límite 5 en lugar de 10. | `PR-004` |
+| `BUG-003` | `ISSUE-018` | `REQ-001` | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada era vertical y no reproducía el formato físico original. | `PR-005` |
 
-Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###` separada. El próximo BUG nuevo será `ISSUE-019`.
+**Próximo BUG disponible: `BUG-004`.** Cada BUG mantiene además la referencia al ISSUE que representa el trabajo técnico.
 
 ### Registro único
 
@@ -152,7 +153,7 @@ Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###`
 | `ISSUE-015` | BUG | `IMPLEMENTED — PENDING QA` | Los campos finales se implementaron erróneamente como firmas. | `PR-003` |
 | `ISSUE-016` | Retirado | `SUPERSEDED` | Gestión fotográfica web basada en alcance incorrecto. | `PR-004` |
 | `ISSUE-017` | BUG | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotos y el límite de Llamada era cinco. | `PR-004` |
-| `ISSUE-018` | BUG | `OPEN — UNASSIGNED` | El PDF de Llamada no es horizontal ni reproduce el formato físico. | Sin PR |
+| `ISSUE-018` | BUG | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada no era horizontal ni reproducía el formato físico. | `PR-005` |
 
 **Próximo ISSUE disponible: `ISSUE-019`.**
 
@@ -199,7 +200,9 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 
 **Tipo:** BUG visual y documental detectado por QA después de validar el flujo funcional de `PR-005`.
 
-**Estado:** `OPEN — UNASSIGNED`.
+**BUG:** `BUG-003`.
+
+**Estado:** `IMPLEMENTED — DEPLOYMENT WEB`.
 
 **Comportamiento observado:** el PDF se genera y puede abrirse/compartirse, pero usa una página vertical y una composición genérica. No reproduce la distribución horizontal del reporte físico entregado por QA.
 
@@ -209,8 +212,10 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 
 **Solución técnica viable:** parametrizar ancho, alto, márgenes y orientación del generador; mantener Elevador/ALIMAK en vertical; crear una plantilla horizontal exclusiva para Llamada; dibujar posiciones, líneas y bloques equivalentes al formato físico; permitir páginas horizontales adicionales para evidencia fotográfica.
 
+**Implementación ejecutada:** `ReportPdfDocument` ahora recibe la orientación y emite el `MediaBox` correspondiente. Llamada usa `841.89 × 595.28` puntos, una plantilla propia con logo y datos corporativos, franja roja, título, filas Cliente/Equipo/Fecha, campos narrativos enmarcados y conformidad. Las fotografías se trasladan a anexos horizontales con su descripción. Elevador y ALIMAK conservan orientación y composición vertical.
+
 **REQ relacionado:** `REQ-001`.
-**PR relacionado:** sin asignar. QA deberá solicitar la descripción de una fase antes de autorizar la corrección.
+**PR relacionado:** `PR-005`, reabierto por orden de QA hasta corregir y validar el PDF.
 
 ## IMIPLEMENTATION
 
@@ -224,7 +229,7 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-002` | `COMPLETED` | Incorporar Llamada en backend y API. | `ISSUE-001`, `ISSUE-003`, `ISSUE-007` | Desplegado y validado por QA. |
 | `PR-003` | `DEPLOYMENT WEB` | Crear botón, alta y formulario web; corregir campos finales. | `ISSUE-002`, `ISSUE-015` | Código entregado; espera validación final de QA. |
 | `PR-004` | `TESTING` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó que la carga web desapareció; PR abierto hasta probar API, fotos y descripciones con Android. |
-| `PR-005` | `COMPLETED` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011` | Flujo funcional desplegado y validado por QA; `ISSUE-018` registra separadamente el defecto visual del PDF. |
+| `PR-005` | `DEPLOYMENT WEB` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011`, `ISSUE-018` / `BUG-003` | Corrección horizontal terminada; QA debe desplegar, regenerar y validar el PDF antes de cerrar. |
 
 **Próximo PR disponible: `PR-006`.** Todavía no tiene alcance asignado ni autorización técnica.
 
@@ -246,7 +251,7 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 
 ### PR-005 — Visualización, aprobación, PDF y acciones web de Llamada
 
-**Estado:** `COMPLETED`. QA validó el flujo funcional completo.
+**Estado:** `DEPLOYMENT WEB`. QA validó el flujo funcional; la corrección de `BUG-003` está lista para desplegar y probar. El PR permanece abierto.
 
 **REQ relacionado:** `REQ-001`.
 

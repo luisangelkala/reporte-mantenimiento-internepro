@@ -62,6 +62,7 @@ fun App() {
     val filteredReports = when (selectedFilter) {
         "Elevador" -> reports.filter { it.type.equals("elevador", ignoreCase = true) }
         "ALIMAK" -> reports.filter { it.type.equals("alimak", ignoreCase = true) }
+        "Llamada" -> reports.filter { it.type.equals("llamada", ignoreCase = true) }
         else -> reports
     }
 
@@ -140,13 +141,19 @@ fun App() {
                             try { editor = ReportApi.createReport(type) } catch (error: Exception) { message = error.message ?: "No se pudo crear el reporte." } finally { loading = false }
                         }.start()
                     }
+                    NewReportButton("Llamada", "llamada", Modifier.weight(1f)) { type ->
+                        loading = true
+                        Thread {
+                            try { editor = ReportApi.createReport(type) } catch (error: Exception) { message = error.message ?: "No se pudo crear el reporte." } finally { loading = false }
+                        }.start()
+                    }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                     Box {
                         OutlinedButton(onClick = { filterExpanded = true }) { Text("Filtro: $selectedFilter", style = MaterialTheme.typography.bodySmall) }
                         DropdownMenu(expanded = filterExpanded, onDismissRequest = { filterExpanded = false }) {
-                            listOf("Todos", "Elevador", "ALIMAK").forEach { option ->
+                            listOf("Todos", "Elevador", "ALIMAK", "Llamada").forEach { option ->
                                 DropdownMenuItem(text = { Text(option) }, onClick = { selectedFilter = option; filterExpanded = false })
                             }
                         }

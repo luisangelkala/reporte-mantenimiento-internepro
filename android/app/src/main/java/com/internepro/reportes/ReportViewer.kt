@@ -39,7 +39,9 @@ fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDe
             Text("Cliente: ${report.client}")
             Text("Fecha: ${report.date}")
             Text("Equipo: ${report.equipment}")
-            Text("Tecnico: ${report.technician}")
+            if (report.type != "llamada") {
+                Text("Tecnico: ${report.technician}")
+            }
             if (report.status == "close") {
                 AssistChip(onClick = { }, label = { Text("APROBADO: ${report.approvedBy} - ${report.approvedDate}") })
             } else {
@@ -59,31 +61,43 @@ fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDe
                 photos = report.photos(),
                 onOpen = { group, index -> fullScreenPhotos = group; fullScreenIndex = index }
             )
-            Text("Checklist", style = MaterialTheme.typography.titleLarge)
-            ChecklistTemplates.forType(report.type).forEach { section ->
-                Card {
-                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(section.title, style = MaterialTheme.typography.titleMedium)
-                        section.items.forEach { item ->
-                            Row(Modifier.fillMaxWidth()) {
-                                Text(item.label, modifier = Modifier.weight(1f))
-                                Text(report.checklist.optString(item.key).ifBlank { "Sin marcar" })
+            if (report.type == "llamada") {
+                Text("Detalle de la llamada", style = MaterialTheme.typography.titleLarge)
+                CallValue("Trabajo realizado", report.checklist.optString("trabajo_realizado"))
+                CallValue("Motivo", report.checklist.optString("motivo"))
+                CallValue("Piezas reemplazadas", report.checklist.optString("piezas_reemplazadas"))
+                CallValue("Observaciones y recomendaciones", report.checklist.optString("observaciones_recomendaciones"))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f)) { CallValue("La empresa", report.checklist.optString("firma_empresa")) }
+                    Box(Modifier.weight(1f)) { CallValue("Cliente", report.checklist.optString("firma_cliente")) }
+                }
+            } else {
+                Text("Checklist", style = MaterialTheme.typography.titleLarge)
+                ChecklistTemplates.forType(report.type).forEach { section ->
+                    Card {
+                        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text(section.title, style = MaterialTheme.typography.titleMedium)
+                            section.items.forEach { item ->
+                                Row(Modifier.fillMaxWidth()) {
+                                    Text(item.label, modifier = Modifier.weight(1f))
+                                    Text(report.checklist.optString(item.key).ifBlank { "Sin marcar" })
+                                }
                             }
-                        }
-                        section.observationKey?.let { key -> report.observations.optString(key).takeIf { it.isNotBlank() }?.let { Text("Observaciones: $it") } }
-                        if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTIONS) {
-                            ViewerPhotoGroup(
-                                reportId = report.id,
-                                title = "Fotografias de ${ALIMAK_PHOTO_SECTIONS[section.key]}",
-                                photos = report.sectionPhotos(section.key),
-                                onOpen = { group, index -> fullScreenPhotos = group; fullScreenIndex = index }
-                            )
+                            section.observationKey?.let { key -> report.observations.optString(key).takeIf { it.isNotBlank() }?.let { Text("Observaciones: $it") } }
+                            if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTIONS) {
+                                ViewerPhotoGroup(
+                                    reportId = report.id,
+                                    title = "Fotografias de ${ALIMAK_PHOTO_SECTIONS[section.key]}",
+                                    photos = report.sectionPhotos(section.key),
+                                    onOpen = { group, index -> fullScreenPhotos = group; fullScreenIndex = index }
+                                )
+                            }
                         }
                     }
                 }
+                report.observations.optString("ob_comentario").takeIf { it.isNotBlank() }?.let { Text("Comentarios: $it") }
+                report.observations.optString("ob_recomendacion").takeIf { it.isNotBlank() }?.let { Text("Recomendacion: $it") }
             }
-            report.observations.optString("ob_comentario").takeIf { it.isNotBlank() }?.let { Text("Comentarios: $it") }
-            report.observations.optString("ob_recomendacion").takeIf { it.isNotBlank() }?.let { Text("Recomendacion: $it") }
         }
     }
     if (confirmApproval) AlertDialog(
@@ -164,6 +178,16 @@ fun ReportViewer(report: ReportDetail, onBack: () -> Unit, onApproved: (ReportDe
                     Text("${fullScreenIndex + 1} / ${fullScreenPhotos.size}", color = Color.White)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CallValue(label: String, value: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(value.ifBlank { "Sin información" })
         }
     }
 }

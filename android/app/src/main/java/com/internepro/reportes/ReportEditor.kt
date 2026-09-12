@@ -23,7 +23,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-private const val MAX_PHOTOS_PER_BUCKET = 5
+private const val DEFAULT_MAX_PHOTOS_PER_BUCKET = 5
+private const val CALL_MAX_GENERAL_PHOTOS = 10
 
 private data class PhotoJob(
     val source: Uri,
@@ -48,6 +49,12 @@ fun ReportEditor(
     var date by remember(report.id) { mutableStateOf(report.date) }
     var equipment by remember(report.id) { mutableStateOf(report.equipment) }
     var technician by remember(report.id) { mutableStateOf(report.technician) }
+    var workPerformed by remember(report.id) { mutableStateOf(report.checklist.optString("trabajo_realizado")) }
+    var reason by remember(report.id) { mutableStateOf(report.checklist.optString("motivo")) }
+    var replacedParts by remember(report.id) { mutableStateOf(report.checklist.optString("piezas_reemplazadas")) }
+    var recommendations by remember(report.id) { mutableStateOf(report.checklist.optString("observaciones_recomendaciones")) }
+    var companyConformity by remember(report.id) { mutableStateOf(report.checklist.optString("firma_empresa")) }
+    var clientConformity by remember(report.id) { mutableStateOf(report.checklist.optString("firma_cliente")) }
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf("") }
     var stateVersion by remember { mutableIntStateOf(0) }
@@ -63,14 +70,17 @@ fun ReportEditor(
     }
     fun pendingInBucket(sectionKey: String?): List<PhotoJob> = photos.filter { it.sectionKey == sectionKey }
     fun bucketCount(sectionKey: String?): Int = storedInBucket(sectionKey).size + pendingInBucket(sectionKey).size
+    fun bucketLimit(sectionKey: String?): Int =
+        if (report.type == "llamada" && sectionKey == null) CALL_MAX_GENERAL_PHOTOS else DEFAULT_MAX_PHOTOS_PER_BUCKET
     fun syncStoredPhotos() {
         val updated = org.json.JSONArray()
         storedPhotos.forEach { updated.put(it.toJson()) }
         report.checklist.put("_photos", updated)
     }
     fun preparePhoto(source: Uri, sectionKey: String?, existingIndex: Int? = null) {
-        if (existingIndex == null && bucketCount(sectionKey) >= MAX_PHOTOS_PER_BUCKET) {
-            saveError = "Solo se permiten $MAX_PHOTOS_PER_BUCKET fotografias por bloque."
+        val limit = bucketLimit(sectionKey)
+        if (existingIndex == null && bucketCount(sectionKey) >= limit) {
+            saveError = "Solo se permiten $limit fotografias en este bloque."
             return
         }
         val index = existingIndex ?: photos.size
@@ -99,10 +109,11 @@ fun ReportEditor(
     }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
         val target = pickerSectionKey
-        val remaining = (MAX_PHOTOS_PER_BUCKET - bucketCount(target)).coerceAtLeast(0)
+        val limit = bucketLimit(target)
+        val remaining = (limit - bucketCount(target)).coerceAtLeast(0)
         selected.take(remaining).forEach { preparePhoto(it, target) }
         if (selected.size > remaining) {
-            saveError = "Se seleccionaron mas fotografias de las permitidas. El limite por bloque es $MAX_PHOTOS_PER_BUCKET."
+            saveError = "Se seleccionaron mas fotografias de las permitidas. El limite de este bloque es $limit."
         }
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
@@ -134,7 +145,15 @@ fun ReportEditor(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (report.type == "alimak") "Editar reporte ALIMAK" else "Editar reporte Elevador") },
+                title = {
+                    Text(
+                        when (report.type) {
+                            "alimak" -> "Editar reporte ALIMAK"
+                            "llamada" -> "Editar reporte Llamada"
+                            else -> "Editar reporte Elevador"
+                        }
+                    )
+                },
                 navigationIcon = { TextButton(onClick = onBack) { Text("Volver") } }
             )
         },
@@ -151,6 +170,14 @@ fun ReportEditor(
                         report.date = date
                         report.equipment = equipment
                         report.technician = technician
+                        if (report.type == "llamada") {
+                            report.checklist.put("trabajo_realizado", workPerformed.trim())
+                            report.checklist.put("motivo", reason.trim())
+                            report.checklist.put("piezas_reemplazadas", replacedParts.trim())
+                            report.checklist.put("observaciones_recomendaciones", recommendations.trim())
+                            report.checklist.put("firma_empresa", companyConformity.trim())
+                            report.checklist.put("firma_cliente", clientConformity.trim())
+                        }
                         syncStoredPhotos()
                         Thread {
                             try {
@@ -211,14 +238,28 @@ fun ReportEditor(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Datos generales", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Titulo del reporte") })
+            if (report.type == "llamada") {
+                Text(
+                    report.title.ifBlank { "LLAMADA #${report.id}" },
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    "El titulo se actualiza automaticamente con Cliente y Fecha al guardar.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Titulo del reporte") })
+            }
             OutlinedTextField(client, { client = it }, Modifier.fillMaxWidth(), label = { Text("Cliente") })
             OutlinedTextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Fecha (AAAA-MM-DD)") })
             OutlinedTextField(equipment, { equipment = it }, Modifier.fillMaxWidth(), label = { Text("Equipo") })
-            OutlinedTextField(technician, { technician = it }, Modifier.fillMaxWidth(), label = { Text("Tecnico") })
+            if (report.type != "llamada") {
+                OutlinedTextField(technician, { technician = it }, Modifier.fillMaxWidth(), label = { Text("Tecnico") })
+            }
 
             PhotoBucketEditor(
                 title = "Fotografias generales",
+                maxPhotos = bucketLimit(null),
                 reportId = report.id,
                 pendingPhotos = pendingInBucket(null),
                 storedPhotos = storedInBucket(null),
@@ -243,50 +284,75 @@ fun ReportEditor(
             )
             if (saveError.isNotBlank()) Text(saveError, color = MaterialTheme.colorScheme.error)
 
-            Text("Checklist de mantenimiento", style = MaterialTheme.typography.titleLarge)
-            ChecklistTemplates.forType(report.type).forEach { section ->
-                ChecklistSectionEditor(
-                    section = section,
-                    checklist = report.checklist,
-                    observations = report.observations,
-                    onChanged = { stateVersion++ },
-                    photoContent = if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTIONS) {
-                        {
-                            PhotoBucketEditor(
-                                title = "Fotografias de ${section.title}",
-                                reportId = report.id,
-                                pendingPhotos = pendingInBucket(section.key),
-                                storedPhotos = storedInBucket(section.key),
-                                saving = saving,
-                                canModifyPending = photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
-                                onTakePhoto = { launchCamera(section.key) },
-                                onSelectPhotos = { launchPicker(section.key) },
-                                onPendingComment = { pending, value ->
-                                    val index = photos.indexOf(pending)
-                                    if (index >= 0) photos[index] = photos[index].copy(comment = value.take(500))
-                                },
-                                onRemovePending = { pending -> photos.remove(pending) },
-                                onRetryPending = { pending ->
-                                    val index = photos.indexOf(pending)
-                                    if (index >= 0) preparePhoto(pending.source, pending.sectionKey, index)
-                                },
-                                onStoredComment = { stored, value ->
-                                    val index = storedPhotos.indexOfFirst { it.name == stored.name }
-                                    if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
-                                },
-                                onDeleteStored = { deletePhotoCandidate = it }
-                            )
-                        }
-                    } else null
-                )
-            }
+            if (report.type == "llamada") {
+                Text("Detalle de la llamada", style = MaterialTheme.typography.titleLarge)
+                OutlinedTextField(workPerformed, { workPerformed = it.take(10000) }, Modifier.fillMaxWidth(), label = { Text("Trabajo realizado") }, minLines = 3)
+                OutlinedTextField(reason, { reason = it.take(10000) }, Modifier.fillMaxWidth(), label = { Text("Motivo") }, minLines = 3)
+                OutlinedTextField(replacedParts, { replacedParts = it.take(10000) }, Modifier.fillMaxWidth(), label = { Text("Piezas reemplazadas") }, minLines = 3)
+                OutlinedTextField(recommendations, { recommendations = it.take(10000) }, Modifier.fillMaxWidth(), label = { Text("Observaciones y recomendaciones") }, minLines = 3)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        companyConformity,
+                        { companyConformity = it.take(255) },
+                        Modifier.weight(1f),
+                        label = { Text("La empresa") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        clientConformity,
+                        { clientConformity = it.take(255) },
+                        Modifier.weight(1f),
+                        label = { Text("Cliente") },
+                        singleLine = true
+                    )
+                }
+            } else {
+                Text("Checklist de mantenimiento", style = MaterialTheme.typography.titleLarge)
+                ChecklistTemplates.forType(report.type).forEach { section ->
+                    ChecklistSectionEditor(
+                        section = section,
+                        checklist = report.checklist,
+                        observations = report.observations,
+                        onChanged = { stateVersion++ },
+                        photoContent = if (report.type == "alimak" && section.key in ALIMAK_PHOTO_SECTIONS) {
+                            {
+                                PhotoBucketEditor(
+                                    title = "Fotografias de ${section.title}",
+                                    maxPhotos = bucketLimit(section.key),
+                                    reportId = report.id,
+                                    pendingPhotos = pendingInBucket(section.key),
+                                    storedPhotos = storedInBucket(section.key),
+                                    saving = saving,
+                                    canModifyPending = photos.none { it.status == "Comprimiendo" || it.status == "Subiendo" },
+                                    onTakePhoto = { launchCamera(section.key) },
+                                    onSelectPhotos = { launchPicker(section.key) },
+                                    onPendingComment = { pending, value ->
+                                        val index = photos.indexOf(pending)
+                                        if (index >= 0) photos[index] = photos[index].copy(comment = value.take(500))
+                                    },
+                                    onRemovePending = { pending -> photos.remove(pending) },
+                                    onRetryPending = { pending ->
+                                        val index = photos.indexOf(pending)
+                                        if (index >= 0) preparePhoto(pending.source, pending.sectionKey, index)
+                                    },
+                                    onStoredComment = { stored, value ->
+                                        val index = storedPhotos.indexOfFirst { it.name == stored.name }
+                                        if (index >= 0) storedPhotos[index] = storedPhotos[index].copy(comment = value.take(500))
+                                    },
+                                    onDeleteStored = { deletePhotoCandidate = it }
+                                )
+                            }
+                        } else null
+                    )
+                }
 
-            var comment by remember(report.id) { mutableStateOf(report.observations.optString("ob_comentario")) }
-            var recommendation by remember(report.id) { mutableStateOf(report.observations.optString("ob_recomendacion")) }
-            Text("Observaciones", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(comment, { comment = it; report.observations.put("ob_comentario", it) }, Modifier.fillMaxWidth(), label = { Text("Comentarios") }, minLines = 3)
-            OutlinedTextField(recommendation, { recommendation = it; report.observations.put("ob_recomendacion", it) }, Modifier.fillMaxWidth(), label = { Text("Recomendacion") }, minLines = 3)
-            Text("Version de checklist: $stateVersion", style = MaterialTheme.typography.labelSmall)
+                var comment by remember(report.id) { mutableStateOf(report.observations.optString("ob_comentario")) }
+                var recommendation by remember(report.id) { mutableStateOf(report.observations.optString("ob_recomendacion")) }
+                Text("Observaciones", style = MaterialTheme.typography.titleLarge)
+                OutlinedTextField(comment, { comment = it; report.observations.put("ob_comentario", it) }, Modifier.fillMaxWidth(), label = { Text("Comentarios") }, minLines = 3)
+                OutlinedTextField(recommendation, { recommendation = it; report.observations.put("ob_recomendacion", it) }, Modifier.fillMaxWidth(), label = { Text("Recomendacion") }, minLines = 3)
+                Text("Version de checklist: $stateVersion", style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
     deletePhotoCandidate?.let { name ->
@@ -307,6 +373,7 @@ fun ReportEditor(
 @Composable
 private fun PhotoBucketEditor(
     title: String,
+    maxPhotos: Int,
     reportId: Int,
     pendingPhotos: List<PhotoJob>,
     storedPhotos: List<ReportPhoto>,
@@ -322,17 +389,17 @@ private fun PhotoBucketEditor(
 ) {
     val count = pendingPhotos.size + storedPhotos.size
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("$title ($count/$MAX_PHOTOS_PER_BUCKET)", style = MaterialTheme.typography.titleMedium)
+        Text("$title ($count/$maxPhotos)", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(enabled = count < MAX_PHOTOS_PER_BUCKET && !saving, onClick = onTakePhoto) {
+            Button(enabled = count < maxPhotos && !saving, onClick = onTakePhoto) {
                 Text("Tomar fotografia")
             }
-            OutlinedButton(enabled = count < MAX_PHOTOS_PER_BUCKET && !saving, onClick = onSelectPhotos) {
+            OutlinedButton(enabled = count < maxPhotos && !saving, onClick = onSelectPhotos) {
                 Text("Seleccionar")
             }
         }
-        if (count >= MAX_PHOTOS_PER_BUCKET) {
-            Text("Limite de 5 fotografias alcanzado para este bloque.", style = MaterialTheme.typography.bodySmall)
+        if (count >= maxPhotos) {
+            Text("Limite de $maxPhotos fotografias alcanzado para este bloque.", style = MaterialTheme.typography.bodySmall)
         }
         if (pendingPhotos.isNotEmpty()) {
             Row(

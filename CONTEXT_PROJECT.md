@@ -40,7 +40,7 @@ Reglas de transición:
 | Requisito | `REQ-001` | `REQ-002` | Solo se crea otro REQ si QA aprueba un comportamiento independiente. |
 | Issue | `ISSUE-019` | `ISSUE-020` | Todo trabajo o defecto nuevo toma el siguiente número; los IDs retirados nunca se reutilizan. |
 | BUG | `BUG-004` | `BUG-005` | Cada defecto confirmado toma un consecutivo propio y referencia su ISSUE, REQ y PR. |
-| Fase interna | `PR-005` | `PR-006` | Solo se asigna cuando QA solicita describir una nueva fase. No representa un Pull Request de GitHub. |
+| Fase interna | `PR-006` | `PR-007` | Solo se asigna cuando QA solicita describir una nueva fase. No representa un Pull Request de GitHub. |
 
 Por tanto, el próximo defecto será `BUG-005` y, si requiere un ISSUE nuevo, usará `ISSUE-020`. Ninguno de esos números se reutilizará.
 
@@ -61,7 +61,7 @@ Por tanto, el próximo defecto será `BUG-005` y, si requiere un ISSUE nuevo, us
 - Los reportes aprobados quedan bloqueados para edición, fotografías y eliminación hasta que la web los devuelva a `PENDIENTE`.
 - La aprobación genera un PDF privado y versionado; web y APK abren y comparten su URL temporal mediante WhatsApp.
 - El nuevo tipo `llamada` ya es reconocido por backend/API y dispone de alta y edición web.
-- La visualización, aprobación, generación de PDF y acciones web de Llamada fueron validadas en `PR-005`. La paginación y los campos sobrantes del PDF horizontal se corrigen en `ISSUE-019`; QA debe validar el PDF regenerado.
+- La visualización, aprobación, generación de PDF y acciones web de Llamada fueron validadas funcionalmente en `PR-005`. QA validó la corrección de paginación y campos sobrantes (`BUG-004` / `ISSUE-019`); el PR sigue abierto hasta su cierre explícito.
 - La experiencia Android de Llamada continúa pendiente de una fase que QA todavía no ha creado.
 - Para Llamada, la web es un canal fotográfico de solo lectura. La captura, carga, descripción y eliminación serán responsabilidad exclusiva de la APK.
 
@@ -129,7 +129,7 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 | `BUG-001` | `ISSUE-015` | `REQ-001` | `IMPLEMENTED — PENDING QA` | `La empresa` y `Cliente` fueron creados erróneamente como firmas manuscritas. | `PR-003` |
 | `BUG-002` | `ISSUE-017` | `REQ-001` | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotografías y aplicaba límite 5 en lugar de 10. | `PR-004` |
 | `BUG-003` | `ISSUE-018` | `REQ-001` | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada era vertical y no reproducía el formato físico original. | `PR-005` |
-| `BUG-004` | `ISSUE-019` | `REQ-001` | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada crea una segunda página residual y agrega `Aprobado por` y `Fecha de aprobación`, ausentes del formato físico. | `PR-005` |
+| `BUG-004` | `ISSUE-019` | `REQ-001` | `VALIDATED BY QA` | El PDF de Llamada creaba una segunda página residual y agregaba `Aprobado por` y `Fecha de aprobación`, ausentes del formato físico. | `PR-005` |
 
 **Próximo BUG disponible: `BUG-005`.** Cada BUG mantiene además la referencia al ISSUE que representa el trabajo técnico.
 
@@ -145,17 +145,17 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 | `ISSUE-006` | Retirado | `SUPERSEDED` | Carga web autorizada por error; sustituida por `ISSUE-017`. | `PR-004` |
 | `ISSUE-007` | Trabajo | `RESOLVED` | Extender a Llamada el bloqueo de reportes aprobados. | `PR-002` |
 | `ISSUE-008` | Trabajo | `RESOLVED` | Faltaban visualización y acciones finales del listado para Llamada. | `PR-005` |
-| `ISSUE-009` | Riesgo | `OPEN — UNASSIGNED` | Verificar compatibilidad de clientes ante el nuevo tipo. | Sin PR |
+| `ISSUE-009` | Riesgo | `PENDING` | Verificar compatibilidad de clientes ante el nuevo tipo. | `PR-006` |
 | `ISSUE-010` | Decisión | `RESOLVED` | Definir título automático de Llamada. | `PR-001` |
 | `ISSUE-011` | Trabajo | `RESOLVED WITH FOLLOW-UP BUG` | Faltaba la generación funcional del PDF de Llamada; el defecto visual posterior está en `ISSUE-018`. | `PR-005` |
 | `ISSUE-012` | Retirado | `SUPERSEDED` | Control de proceso duplicado por Gobierno del proyecto. | Sin PR |
-| `ISSUE-013` | Trabajo | `OPEN — UNASSIGNED` | La APK todavía no incorpora el tipo Llamada. | Sin PR |
-| `ISSUE-014` | Riesgo | `OPEN — UNASSIGNED` | Falta regresión integral de Elevador y ALIMAK. | Sin PR |
+| `ISSUE-013` | Trabajo | `PENDING` | La APK todavía no incorpora el tipo Llamada. | `PR-006` |
+| `ISSUE-014` | Riesgo | `PENDING` | Falta regresión integral de Elevador y ALIMAK. | `PR-006` |
 | `ISSUE-015` | BUG | `IMPLEMENTED — PENDING QA` | Los campos finales se implementaron erróneamente como firmas. | `PR-003` |
 | `ISSUE-016` | Retirado | `SUPERSEDED` | Gestión fotográfica web basada en alcance incorrecto. | `PR-004` |
 | `ISSUE-017` | BUG | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotos y el límite de Llamada era cinco. | `PR-004` |
 | `ISSUE-018` | BUG | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada no era horizontal ni reproducía el formato físico. | `PR-005` |
-| `ISSUE-019` | BUG | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada agrega una página residual y una fila de aprobación ajena al formulario físico. | `PR-005` |
+| `ISSUE-019` | BUG | `RESOLVED — VALIDATED BY QA` | El PDF de Llamada agregaba una página residual y una fila de aprobación ajena al formulario físico. | `PR-005` |
 
 **Próximo ISSUE disponible: `ISSUE-020`.**
 
@@ -165,7 +165,7 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 
 ### ISSUE-009 — Compatibilidad con clientes existentes
 
-Antes de exponer Llamada en Android debe comprobarse que listado, parser, filtro y navegación no fallen ante el nuevo tipo.
+En `PR-006` se comprobará que listado, parser, filtro y navegación reconozcan el nuevo tipo sin tratarlo como Elevador o ALIMAK.
 
 ### ISSUE-011 — PDF definitivo
 
@@ -173,11 +173,11 @@ Antes de exponer Llamada en Android debe comprobarse que listado, parser, filtro
 
 ### ISSUE-013 — Interfaz Android de Llamada
 
-Android aún debe incorporar creación, edición, bloque general de hasta diez fotos, comentarios opcionales, visor, aprobación, PDF y WhatsApp. Este trabajo no tiene número PR hasta que QA autorice definir una fase Android.
+Android aún debe incorporar creación, edición, bloque general de hasta diez fotos, comentarios opcionales, visor, aprobación, PDF y WhatsApp. Este trabajo queda asignado a `PR-006`, todavía sin autorización de implementación.
 
 ### ISSUE-014 — Regresión
 
-Debe verificarse que incorporar Llamada no modifique rutas, estados, filtros, fotografías, PDF ni acciones de Elevador y ALIMAK.
+En `PR-006` debe verificarse que incorporar Llamada no modifique rutas, estados, filtros, fotografías, PDF ni acciones de Elevador y ALIMAK.
 
 ### ISSUE-015 — Campos finales incorrectos
 
@@ -221,7 +221,7 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 
 ### ISSUE-019 — Segunda página residual y campos de aprobación en el PDF de Llamada
 
-**Tipo:** BUG. **Identificador:** `BUG-004`. **REQ:** `REQ-001`. **PR:** `PR-005`. **Estado:** `IMPLEMENTED — DEPLOYMENT WEB`.
+**Tipo:** BUG. **Identificador:** `BUG-004`. **REQ:** `REQ-001`. **PR:** `PR-005`. **Estado:** `RESOLVED — VALIDATED BY QA`.
 
 **Observado por QA:** un reporte de Llamada sin anexos fotográficos termina con una segunda página casi vacía, titulada «Continuación del reporte». En el cuerpo se imprimen `APROBADO POR` y `FECHA DE APROBACION`, pese a que esos campos no aparecen en el formulario físico aprobado.
 
@@ -230,6 +230,8 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 **Implementación autorizada:** quitar la fila de aprobación y el pie técnico de la plantilla Llamada. Mantener `LA EMPRESA` y `CLIENTE` como los últimos campos del formulario. Un reporte con datos de longitud habitual y sin fotos debe generar exactamente una página horizontal; con fotos se permiten únicamente las páginas de anexo fotográfico necesarias. No cambiar los PDF de Elevador ni ALIMAK.
 
 **Corrección ejecutada:** la rama Llamada del generador ya no imprime `APROBADO POR`, `FECHA DE APROBACION` ni el pie técnico después del formulario o de las fotos; mantiene el registro interno de aprobación y la generación de anexos solo cuando hay fotografías. Verificar la página única y la ausencia de estos campos en DEMO después de regenerar un PDF: los PDF aprobados anteriormente son instantáneas inmutables. La prueba local de PHP/PDF no pudo ejecutarse porque PHP CLI no está instalado en este entorno.
+
+**Validación QA:** QA confirmó que el BUG quedó corregido. Esta validación no cierra por sí sola el alcance completo de `PR-005`.
 
 ## IMIPLEMENTATION
 
@@ -243,9 +245,10 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-002` | `COMPLETED` | Incorporar Llamada en backend y API. | `ISSUE-001`, `ISSUE-003`, `ISSUE-007` | Desplegado y validado por QA. |
 | `PR-003` | `DEPLOYMENT WEB` | Crear botón, alta y formulario web; corregir campos finales. | `ISSUE-002`, `ISSUE-015` | Código entregado; espera validación final de QA. |
 | `PR-004` | `TESTING` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó que la carga web desapareció; PR abierto hasta probar API, fotos y descripciones con Android. |
-| `PR-005` | `DEPLOYMENT WEB` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011`, `ISSUE-018` / `BUG-003`, `ISSUE-019` / `BUG-004` | Corrección de página residual entregada; QA debe desplegar, regenerar y validar el PDF. |
+| `PR-005` | `TESTING` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011`, `ISSUE-018` / `BUG-003`, `ISSUE-019` / `BUG-004` | QA validó `BUG-004`; el PR espera cierre explícito del alcance total. |
+| `PR-006` | `PENDING` | Incorporar Llamada de punta a punta en la APK y probar compatibilidad/regresión. | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | Definido para aprobación técnica de QA; aún no se modifica Android. |
 
-**Próximo PR disponible: `PR-006`.** Todavía no tiene alcance asignado ni autorización técnica.
+**Próximo PR disponible: `PR-007`.** `PR-006` está definido pero no cuenta todavía con autorización técnica.
 
 ### Registro Git por PR
 
@@ -265,7 +268,7 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 
 ### PR-005 — Visualización, aprobación, PDF y acciones web de Llamada
 
-**Estado:** `DEPLOYMENT WEB`. QA validó el flujo funcional; la corrección de `BUG-004` está lista para desplegar y probar. El PR permanece abierto.
+**Estado:** `TESTING`. QA validó el flujo funcional y `BUG-004`; el PR permanece abierto hasta que QA apruebe su cierre completo.
 
 **REQ relacionado:** `REQ-001`.
 
@@ -308,3 +311,50 @@ Detalles técnicos verificados por Dev:
 7. Elevador y ALIMAK superan una prueba básica de regresión de listado, visualización y acciones.
 
 **Commit principal ejecutado:** `87a5a7de2ab711f58fa06027a607880b6b248766` — `feat(PR-005): completar visualizacion y PDF de Llamada`.
+
+### PR-006 — Reporte Llamada completo en Android
+
+**Estado:** `PENDING`. Esta sección describe la fase; no autoriza ni contiene todavía cambios técnicos en la APK.
+
+**REQ relacionado:** `REQ-001`.
+
+**ISSUES asociados:**
+
+- `ISSUE-013` — trabajo principal: la APK aún no incorpora el reporte Llamada.
+- `ISSUE-009` — riesgo de compatibilidad: el cliente Android actual solo distingue Elevador y ALIMAK.
+- `ISSUE-014` — riesgo de regresión: deben preservarse los flujos existentes de Elevador y ALIMAK.
+
+**Alcance propuesto:**
+
+1. Añadir `Llamada` como tercer botón de creación y como opción del filtro del listado.
+2. Mostrar cards Llamada con el mismo contrato visual y de acciones: estado, fecha, portada, ver, editar, eliminar, PDF y WhatsApp según disponibilidad y estado.
+3. Crear una pantalla de edición exclusiva, sin checklist de mantenimiento, con Cliente, Equipo, Fecha, Trabajo realizado, Motivo, Piezas reemplazadas, Observaciones y recomendaciones, `La empresa` y `Cliente`.
+4. Mantener `La empresa` y `Cliente` como campos simples de texto opcionales, alineados horizontalmente cuando el ancho lo permita.
+5. Incorporar un único bloque general de hasta diez fotografías; cada fotografía tendrá descripción opcional de hasta 500 caracteres, compresión, verificación de subida, miniatura, visor y eliminación mientras esté pendiente.
+6. Guardar mediante el contrato API existente y recargar automáticamente el listado después de crear o editar.
+7. Crear una visualización exclusiva para Llamada con datos, fotografías y descripciones, aprobación y bloqueo posterior.
+8. Habilitar PDF y WhatsApp únicamente cuando el backend devuelva una URL de PDF vigente.
+9. Impedir edición, cambios fotográficos y eliminación de reportes aprobados; la reapertura continuará realizándose desde la web.
+10. Conservar diseño adaptable a móvil/tablet y orientación vertical/horizontal.
+
+**Cambios técnicos previstos:**
+
+- Extender el modelo/parser Android para tratar `llamada` explícitamente y no enviarlo al checklist de Elevador por descarte.
+- Añadir navegación específica desde creación, edición y visualización.
+- Reutilizar el transporte API, compresor, cámara/selector, metadatos y visor ya validados, parametrizando el límite general de Llamada a diez.
+- Mantener el límite de cinco fotografías por bloque para Elevador y ALIMAK.
+- Preservar el título calculado por backend (`LLAMADA - CLIENTE - FECHA` o `LLAMADA #ID`) y refrescarlo desde la respuesta del servidor.
+
+**Criterios de aceptación para QA:**
+
+1. El filtro separa correctamente Todos, Elevador, ALIMAK y Llamada.
+2. Crear Llamada abre el formulario correcto y nunca muestra checklist de Elevador/ALIMAK.
+3. Todos los campos se guardan, persisten al reabrir y actualizan el título/card.
+4. Se pueden tomar o seleccionar hasta diez fotos generales con descripción opcional; la número once se rechaza sin perder datos.
+5. Las fotos persisten al reabrir, pueden ampliarse y pueden eliminarse de APK y servidor antes de aprobar.
+6. La visualización muestra todos los campos, fotos y descripciones y permite aprobar.
+7. Tras aprobar se bloquean edición, fotos y borrado; PDF y WhatsApp funcionan con la URL vigente.
+8. Crear, editar, visualizar, fotografiar, aprobar y compartir funcionan en la tablet física en ambas orientaciones.
+9. Una regresión básica confirma que Elevador y ALIMAK conservan creación, edición, fotos, visualización, aprobación, PDF, WhatsApp, filtro y borrado según estado.
+
+**Nombre de commit previsto:** `feat(PR-006): incorporar reporte Llamada en Android`.

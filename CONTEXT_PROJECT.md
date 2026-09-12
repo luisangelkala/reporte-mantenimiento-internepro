@@ -62,7 +62,7 @@ Por tanto, el próximo defecto será `BUG-005` y, si requiere un ISSUE nuevo, us
 - La aprobación genera un PDF privado y versionado; web y APK abren y comparten su URL temporal mediante WhatsApp.
 - El nuevo tipo `llamada` ya es reconocido por backend/API y dispone de alta y edición web.
 - La visualización, aprobación, generación de PDF y acciones web de Llamada fueron validadas funcionalmente en `PR-005`. QA validó la corrección de paginación y campos sobrantes (`BUG-004` / `ISSUE-019`); el PR sigue abierto hasta su cierre explícito.
-- La experiencia Android de Llamada fue implementada en `PR-006` y está pendiente de compilación, instalación y pruebas de QA en la tablet física.
+- La experiencia Android de Llamada fue implementada y validada por QA en `PR-006`.
 - Para Llamada, la web es un canal fotográfico de solo lectura. La captura, carga, descripción y eliminación serán responsabilidad exclusiva de la APK.
 
 ## Arquitectura vigente
@@ -127,7 +127,7 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 | BUG | ISSUE | REQ | Estado | Defecto | PR |
 | --- | --- | --- | --- | --- | --- |
 | `BUG-001` | `ISSUE-015` | `REQ-001` | `IMPLEMENTED — PENDING QA` | `La empresa` y `Cliente` fueron creados erróneamente como firmas manuscritas. | `PR-003` |
-| `BUG-002` | `ISSUE-017` | `REQ-001` | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotografías y aplicaba límite 5 en lugar de 10. | `PR-004` |
+| `BUG-002` | `ISSUE-017` | `REQ-001` | `RESOLVED — VALIDATED BY QA` | La web permitía gestionar fotografías y aplicaba límite 5 en lugar de 10. | `PR-004` |
 | `BUG-003` | `ISSUE-018` | `REQ-001` | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada era vertical y no reproducía el formato físico original. | `PR-005` |
 | `BUG-004` | `ISSUE-019` | `REQ-001` | `VALIDATED BY QA` | El PDF de Llamada creaba una segunda página residual y agregaba `Aprobado por` y `Fecha de aprobación`, ausentes del formato físico. | `PR-005` |
 
@@ -145,15 +145,15 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 | `ISSUE-006` | Retirado | `SUPERSEDED` | Carga web autorizada por error; sustituida por `ISSUE-017`. | `PR-004` |
 | `ISSUE-007` | Trabajo | `RESOLVED` | Extender a Llamada el bloqueo de reportes aprobados. | `PR-002` |
 | `ISSUE-008` | Trabajo | `RESOLVED` | Faltaban visualización y acciones finales del listado para Llamada. | `PR-005` |
-| `ISSUE-009` | Riesgo | `IMPLEMENTED — PENDING QA` | Verificar compatibilidad de clientes ante el nuevo tipo. | `PR-006` |
+| `ISSUE-009` | Riesgo | `RESOLVED — VALIDATED BY QA` | Verificar compatibilidad de clientes ante el nuevo tipo. | `PR-006` |
 | `ISSUE-010` | Decisión | `RESOLVED` | Definir título automático de Llamada. | `PR-001` |
 | `ISSUE-011` | Trabajo | `RESOLVED WITH FOLLOW-UP BUG` | Faltaba la generación funcional del PDF de Llamada; el defecto visual posterior está en `ISSUE-018`. | `PR-005` |
 | `ISSUE-012` | Retirado | `SUPERSEDED` | Control de proceso duplicado por Gobierno del proyecto. | Sin PR |
-| `ISSUE-013` | Trabajo | `IMPLEMENTED — PENDING QA` | La APK incorpora el tipo Llamada; falta validación en dispositivo. | `PR-006` |
-| `ISSUE-014` | Riesgo | `PENDING QA` | Falta regresión funcional en dispositivo de Elevador y ALIMAK. | `PR-006` |
+| `ISSUE-013` | Trabajo | `RESOLVED — VALIDATED BY QA` | La APK incorpora el tipo Llamada. | `PR-006` |
+| `ISSUE-014` | Riesgo | `RESOLVED — VALIDATED BY QA` | Regresión funcional de Elevador y ALIMAK validada con PR-006. | `PR-006` |
 | `ISSUE-015` | BUG | `IMPLEMENTED — PENDING QA` | Los campos finales se implementaron erróneamente como firmas. | `PR-003` |
 | `ISSUE-016` | Retirado | `SUPERSEDED` | Gestión fotográfica web basada en alcance incorrecto. | `PR-004` |
-| `ISSUE-017` | BUG | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotos y el límite de Llamada era cinco. | `PR-004` |
+| `ISSUE-017` | BUG | `RESOLVED — VALIDATED BY QA` | La web permitía gestionar fotos y el límite de Llamada era cinco. | `PR-004` |
 | `ISSUE-018` | BUG | `IMPLEMENTED — DEPLOYMENT WEB` | El PDF de Llamada no era horizontal ni reproducía el formato físico. | `PR-005` |
 | `ISSUE-019` | BUG | `RESOLVED — VALIDATED BY QA` | El PDF de Llamada agregaba una página residual y una fila de aprobación ajena al formulario físico. | `PR-005` |
 
@@ -165,7 +165,7 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 
 ### ISSUE-009 — Compatibilidad con clientes existentes
 
-`PR-006` implementó el reconocimiento explícito en listado, filtro, edición y visualización para impedir que Llamada sea tratada como Elevador o ALIMAK. Falta validación funcional de QA en dispositivo.
+`PR-006` implementó el reconocimiento explícito en listado, filtro, edición y visualización para impedir que Llamada sea tratada como Elevador o ALIMAK. QA validó el comportamiento en dispositivo.
 
 ### ISSUE-011 — PDF definitivo
 
@@ -173,11 +173,11 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 
 ### ISSUE-013 — Interfaz Android de Llamada
 
-`PR-006` implementó creación, edición, bloque general de hasta diez fotos, comentarios opcionales, visor, aprobación, PDF y WhatsApp. El trabajo espera compilación e instalación de QA para validación funcional.
+`PR-006` implementó creación, edición, bloque general de hasta diez fotos, comentarios opcionales, visor, aprobación, PDF y WhatsApp. QA validó la implementación.
 
 ### ISSUE-014 — Regresión
 
-La compilación confirma compatibilidad estática. QA debe verificar en la tablet que Llamada no modifique rutas, estados, filtros, fotografías, PDF ni acciones de Elevador y ALIMAK.
+La compilación confirmó compatibilidad estática y QA validó en la tablet que la incorporación de Llamada conserva los flujos existentes.
 
 ### ISSUE-015 — Campos finales incorrectos
 
@@ -196,7 +196,7 @@ Corrección implementada:
 - Elevador y cada bloque de ALIMAK mantienen su límite vigente de cinco.
 - La foto número once es rechazada por la API.
 
-La corrección técnica está lista para despliegue, pero `PR-004` permanece abierto: la visualización real de fotos y descripciones solo podrá validarse cuando una futura fase Android permita subirlas.
+QA validó la visualización web real de las fotos y sus descripciones después de cargarlas desde Android. `ISSUE-017`, `BUG-002` y `PR-004` quedan cerrados.
 
 ### ISSUE-018 — PDF de Llamada con orientación y diseño incorrectos
 
@@ -244,11 +244,11 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-001` | `COMPLETED` | Cerrar el contrato inicial de Llamada. | `ISSUE-010` y decisiones históricas | Validado por QA. |
 | `PR-002` | `COMPLETED` | Incorporar Llamada en backend y API. | `ISSUE-001`, `ISSUE-003`, `ISSUE-007` | Desplegado y validado por QA. |
 | `PR-003` | `DEPLOYMENT WEB` | Crear botón, alta y formulario web; corregir campos finales. | `ISSUE-002`, `ISSUE-015` | Código entregado; espera validación final de QA. |
-| `PR-004` | `TESTING` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó que la carga web desapareció; PR abierto hasta probar API, fotos y descripciones con Android. |
+| `PR-004` | `COMPLETED` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó el canal de solo lectura, límite, fotos y descripciones. |
 | `PR-005` | `TESTING` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011`, `ISSUE-018` / `BUG-003`, `ISSUE-019` / `BUG-004` | QA validó `BUG-004`; el PR espera cierre explícito del alcance total. |
-| `PR-006` | `DEPLOYMENT & COMPILING` | Incorporar Llamada de punta a punta en la APK y probar compatibilidad/regresión. | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | Kotlin compila; QA debe compilar/instalar y probar en la tablet física. |
+| `PR-006` | `COMPLETED` | Incorporar Llamada de punta a punta en la APK y probar compatibilidad/regresión. | `ISSUE-009`, `ISSUE-013`, `ISSUE-014` | Implementación Android validada por QA. |
 
-**Próximo PR disponible: `PR-007`.** `PR-006` está en `DEPLOYMENT & COMPILING`.
+**Próximo PR disponible: `PR-007`.** `PR-006` está cerrado como `COMPLETED`.
 
 ### Registro Git por PR
 
@@ -263,9 +263,9 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 
 ### Entrega actual de PR-004
 
-Estado actual: `TESTING`, abierto.
+Estado actual: `COMPLETED`, cerrado por QA.
 
-QA validó en DEMO que el formulario web de Llamada ya no contiene controles fotográficos. La prueba de fotos, descripciones, máximo diez y visor quedará pendiente de la futura implementación Android, por lo que PR-004 no debe pasar todavía a `COMPLETED`.
+QA validó en DEMO que el formulario web de Llamada no contiene controles fotográficos y, usando fotografías cargadas desde Android, confirmó miniaturas, descripciones, visor y límite de diez. No quedan pendientes dentro de `PR-004`.
 
 ### PR-005 — Visualización, aprobación, PDF y acciones web de Llamada
 
@@ -315,7 +315,7 @@ Detalles técnicos verificados por Dev:
 
 ### PR-006 — Reporte Llamada completo en Android
 
-**Estado:** `DEPLOYMENT & COMPILING`. Implementación terminada y compilación Kotlin local satisfactoria; QA debe sincronizar, compilar, instalar y probar en la tablet física.
+**Estado:** `COMPLETED`. QA compiló, instaló y validó la implementación en el dispositivo físico.
 
 **REQ relacionado:** `REQ-001`.
 
@@ -371,3 +371,5 @@ Detalles técnicos verificados por Dev:
 - La separación por tipo evita que Llamada caiga por defecto en la plantilla de Elevador.
 
 **Verificación Dev:** `:app:compileDebugKotlin` terminó con `BUILD SUCCESSFUL`. Se utilizó temporalmente el JDK integrado de Android Studio porque la terminal no tenía `JAVA_HOME`; no se modificó la configuración permanente. Gradle mostró advertencias no bloqueantes sobre la versión XML del SDK, compatibilidad de compile SDK 37 con AGP 8.13 y futuras incompatibilidades con Gradle 10. La validación funcional y de orientación corresponde a QA en la tablet.
+
+**Validación QA:** QA confirmó el funcionamiento de `PR-006`; la fase y sus `ISSUE-009`, `ISSUE-013` e `ISSUE-014` quedan cerrados como `COMPLETED`/`RESOLVED`.

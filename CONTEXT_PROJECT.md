@@ -38,10 +38,10 @@ Reglas de transición:
 | Registro | Último ID utilizado | Próximo ID disponible | Regla |
 | --- | --- | --- | --- |
 | Requisito | `REQ-001` | `REQ-002` | Solo se crea otro REQ si QA aprueba un comportamiento independiente. |
-| Issue o BUG | `ISSUE-017` | `ISSUE-018` | Todo trabajo o defecto nuevo toma el siguiente número; los IDs retirados nunca se reutilizan. |
+| Issue o BUG | `ISSUE-018` | `ISSUE-019` | Todo trabajo o defecto nuevo toma el siguiente número; los IDs retirados nunca se reutilizan. |
 | Fase interna | `PR-005` | `PR-006` | Solo se asigna cuando QA solicita describir una nueva fase. No representa un Pull Request de GitHub. |
 
-Por tanto, el próximo BUG que QA identifique será `ISSUE-018`, salvo que sea exactamente otra manifestación de un ISSUE ya abierto.
+Por tanto, el próximo BUG que QA identifique será `ISSUE-019`, salvo que sea exactamente otra manifestación de un ISSUE ya abierto.
 
 ### Trazabilidad con Git
 
@@ -60,7 +60,8 @@ Por tanto, el próximo BUG que QA identifique será `ISSUE-018`, salvo que sea e
 - Los reportes aprobados quedan bloqueados para edición, fotografías y eliminación hasta que la web los devuelva a `PENDIENTE`.
 - La aprobación genera un PDF privado y versionado; web y APK abren y comparten su URL temporal mediante WhatsApp.
 - El nuevo tipo `llamada` ya es reconocido por backend/API y dispone de alta y edición web.
-- La visualización final, aprobación, PDF definitivo, acciones de listado y experiencia Android de Llamada continúan pendientes de fases que QA todavía no ha creado.
+- La visualización, aprobación, generación de PDF y acciones web de Llamada fueron validadas en `PR-005`. El formato visual horizontal del PDF permanece pendiente en `ISSUE-018`.
+- La experiencia Android de Llamada continúa pendiente de una fase que QA todavía no ha creado.
 - Para Llamada, la web es un canal fotográfico de solo lectura. La captura, carga, descripción y eliminación serán responsabilidad exclusiva de la APK.
 
 ## Arquitectura vigente
@@ -110,11 +111,11 @@ Criterios aprobados por QA:
 7. Solo la APK captura, selecciona, sube, cambia la descripción y elimina fotografías mientras el reporte está pendiente.
 8. La web únicamente muestra foto, descripción y visor ampliado; no ofrece controles de carga, edición o eliminación fotográfica.
 9. Un reporte pendiente puede editarse y eliminarse. Un reporte aprobado queda bloqueado hasta que la web lo devuelva a `PENDIENTE`.
-10. La aprobación debe producir un PDF definitivo con logo, título, campos, fotografías y descripciones.
+10. La aprobación debe producir un PDF horizontal que reproduzca visualmente el formato físico original de Llamada, con logo, franja de título, campos, fotografías y descripciones.
 11. PDF y WhatsApp solo se habilitan cuando existe un PDF vigente.
 12. La APK deberá listar, filtrar, crear, editar, fotografiar, visualizar, aprobar, abrir PDF y compartir Llamada.
 
-**ISSUES relacionados:** `ISSUE-001`, `ISSUE-002`, `ISSUE-003`, `ISSUE-007`, `ISSUE-008`, `ISSUE-009`, `ISSUE-010`, `ISSUE-011`, `ISSUE-013`, `ISSUE-014`, `ISSUE-015`, `ISSUE-017`.
+**ISSUES relacionados:** `ISSUE-001`, `ISSUE-002`, `ISSUE-003`, `ISSUE-007`, `ISSUE-008`, `ISSUE-009`, `ISSUE-010`, `ISSUE-011`, `ISSUE-013`, `ISSUE-014`, `ISSUE-015`, `ISSUE-017`, `ISSUE-018`.
 
 No existen otros requisitos activos. La fragmentación documental anterior fue eliminada: todo el comportamiento autorizado del reporte Llamada pertenece únicamente a `REQ-001`.
 
@@ -126,8 +127,9 @@ No existen otros requisitos activos. La fragmentación documental anterior fue e
 | --- | --- | --- | --- |
 | `ISSUE-015` | `IMPLEMENTED — PENDING QA` | `La empresa` y `Cliente` fueron creados erróneamente como firmas manuscritas en lugar de campos simples de texto. | `PR-003` |
 | `ISSUE-017` | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotografías de Llamada y aplicaba límite 5 en lugar de 10. QA ya validó que los controles web desaparecieron; falta validar API, fotos y descripciones con Android. | `PR-004` |
+| `ISSUE-018` | `OPEN — UNASSIGNED` | El PDF de Llamada se genera en orientación vertical y con una composición genérica que no reproduce el formato físico original. | Sin PR |
 
-Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###` separada. El próximo BUG nuevo será `ISSUE-018`.
+Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###` separada. El próximo BUG nuevo será `ISSUE-019`.
 
 ### Registro único
 
@@ -140,22 +142,23 @@ Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###`
 | `ISSUE-005` | Retirado | `SUPERSEDED` | Límite histórico de cinco fotos; sustituido por `ISSUE-017`. | `PR-004` |
 | `ISSUE-006` | Retirado | `SUPERSEDED` | Carga web autorizada por error; sustituida por `ISSUE-017`. | `PR-004` |
 | `ISSUE-007` | Trabajo | `RESOLVED` | Extender a Llamada el bloqueo de reportes aprobados. | `PR-002` |
-| `ISSUE-008` | Trabajo | `IMPLEMENTED — DEPLOYMENT WEB` | Faltaban visualización y acciones finales del listado para Llamada. | `PR-005` |
+| `ISSUE-008` | Trabajo | `RESOLVED` | Faltaban visualización y acciones finales del listado para Llamada. | `PR-005` |
 | `ISSUE-009` | Riesgo | `OPEN — UNASSIGNED` | Verificar compatibilidad de clientes ante el nuevo tipo. | Sin PR |
 | `ISSUE-010` | Decisión | `RESOLVED` | Definir título automático de Llamada. | `PR-001` |
-| `ISSUE-011` | Trabajo | `IMPLEMENTED — DEPLOYMENT WEB` | Faltaba la plantilla PDF definitiva de Llamada. | `PR-005` |
+| `ISSUE-011` | Trabajo | `RESOLVED WITH FOLLOW-UP BUG` | Faltaba la generación funcional del PDF de Llamada; el defecto visual posterior está en `ISSUE-018`. | `PR-005` |
 | `ISSUE-012` | Retirado | `SUPERSEDED` | Control de proceso duplicado por Gobierno del proyecto. | Sin PR |
 | `ISSUE-013` | Trabajo | `OPEN — UNASSIGNED` | La APK todavía no incorpora el tipo Llamada. | Sin PR |
 | `ISSUE-014` | Riesgo | `OPEN — UNASSIGNED` | Falta regresión integral de Elevador y ALIMAK. | Sin PR |
 | `ISSUE-015` | BUG | `IMPLEMENTED — PENDING QA` | Los campos finales se implementaron erróneamente como firmas. | `PR-003` |
 | `ISSUE-016` | Retirado | `SUPERSEDED` | Gestión fotográfica web basada en alcance incorrecto. | `PR-004` |
 | `ISSUE-017` | BUG | `PARTIALLY VALIDATED — OPEN` | La web permitía gestionar fotos y el límite de Llamada era cinco. | `PR-004` |
+| `ISSUE-018` | BUG | `OPEN — UNASSIGNED` | El PDF de Llamada no es horizontal ni reproduce el formato físico. | Sin PR |
 
-**Próximo ISSUE disponible: `ISSUE-018`.**
+**Próximo ISSUE disponible: `ISSUE-019`.**
 
 ### ISSUE-008 — Visualización y acciones finales de Llamada
 
-`PR-005` implementa la vista de solo lectura de Llamada, activa el ojo del listado y conecta aprobación, PDF vigente y WhatsApp. Queda pendiente de despliegue y validación QA.
+`PR-005` implementó la vista de solo lectura de Llamada, activó el ojo del listado y conectó aprobación, PDF vigente y WhatsApp. QA validó este flujo; el defecto posterior de presentación del PDF se aisló en `ISSUE-018`.
 
 ### ISSUE-009 — Compatibilidad con clientes existentes
 
@@ -163,7 +166,7 @@ Antes de exponer Llamada en Android debe comprobarse que listado, parser, filtro
 
 ### ISSUE-011 — PDF definitivo
 
-`PR-005` completa la plantilla multipágina con logo, título, campos, textos de conformidad, fotos generales y descripciones. La aprobación es transaccional: si el PDF falla, el reporte permanece pendiente y las acciones PDF/WhatsApp continúan deshabilitadas. Queda pendiente de despliegue y validación QA.
+`PR-005` completó la generación multipágina con logo, título, campos, textos de conformidad, fotos generales y descripciones. La aprobación es transaccional: si el PDF falla, el reporte permanece pendiente y las acciones PDF/WhatsApp continúan deshabilitadas. QA validó la generación y apertura; `ISSUE-018` corrige posteriormente su orientación y fidelidad visual.
 
 ### ISSUE-013 — Interfaz Android de Llamada
 
@@ -192,6 +195,23 @@ Corrección implementada:
 
 La corrección técnica está lista para despliegue, pero `PR-004` permanece abierto: la visualización real de fotos y descripciones solo podrá validarse cuando una futura fase Android permita subirlas.
 
+### ISSUE-018 — PDF de Llamada con orientación y diseño incorrectos
+
+**Tipo:** BUG visual y documental detectado por QA después de validar el flujo funcional de `PR-005`.
+
+**Estado:** `OPEN — UNASSIGNED`.
+
+**Comportamiento observado:** el PDF se genera y puede abrirse/compartirse, pero usa una página vertical y una composición genérica. No reproduce la distribución horizontal del reporte físico entregado por QA.
+
+**Comportamiento requerido:** el PDF de Llamada debe generarse en orientación horizontal y reproducir visualmente el formato físico original: encabezado corporativo, franja de título, Cliente/Equipo/Fecha alineados, bloques narrativos en el mismo orden y campos finales `La empresa`/`Cliente`. Las fotografías y sus descripciones deberán incorporarse después del cuerpo principal, usando páginas horizontales adicionales cuando sea necesario.
+
+**Causa técnica confirmada:** el generador actual fija todas las páginas en `595.28 × 841.89` puntos (`MediaBox` vertical) y utiliza una sola composición lineal para los tres tipos de reporte.
+
+**Solución técnica viable:** parametrizar ancho, alto, márgenes y orientación del generador; mantener Elevador/ALIMAK en vertical; crear una plantilla horizontal exclusiva para Llamada; dibujar posiciones, líneas y bloques equivalentes al formato físico; permitir páginas horizontales adicionales para evidencia fotográfica.
+
+**REQ relacionado:** `REQ-001`.
+**PR relacionado:** sin asignar. QA deberá solicitar la descripción de una fase antes de autorizar la corrección.
+
 ## IMIPLEMENTATION
 
 > Se conserva la palabra `IMIPLEMENTATION` exactamente como fue solicitada por QA. Los `PR-###` son fases internas, no Pull Requests de GitHub.
@@ -204,9 +224,9 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-002` | `COMPLETED` | Incorporar Llamada en backend y API. | `ISSUE-001`, `ISSUE-003`, `ISSUE-007` | Desplegado y validado por QA. |
 | `PR-003` | `DEPLOYMENT WEB` | Crear botón, alta y formulario web; corregir campos finales. | `ISSUE-002`, `ISSUE-015` | Código entregado; espera validación final de QA. |
 | `PR-004` | `TESTING` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó que la carga web desapareció; PR abierto hasta probar API, fotos y descripciones con Android. |
-| `PR-005` | `DEPLOYMENT WEB` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011` | Implementación terminada; QA debe desplegar y probar. |
+| `PR-005` | `COMPLETED` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011` | Flujo funcional desplegado y validado por QA; `ISSUE-018` registra separadamente el defecto visual del PDF. |
 
-**Próximo PR disponible: `PR-006`.** `PR-005` queda creado y descrito, pero no está autorizado para implementación técnica.
+**Próximo PR disponible: `PR-006`.** Todavía no tiene alcance asignado ni autorización técnica.
 
 ### Registro Git por PR
 
@@ -226,7 +246,7 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 
 ### PR-005 — Visualización, aprobación, PDF y acciones web de Llamada
 
-**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
+**Estado:** `COMPLETED`. QA validó el flujo funcional completo.
 
 **REQ relacionado:** `REQ-001`.
 
@@ -268,4 +288,4 @@ Detalles técnicos verificados por Dev:
 6. Volver a `PENDIENTE` invalida el PDF anterior y vuelve a permitir edición desde el canal autorizado.
 7. Elevador y ALIMAK superan una prueba básica de regresión de listado, visualización y acciones.
 
-**Nombre previsto del commit:** `feat(PR-005): completar visualizacion y PDF de Llamada`.
+**Commit principal ejecutado:** `87a5a7de2ab711f58fa06027a607880b6b248766` — `feat(PR-005): completar visualizacion y PDF de Llamada`.

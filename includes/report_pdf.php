@@ -6,7 +6,7 @@ const REPORT_PDF_LINK_TTL = 604800;
 
 /**
  * Generador PDF autocontenido para la instantanea inmutable de un reporte aprobado.
- * No expone el archivo: la entrega publica y sus firmas pertenecen a la fase 5.5.
+ * El archivo se entrega exclusivamente mediante el controlador firmado pdf.php.
  */
 final class ReportPdfDocument
 {
@@ -208,31 +208,38 @@ final class ReportPdfDocument
 
     private function wrap(string $text, int $size, float $width): array
     {
-        $text = trim(preg_replace('/\s+/u', ' ', $text));
+        $text = trim(str_replace(["\r\n", "\r"], "\n", $text));
         if ($text === '') {
             return [''];
         }
         $limit = max(12, (int) floor($width / ($size * 0.52)));
-        $words = preg_split('/\s+/u', $text) ?: [$text];
         $lines = [];
-        $line = '';
-        foreach ($words as $word) {
-            $candidate = $line === '' ? $word : $line . ' ' . $word;
-            if (strlen($this->encodeText($candidate)) <= $limit) {
-                $line = $candidate;
+        foreach (explode("\n", $text) as $paragraph) {
+            $paragraph = trim(preg_replace('/[\t ]+/u', ' ', $paragraph));
+            if ($paragraph === '') {
+                $lines[] = '';
                 continue;
+            }
+            $words = preg_split('/\s+/u', $paragraph) ?: [$paragraph];
+            $line = '';
+            foreach ($words as $word) {
+                $candidate = $line === '' ? $word : $line . ' ' . $word;
+                if (strlen($this->encodeText($candidate)) <= $limit) {
+                    $line = $candidate;
+                    continue;
+                }
+                if ($line !== '') {
+                    $lines[] = $line;
+                }
+                while (strlen($this->encodeText($word)) > $limit) {
+                    $lines[] = substr($word, 0, $limit);
+                    $word = substr($word, $limit);
+                }
+                $line = $word;
             }
             if ($line !== '') {
                 $lines[] = $line;
             }
-            while (strlen($this->encodeText($word)) > $limit) {
-                $lines[] = substr($word, 0, $limit);
-                $word = substr($word, $limit);
-            }
-            $line = $word;
-        }
-        if ($line !== '') {
-            $lines[] = $line;
         }
         return $lines ?: [''];
     }

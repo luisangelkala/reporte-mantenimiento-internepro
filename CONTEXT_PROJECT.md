@@ -140,10 +140,10 @@ Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###`
 | `ISSUE-005` | Retirado | `SUPERSEDED` | Límite histórico de cinco fotos; sustituido por `ISSUE-017`. | `PR-004` |
 | `ISSUE-006` | Retirado | `SUPERSEDED` | Carga web autorizada por error; sustituida por `ISSUE-017`. | `PR-004` |
 | `ISSUE-007` | Trabajo | `RESOLVED` | Extender a Llamada el bloqueo de reportes aprobados. | `PR-002` |
-| `ISSUE-008` | Trabajo | `PLANNED IN PR-005` | Faltan visualización y acciones finales del listado para Llamada. | `PR-005` |
+| `ISSUE-008` | Trabajo | `IMPLEMENTED — DEPLOYMENT WEB` | Faltaban visualización y acciones finales del listado para Llamada. | `PR-005` |
 | `ISSUE-009` | Riesgo | `OPEN — UNASSIGNED` | Verificar compatibilidad de clientes ante el nuevo tipo. | Sin PR |
 | `ISSUE-010` | Decisión | `RESOLVED` | Definir título automático de Llamada. | `PR-001` |
-| `ISSUE-011` | Trabajo | `PLANNED IN PR-005` | Falta plantilla PDF definitiva de Llamada. | `PR-005` |
+| `ISSUE-011` | Trabajo | `IMPLEMENTED — DEPLOYMENT WEB` | Faltaba la plantilla PDF definitiva de Llamada. | `PR-005` |
 | `ISSUE-012` | Retirado | `SUPERSEDED` | Control de proceso duplicado por Gobierno del proyecto. | Sin PR |
 | `ISSUE-013` | Trabajo | `OPEN — UNASSIGNED` | La APK todavía no incorpora el tipo Llamada. | Sin PR |
 | `ISSUE-014` | Riesgo | `OPEN — UNASSIGNED` | Falta regresión integral de Elevador y ALIMAK. | Sin PR |
@@ -155,7 +155,7 @@ Los BUG usan la misma secuencia `ISSUE-###`; no existe una numeración `BUG-###`
 
 ### ISSUE-008 — Visualización y acciones finales de Llamada
 
-La fila todavía no puede abrir una vista final de Llamada ni completar aprobación, PDF y WhatsApp. No es un BUG de `PR-003`, porque esas funciones no pertenecían al formulario de alta/edición. Se asigna a `PR-005`, todavía `PENDING`.
+`PR-005` implementa la vista de solo lectura de Llamada, activa el ojo del listado y conecta aprobación, PDF vigente y WhatsApp. Queda pendiente de despliegue y validación QA.
 
 ### ISSUE-009 — Compatibilidad con clientes existentes
 
@@ -163,7 +163,7 @@ Antes de exponer Llamada en Android debe comprobarse que listado, parser, filtro
 
 ### ISSUE-011 — PDF definitivo
 
-Debe existir una plantilla multipágina que represente campos, textos de conformidad, fotos generales y sus descripciones. La aprobación no debe habilitar WhatsApp si el PDF no quedó generado correctamente.
+`PR-005` completa la plantilla multipágina con logo, título, campos, textos de conformidad, fotos generales y descripciones. La aprobación es transaccional: si el PDF falla, el reporte permanece pendiente y las acciones PDF/WhatsApp continúan deshabilitadas. Queda pendiente de despliegue y validación QA.
 
 ### ISSUE-013 — Interfaz Android de Llamada
 
@@ -204,7 +204,7 @@ La corrección técnica está lista para despliegue, pero `PR-004` permanece abi
 | `PR-002` | `COMPLETED` | Incorporar Llamada en backend y API. | `ISSUE-001`, `ISSUE-003`, `ISSUE-007` | Desplegado y validado por QA. |
 | `PR-003` | `DEPLOYMENT WEB` | Crear botón, alta y formulario web; corregir campos finales. | `ISSUE-002`, `ISSUE-015` | Código entregado; espera validación final de QA. |
 | `PR-004` | `TESTING` | Mostrar en web las fotos de Llamada en solo lectura y establecer máximo 10 en API. | `ISSUE-017` | QA validó que la carga web desapareció; PR abierto hasta probar API, fotos y descripciones con Android. |
-| `PR-005` | `PENDING` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011` | Sin autorización técnica. |
+| `PR-005` | `DEPLOYMENT WEB` | Completar visualización web, aprobación, PDF y acciones finales de Llamada. | `ISSUE-008`, `ISSUE-011` | Implementación terminada; QA debe desplegar y probar. |
 
 **Próximo PR disponible: `PR-006`.** `PR-005` queda creado y descrito, pero no está autorizado para implementación técnica.
 
@@ -226,7 +226,7 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 
 ### PR-005 — Visualización, aprobación, PDF y acciones web de Llamada
 
-**Estado:** `PENDING`. Descrito, pero sin autorización técnica.
+**Estado:** `DEPLOYMENT WEB`. Implementación técnica terminada; QA debe desplegarla en DEMO.
 
 **REQ relacionado:** `REQ-001`.
 
@@ -235,7 +235,7 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 - `ISSUE-008`: habilitar la visualización correcta y las acciones finales de la fila Llamada.
 - `ISSUE-011`: crear la plantilla PDF definitiva y vincularla al proceso de aprobación.
 
-**Alcance propuesto:**
+**Implementación ejecutada:**
 
 - Activar el icono de visualización para abrir una vista de solo lectura específica de Llamada.
 - Mostrar logo, título automático, todos los campos, `La empresa`, `Cliente`, fotos generales y sus descripciones.
@@ -245,6 +245,18 @@ QA validó en DEMO que el formulario web de Llamada ya no contiene controles fot
 - Compartir por WhatsApp la URL temporal firmada del PDF.
 - Mantener eliminación solo para pendientes y conservar la opción web de volver un aprobado a `PENDIENTE`.
 - No incorporar todavía la interfaz Android de Llamada.
+
+Detalles técnicos verificados por Dev:
+
+- El listado dirige Llamada exclusivamente a `view_llamada.php` y conserva las rutas existentes de Elevador/ALIMAK.
+- La nueva vista valida el ID, la existencia del registro y el tipo antes de mostrar datos.
+- Todo texto dinámico de la vista se escapa y los campos narrativos preservan saltos de línea.
+- Las fotografías reutilizan las URLs firmadas, miniaturas, descripciones y visor común en modo de solo lectura.
+- La aprobación reutiliza la transacción backend existente: primero genera el PDF y solo después confirma el estado aprobado.
+- El PDF incluye logo, título automático, datos generales, fotos/descripciones, campos narrativos y textos `La empresa`/`Cliente`.
+- El generador PDF preserva saltos de línea explícitos sin alterar el contrato de Elevador o ALIMAK.
+- La lista y la vista solo ofrecen PDF/WhatsApp cuando `report_pdf_active_url()` confirma un PDF activo de un reporte aprobado.
+- Reabrir invalida el PDF anterior y devuelve el reporte a pendiente.
 
 **Criterios de aceptación propuestos:**
 

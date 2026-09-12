@@ -37,7 +37,7 @@ function report_list(){
 
         $reportType = report_type_from_record(is_array($state) ? $state : [], $row['data_reporte'] ?? null);
         if ($reportType === 'llamada') {
-            $viewAction = '<span title="Vista de Llamada disponible al completar PR-005" aria-label="Vista de Llamada pendiente" style="margin:0 5px;color:#aaa"><i class="fa fa-eye" aria-hidden="true"></i></span>';
+            $viewAction = '<a href="view_llamada.php?id=' . (int) $row['id'] . '" class="view" title="Visualizar reporte Llamada" aria-label="Visualizar reporte Llamada" style="margin:0 5px"><i class="fa fa-eye" aria-hidden="true"></i></a>';
             $editAction = (($state['status'] ?? '') === 'close')
                 ? '<span title="Un reporte aprobado no puede editarse" aria-label="Edición no disponible" style="margin:0 5px;color:#aaa"><i class="fa fa-pencil" aria-hidden="true"></i></span>'
                 : '<a href="edit_llamada.php?id=' . (int) $row['id'] . '" title="Editar reporte Llamada" aria-label="Editar reporte Llamada" style="margin:0 5px"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
